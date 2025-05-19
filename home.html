@@ -323,11 +323,14 @@
   <section id="contact" class="fade-in">
     <div class="container">
       <h2 class="section-title">Get in Touch</h2>
-      <form>
-        <input type="text" placeholder="Your Name" required>
-        <input type="email" placeholder="Your Email" required>
-        <textarea rows="5" placeholder="Your Message" required></textarea>
-        <button type="submit">Send Message</button>
+      <form action="https://formsubmit.co/beaverbuiltfurniture@gmail.com" method="POST">
+     <input type="text" name="name" required>
+     <input type="email" name="email" required>
+     <input type="text" rows="5" name="message" required>
+     <button type="submit">Send</button>
+     <input type="hidden" name="_subject" value="New submission!">
+    <input type="hidden" name="_cc" value="akody81@gmail.com">
+    <input type="hidden" name="_template" value="box">
       </form>
     </div>
   </section>
