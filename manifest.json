@@ -6,21 +6,25 @@
       "src": "beaverlogo.png",
       "sizes": "192x192",
       "type": "image/png"
+      "purpose": "any maskable"
     },
     {
       "src": "beaverlogo.png",
       "sizes": "192x192",
       "type": "image/png"
+      "purpose": "any maskable"
     },
     {
       "src": "beaverlogo.png",
       "sizes": "192x192",
       "type": "image/png"
+      "purpose": "any maskable"
     },
     {
       "src": "beaverlogo.png",
       "sizes": "800x800",
       "type": "image/png"
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/?source=pwa",
