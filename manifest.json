@@ -4,12 +4,12 @@
   "icons": [
     {
       "src": "beaverlogo.png",
-      "sizes": "120x110",
+      "sizes": "180x180",
       "type": "image/png"
     },
     {
       "src": "beaverlogo.png",
-      "sizes": "144x144",
+      "sizes": "180x180",
       "type": "image/png"
     },
     {
