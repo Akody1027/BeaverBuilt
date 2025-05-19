@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beaver Built Furniture</title>
+
+  <!-- Modern fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset & base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; }
+    body { padding-top: 80px; }
+
+    /* Preloader */
+    #preloader {
+      position: fixed; inset: 0;
+      background-color: #fff;
+      transition: opacity 1s ease-out;
+      z-index: 2000;
+    }
+    #preloader::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url('background.jpg') center/cover no-repeat;
+      opacity: 0.2;
+    }
+    #preloader.fade-out {
+      opacity: 0; pointer-events: none;
+    }
+    #preloader .prelogo {
+      position: fixed; top: 20px; left: 20px;
+      height: 50px; z-index: 2001;
+    }
+    #preloader .spinner {
+      position: fixed; top: 50%; left: 50%;
+      margin: -25px 0 0 -25px;
+      width: 50px; height: 50px;
+      border: 5px solid rgba(0,0,0,0.1);
+      border-top-color: #111; border-radius: 50%;
+      animation: spin 1s linear infinite;
+      z-index: 2001;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Header */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 80px;
+      background: rgba(17,17,17,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+    header .logo {
+      position: fixed; top: 20px; left: 20px;
+      height: 50px; z-index: 1001;
+    }
+    .menu-btn {
+      position: fixed; top: 20px; right: 20px;
+      background: none; border: none; color: #fff;
+      font-size: 1.5rem; cursor: pointer; z-index: 1001;
+    }
+    .dropdown {
+      position: fixed; top: 60px; right: 20px;
+      display: none; background: #222; border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1001;
+    }
+    .dropdown.open { display: block; }
+    .dropdown a {
+      display: block; padding: 0.75rem 1rem; color: #fff;
+      white-space: nowrap;
+    }
+    .dropdown a:hover { background: rgba(255,255,255,0.1); }
+
+    /* Page background & overlay */
+    body {
+      background: url('background.jpg') center/cover scroll;
+      position: relative;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85);
+      pointer-events: none; z-index: -1;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* Animations */
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
+    .fade-in { animation: fadeInUp 0.6s ease both; }
+
+    /* Title fonts */
+    h1, .section-title {
+      font-family: 'Lily Script One', cursive;
+    }
+
+    /* Accent bar & section titles */
+    .accent-bar { height: 6px; background: url('wood-texture.jpg') center/cover; }
+    .section-title {
+      font-size: 2rem; margin-bottom: 0.5rem;
+      display: inline-block; position: relative;
+      animation: fadeInUp 0.6s ease both;
+    }
+    .section-title::after {
+      content: ''; position: absolute; left: 0; bottom: -6px;
+      width: 100%; height: 6px;
+      background: url('wood-texture.jpg') center/cover;
+      opacity: 0.4;
+    }
+
+    /* Container */
+    .container {
+      width: 90%; max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;
+    }
+    section + section { margin-top: 4rem; }
+
+    /* Hero */
+    .hero {
+      text-align: center; padding: 6rem 1rem;
+      background: rgba(245,245,245,0.9);
+      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.05);
+    }
+    .hero h1 { font-size: 3rem; margin-bottom: 1rem; animation: fadeInUp 0.8s ease both; }
+    .hero p { max-width: 600px; margin: 0 auto; color: #444; animation: fadeInUp 1s ease both; }
+
+    /* About */
+    #about {
+      background: rgba(34,34,34,0.85); color: #eee; padding: 4rem 1rem;
+    }
+    #about p { max-width: 800px; margin: 0 auto; color: #ccc; animation: fadeInUp 0.8s ease both; }
+
+    /* Services */
+    #services .grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 2rem;
+    }
+    .service {
+      background: #fafafa; padding: 2rem; border: 1px solid #ddd;
+      border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s; animation: fadeInUp 0.6s ease both;
+    }
+    .service:hover {
+      transform: translateY(-5px); box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    /* Gallery */
+    #gallery .grid {
+      display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 1.5rem;
+    }
+    .gallery-item {
+      overflow: hidden; position: relative; background: #000;
+      border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: fadeInUp 0.6s ease both;
+    }
+    .gallery-item img {
+      width: 100%; display: block; filter: grayscale(50%);
+      transition: filter 0.3s, transform 0.3s;
+    }
+    .gallery-item:hover img {
+      filter: grayscale(0%); transform: scale(1.05);
+    }
+    .gallery-item .caption {
+      position: absolute; left:0; bottom:0; width:100%;
+      background: rgba(17,17,17,0.7); color: #fff; padding: 0.75rem;
+      text-align: center; font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Testimonials */
+    #testimonials .card {
+      background: #f5f5f5; padding: 2rem; border-left: 4px solid #111;
+      margin-bottom: 2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    /* Contact */
+    #contact form {
+      max-width: 600px; margin: 0 auto; display: grid; gap: 1rem;
+      animation: fadeInUp 0.6s ease both;
+    }
+    #contact input,#contact textarea {
+      width: 100%; padding: 0.75rem; border: 1px solid #ccc;
+      background: #fafafa; border-radius: 4px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    #contact button {
+      padding: 0.75rem 1.5rem; background: #111; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    #contact button:hover {
+      background: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Footer */
+    footer {
+      background: rgba(17,17,17,0.9); color: #eee; text-align: center;
+      padding: 2rem 1rem; font-size: 0.9rem;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    @media (max-width:600px) {
+      .hero h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <img src="beaverlogo.jpg" alt="Logo" class="prelogo">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <nav class="dropdown" id="navDropdown">
+      <a href="#home">Home</a>
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="accent-bar"></div>
+  </header>
+
+  <!-- Hero -->
+  <section id="home" class="hero fade-in">
+    <div class="container">
+      <h1>Beaver Built Furniture</h1>
+      <p>Beautifully crafted, sustainable wooden furniture—designed for modern living.</p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="fade-in">
+    <div class="container">
+      <h2 class="section-title">About Us</h2>
+      <p>At Beaver Built Furniture, we blend time-honored woodworking techniques with contemporary design. Every piece is handcrafted in small batches using sustainably sourced timber, ensuring durability and style that lasts generations.</p>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="fade-in">
+    <div class="container">
+      <h2 class="section-title">Our Services</h2>
+      <div class="grid">
+        <div class="service">
+          <h3>Custom Builds</h3>
+          <p>Bespoke tables, chairs, shelving and more—tailored to your space and style.</p>
+        </div>
+        <div class="service">
+          <h3>Repairs & Restoration</h3>
+          <p>Breathe new life into your heirloom or vintage pieces with expert restoration.</p>
+        </div>
+        <div class="service">
+          <h3>Design Consultation</h3>
+          <p>Work one-on-one with our designers to bring your vision to life.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery" class="fade-in">
+    <div class="container">
+      <h2 class="section-title">Gallery</h2>
+
+      <!-- First six images -->
+      <div class="grid">
+        <div class="gallery-item"><img src="Gal1.jpg" alt="Gallery 1"><div class="caption">Gallery 1</div></div>
+        <div class="gallery-item"><img src="Gal2.jpg" alt="Gallery 2"><div class="caption">Gallery 2</div></div>
+        <div class="gallery-item"><img src="Gal3.jpg" alt="Gallery 3"><div class="caption">Gallery 3</div></div>
+        <div class="gallery-item"><img src="Gal4.jpg" alt="Gallery 4"><div class="caption">Gallery 4</div></div>
+        <div class="gallery-item"><img src="Gal5.jpg" alt="Gallery 5"><div class="caption">Gallery 5</div></div>
+        <div class="gallery-item"><img src="Gal6.jpg" alt="Gallery 6"><div class="caption">Gallery 6</div></div>
+      </div>
+
+      <!-- Show more/less toggle -->
+      <button id="toggleGalleryBtn" onclick="toggleGallery()" style="margin:1.5rem auto; display:block; background:#111; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:4px; cursor:pointer;">
+        Show More
+      </button>
+
+      <!-- Hidden extra images -->
+      <div id="moreGallery" style="display:none;">
+        <div class="grid">
+          <div class="gallery-item"><img src="Gal7.jpg"  alt="Gallery 7"><div class="caption">Gallery 7</div></div>
+          <div class="gallery-item"><img src="Gal8.jpg"  alt="Gallery 8"><div class="caption">Gallery 8</div></div>
+          <div class="gallery-item"><img src="Gal9.jpg"  alt="Gallery 9"><div class="caption">Gallery 9</div></div>
+          <div class="gallery-item"><img src="Gal10.jpg" alt="Gallery 10"><div class="caption">Gallery 10</div></div>
+          <div class="gallery-item"><img src="Gal11.jpg" alt="Gallery 11"><div class="caption">Gallery 11</div></div>
+          <div class="gallery-item"><img src="Gal12.jpg" alt="Gallery 12"><div class="caption">Gallery 12</div></div>
+          <div class="gallery-item"><img src="Gal13.jpg" alt="Gallery 13"><div class="caption">Gallery 13</div></div>
+          <div class="gallery-item"><img src="Gal14.jpg" alt="Gallery 14"><div class="caption">Gallery 14</div></div>
+          <div class="gallery-item"><img src="Gal15.jpg" alt="Gallery 15"><div class="caption">Gallery 15</div></div>
+          <div class="gallery-item"><img src="Gal16.jpg" alt="Gallery 16"><div class="caption">Gallery 16</div></div>
+          <div class="gallery-item"><img src="Gal17.jpg" alt="Gallery 17"><div class="caption">Gallery 17</div></div>
+          <div class="gallery-item"><img src="Gal18.jpg" alt="Gallery 18"><div class="caption">Gallery 18</div></div>
+          <div class="gallery-item"><img src="Gal19.jpg" alt="Gallery 19"><div class="caption">Gallery 19</div></div>
+          <div class="gallery-item"><img src="Gal20.jpg" alt="Gallery 20"><div class="caption">Gallery 20</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="fade-in">
+    <div class="container">
+      <h2 class="section-title">Testimonials</h2>
+      <div class="card"><blockquote>“Our custom dining table from Beaver Built is the centerpiece of our home. Absolutely stunning workmanship!”</blockquote><cite>— Sarah K.</cite></div>
+      <div class="card"><blockquote>“Fantastic service and attention to detail. Our restored cherry-wood chest looks brand new.”</blockquote><cite>— Mark T.</cite></div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="fade-in">
+    <div class="container">
+      <h2 class="section-title">Get in Touch</h2>
+      <form>
+        <input type="text" placeholder="Your Name" required>
+        <input type="email" placeholder="Your Email" required>
+        <textarea rows="5" placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="fade-in">
+    <div class="container">
+      <p>&copy; 2025 Beaver Built Furniture. All rights reserved.</p>
+      <p><a href="mailto:hello@beaverbuiltfurniture.com">hello@beaverbuiltfurniture.com</a></p>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+    function toggleGallery() {
+      const more = document.getElementById('moreGallery');
+      const btn  = document.getElementById('toggleGalleryBtn');
+      if (more.style.display === 'none') {
+        more.style.display = 'grid';
+        btn.textContent = 'Show Less';
+      } else {
+        more.style.display = 'none';
+        btn.textContent = 'Show More';
+      }
+    }
+    window.addEventListener('load', () => {
+      window.scrollTo(0,0);
+      setTimeout(() => {
+        const pre = document.getElementById('preloader');
+        pre.classList.add('fade-out');
+        setTimeout(() => pre.style.display = 'none', 1000);
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
