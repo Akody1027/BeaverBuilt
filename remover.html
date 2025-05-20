@@ -46,22 +46,27 @@
     .controls input[type=file]:hover {
       border-color: #888;
     }
-    /* The container now SHOWS the image via CSS background */
+
+    /* Canvas area */
     #canvasContainer {
       position: relative;
-      width: 100%;
-      padding-top: 75%; /* maintain aspect until image loads */
-      background: #ddd center/contain no-repeat;
+      background: #ddd;
     }
-    /* hide orig canvas from view */
-    #orig { display: none; }
-    /* mask canvas sits exactly on top */
+    #canvasContainer canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
     #mask {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
+      top: 0; left: 0;
+      z-index: 2;
     }
+    #orig {
+      position: relative;
+      z-index: 1;
+    }
+
     #tools {
       padding: 1rem;
       display: flex;
@@ -93,9 +98,8 @@
       gap: .5rem;
     }
     #previewSlider label { font-size: .9rem; color: #555; }
-    @keyframes fadeIn {
-      from { opacity: 0; } to { opacity: 1; }
-    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp {
       from { transform: translateY(20px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
@@ -138,57 +142,53 @@
     const MODEL_URL = 'https://cdn.jsdelivr.net/gh/onnx/models@main/vision/body_analysis/u2net/model/u2net.onnx';
     const session   = await ort.InferenceSession.create(MODEL_URL);
 
-    const fileInput       = document.getElementById('file');
-    const container       = document.getElementById('canvasContainer');
-    const orig            = document.getElementById('orig');
-    const mask            = document.getElementById('mask');
-    const octx            = orig.getContext('2d');
-    const mctx            = mask.getContext('2d');
-    const autoBtn         = document.getElementById('auto');
-    const downloadBtn     = document.getElementById('download');
-    const modeSelect      = document.getElementById('mode');
-    const brushSizeInput  = document.getElementById('brushSize');
-    const opacitySlider   = document.getElementById('overlayOpacity');
+    const fileInput      = document.getElementById('file');
+    const container      = document.getElementById('canvasContainer');
+    const orig           = document.getElementById('orig');
+    const mask           = document.getElementById('mask');
+    const octx           = orig.getContext('2d');
+    const mctx           = mask.getContext('2d');
+    const autoBtn        = document.getElementById('auto');
+    const downloadBtn    = document.getElementById('download');
+    const modeSelect     = document.getElementById('mode');
+    const brushSizeInput = document.getElementById('brushSize');
+    const opacitySlider  = document.getElementById('overlayOpacity');
 
     let imgW, imgH, drawing = false;
 
-    // Update mask opacity
     opacitySlider.oninput = () => {
       mask.style.opacity = (opacitySlider.value/100).toString();
     };
 
-    // Load image and set as container background
     fileInput.onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
-        imgW = img.width;
-        imgH = img.height;
-        // set container aspect & background
-        const aspect = (imgH/imgW)*100;
-        container.style.paddingTop = aspect + '%';
-        container.style.backgroundImage = `url(${url})`;
-        // resize hidden orig canvas for processing
-        orig.width  = imgW;
-        orig.height = imgH;
+        imgW = img.width; imgH = img.height;
+        // size canvases
+        [orig, mask].forEach(c => {
+          c.width  = imgW;
+          c.height = imgH;
+          c.style.width  = '100%';
+          c.style.height = 'auto';
+        });
+        // draw image on orig canvas
         octx.clearRect(0,0,imgW,imgH);
-        octx.drawImage(img, 0, 0);
-        // prepare mask canvas
-        mask.width  = imgW;
-        mask.height = imgH;
-        mask.style.pointerEvents = 'auto';
+        octx.drawImage(img, 0, 0, imgW, imgH);
+        // clear mask
         mctx.clearRect(0,0,imgW,imgH);
+        mask.style.pointerEvents = 'auto';
+        opacitySlider.dispatchEvent(new Event('input'));
       };
       img.src = url;
     };
 
-    // Run U²-Net 
     async function runModel() {
       const tmp = document.createElement('canvas');
       tmp.width = 320; tmp.height = 320;
-      tmp.getContext('2d').drawImage(orig, 0,0,320,320);
+      tmp.getContext('2d').drawImage(orig,0,0,320,320);
       const data = tmp.getContext('2d').getImageData(0,0,320,320).data;
       const input = new Float32Array(3*320*320);
       for (let i=0; i<320*320; i++){
@@ -201,7 +201,7 @@
       const arr   = res.out.data;
       // draw mask
       const mImg = mctx.createImageData(320,320);
-      for (let i=0; i<arr.length; i++){
+      for (let i=0; i<320*320; i++){
         const a = Math.round(arr[i]*255);
         mImg.data[i*4+0] = 255;
         mImg.data[i*4+1] = 255;
@@ -209,16 +209,14 @@
         mImg.data[i*4+3] = a;
       }
       const tmp2 = document.createElement('canvas');
-      tmp2.width  = 320;
-      tmp2.height = 320;
-      tmp2.getContext('2d').putImageData(mImg, 0, 0);
+      tmp2.width  = 320; tmp2.height = 320;
+      tmp2.getContext('2d').putImageData(mImg,0,0);
       mctx.clearRect(0,0,imgW,imgH);
-      mctx.drawImage(tmp2, 0,0, imgW, imgH);
+      mctx.drawImage(tmp2,0,0,imgW,imgH);
       opacitySlider.dispatchEvent(new Event('input'));
     }
     autoBtn.onclick = runModel;
 
-    // Brush refine
     mask.addEventListener('pointerdown', e=>{ drawing=true; draw(e); });
     mask.addEventListener('pointermove', e=> drawing&&draw(e));
     mask.addEventListener('pointerup',   ()=> drawing=false);
@@ -236,20 +234,17 @@
       mctx.globalCompositeOperation = 'source-over';
     }
 
-    // Download PNG
     downloadBtn.onclick = () => {
       const out = document.createElement('canvas');
-      out.width  = imgW;
-      out.height = imgH;
+      out.width  = imgW; out.height = imgH;
       const ctx = out.getContext('2d');
-      // draw original from the hidden canvas
-      ctx.drawImage(orig, 0, 0);
+      ctx.drawImage(orig,0,0);
       const mData = mctx.getImageData(0,0,imgW,imgH);
       const iData = ctx.getImageData(0,0,imgW,imgH);
       for (let i=0; i<imgW*imgH; i++){
         iData.data[i*4+3] = mData.data[i*4+3];
       }
-      ctx.putImageData(iData, 0, 0);
+      ctx.putImageData(iData,0,0);
       const a = document.createElement('a');
       a.href = out.toDataURL('image/png');
       a.download = 'cutout.png';
