@@ -1,241 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Background Remover</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Background Eraser Preview</title>
   <style>
-    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      font-family: 'Segoe UI', sans-serif;
       background: #f0f2f5;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 2rem;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
     }
-    h2 {
-      margin-bottom: 1rem;
-      color: #333;
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 480px;
-      overflow: hidden;
-    }
-    .controls {
-      padding: 1rem;
-      background: #fafafa;
-      border-bottom: 1px solid #eee;
-    }
-    .controls input[type=file] {
-      width: 100%;
-      padding: .75rem;
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
-      transition: border-color .3s;
-    }
-    .controls input[type=file]:hover {
-      border-color: #888;
-    }
-    #canvasContainer {
+    .play-viewport {
       position: relative;
-      background: #ddd;
+      width: 300px;
+      height: 600px;
+      border: 12px solid #333;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.2);
+      background: #000;
     }
-    #preview {
+    .play-screen {
       display: block;
       width: 100%;
-      height: auto;
-    }
-    #mask {
-      position: absolute;
-      top:0; left:0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-    }
-    #tools {
-      padding: 1rem;
-      background: #fafafa;
-      border-top: 1px solid #eee;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      justify-content: center;
-    }
-    button, select, input[type=range] {
-      padding: .75rem 1.25rem;
-      border: none;
-      border-radius: 8px;
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      font-size: 1rem;
+      height: 100%;
+      object-fit: cover;
       cursor: pointer;
-      transition: transform .1s, box-shadow .1s;
     }
-    button:hover, select:hover, input[type=range]:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    .play-badge {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 160px;
+      z-index: 10;
+      cursor: pointer;
     }
-    select, input[type=range] { flex: 1 1 40%; }
-    #previewSlider {
-      flex: 1 1 100%;
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-    }
-    #previewSlider label { font-size: .9rem; color: #555; }
   </style>
 </head>
 <body>
 
-  <h2>Touch-Friendly Background Remover</h2>
-  <div class="card">
+  <div class="play-viewport">
+    <!-- Screenshot of the Play Store page (host this image yourself) -->
+    <a href="https://play.google.com/store/apps/details?id=com.handycloset.android.eraser"
+       target="_blank" rel="noopener">
+      <img
+        src="https://your-cdn.com/background-eraser-screenshot.png"
+        alt="Background Eraser Preview"
+        class="play-screen"
+      >
+    </a>
 
-    <div class="controls">
-      <input type="file" id="file" accept="image/*">
-    </div>
-
-    <div id="canvasContainer">
-      <img id="preview" src="" alt="Your image will appear here">
-      <canvas id="mask"></canvas>
-    </div>
-
-    <div id="tools">
-      <button id="auto">Auto Remove</button>
-      <select id="mode">
-        <option value="brush_add">Brush +</option>
-        <option value="brush_sub">Brush –</option>
-      </select>
-      <input id="brushSize" type="range" min="5" max="100" value="30">
-      <div id="previewSlider">
-        <label for="overlayOpacity">Mask Opacity:</label>
-        <input id="overlayOpacity" type="range" min="0" max="100" value="80">
-      </div>
-      <button id="download">Download PNG</button>
-    </div>
+    <!-- Google Play badge -->
+    <a href="https://play.google.com/store/apps/details?id=com.handycloset.android.eraser"
+       target="_blank" rel="noopener">
+      <img
+        src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+        alt="Get Background Eraser on Google Play"
+        class="play-badge"
+      >
+    </a>
   </div>
 
-  <!-- ONNX Runtime Web -->
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-  <script>
-  (async ()=> {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/gh/onnx/models@main/vision/body_analysis/u2net/model/u2net.onnx';
-    const session   = await ort.InferenceSession.create(MODEL_URL);
-
-    const fileInput      = document.getElementById('file');
-    const previewImg     = document.getElementById('preview');
-    const mask           = document.getElementById('mask');
-    const mctx           = mask.getContext('2d');
-    const autoBtn        = document.getElementById('auto');
-    const downloadBtn    = document.getElementById('download');
-    const modeSelect     = document.getElementById('mode');
-    const brushSizeInput = document.getElementById('brushSize');
-    const opacitySlider  = document.getElementById('overlayOpacity');
-
-    let imgW, imgH, drawing=false;
-
-    // opacity control
-    opacitySlider.oninput = ()=> {
-      mask.style.opacity = (opacitySlider.value/100);
-    };
-
-    // load image into <img>
-    fileInput.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const url = URL.createObjectURL(file);
-      previewImg.src = url;
-      previewImg.onload = ()=> {
-        imgW = previewImg.naturalWidth;
-        imgH = previewImg.naturalHeight;
-        // size canvas to match
-        mask.width  = imgW;
-        mask.height = imgH;
-        mask.style.width  = previewImg.clientWidth+'px';
-        mask.style.height = previewImg.clientHeight+'px';
-        mctx.clearRect(0,0,imgW,imgH);
-        mask.style.pointerEvents = 'auto';
-        opacitySlider.dispatchEvent(new Event('input'));
-      };
-    };
-
-    // run U2-Net
-    async function runModel() {
-      // draw previewImg onto offscreen 320×320
-      const tmp = document.createElement('canvas');
-      tmp.width=320; tmp.height=320;
-      const tctx = tmp.getContext('2d');
-      tctx.drawImage(previewImg, 0,0,320,320);
-      const data = tctx.getImageData(0,0,320,320).data;
-      const input = new Float32Array(3*320*320);
-      for (let i=0;i<320*320;i++){
-        input[i]           = data[i*4]/255;
-        input[320*320+i]   = data[i*4+1]/255;
-        input[2*320*320+i] = data[i*4+2]/255;
-      }
-      const feeds = { input:new ort.Tensor('float32',input,[1,3,320,320]) };
-      const res   = await session.run(feeds);
-      const arr   = res.out.data;
-
-      // draw mask
-      const maskImg = mctx.createImageData(320,320);
-      for (let i=0;i<320*320;i++){
-        const a = Math.round(arr[i]*255);
-        maskImg.data[i*4+0]=255;
-        maskImg.data[i*4+1]=255;
-        maskImg.data[i*4+2]=255;
-        maskImg.data[i*4+3]=a;
-      }
-      const tmp2 = document.createElement('canvas');
-      tmp2.width=320; tmp2.height=320;
-      tmp2.getContext('2d').putImageData(maskImg,0,0);
-      // scale up to full resolution
-      mctx.clearRect(0,0,imgW,imgH);
-      mctx.drawImage(tmp2,0,0,imgW,imgH);
-      opacitySlider.dispatchEvent(new Event('input'));
-    }
-    autoBtn.onclick = runModel;
-
-    // brush
-    mask.addEventListener('pointerdown',e=>{ drawing=true;draw(e); });
-    mask.addEventListener('pointermove',e=>drawing&&draw(e));
-    mask.addEventListener('pointerup',()=>drawing=false);
-    mask.addEventListener('pointerleave',()=>drawing=false);
-    function draw(e){
-      const r=mask.getBoundingClientRect();
-      const x=(e.clientX-r.left)*(imgW/r.width);
-      const y=(e.clientY-r.top)*(imgH/r.height);
-      mctx.globalCompositeOperation = modeSelect.value==='brush_add'?'source-over':'destination-out';
-      mctx.beginPath();
-      mctx.arc(x,y,brushSizeInput.value/2,0,Math.PI*2);
-      mctx.fillStyle='rgba(255,255,255,0.8)';
-      mctx.fill();
-      mctx.globalCompositeOperation='source-over';
-    }
-
-    // download
-    downloadBtn.onclick = ()=>{
-      const out = document.createElement('canvas');
-      out.width=imgW; out.height=imgH;
-      const ctx=out.getContext('2d');
-      ctx.drawImage(previewImg,0,0,imgW,imgH);
-      const mData=mctx.getImageData(0,0,imgW,imgH);
-      const iData=ctx.getImageData(0,0,imgW,imgH);
-      for(let i=0;i<imgW*imgH;i++){
-        iData.data[i*4+3]=mData.data[i*4+3];
-      }
-      ctx.putImageData(iData,0,0);
-      const a=document.createElement('a');
-      a.href=out.toDataURL('image/png');
-      a.download='cutout.png';
-      a.click();
-    };
-  })();
-  </script>
 </body>
 </html>
