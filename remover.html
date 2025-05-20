@@ -5,17 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Background Remover</title>
   <style>
-    body { font-family: sans-serif; text-align: center; margin: 1rem; }
-    canvas { border: 1px solid #ccc; max-width: 100%; height: auto; display: block; margin: 0 auto; }
-    #tools { margin-top: 0.5rem; }
-    button, select, input[type=range] { margin: 0 .25rem; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 1rem;
+    }
+    #canvasContainer {
+      position: relative;
+      display: inline-block;
+      margin-top: 1rem;
+    }
+    #canvasContainer canvas {
+      border: 1px solid #ccc;
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    /* mask sits exactly on top of orig, but only inside container */
+    #mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none; /* disable blocking the input until we enable brush mode */
+    }
+    #tools {
+      margin-top: 0.5rem;
+    }
+    button, select, input[type=range] {
+      margin: 0 .25rem;
+    }
   </style>
 </head>
 <body>
   <h2>Background Remover</h2>
-  <input type="file" id="file" accept="image/*"><br>
-  <canvas id="orig"></canvas>
-  <canvas id="mask" style="position:absolute; top:0; left:0;"></canvas>
+
+  <!-- file input stays clickable -->
+  <input type="file" id="file" accept="image/*">
+
+  <!-- wrap both canvases so mask only covers the image -->
+  <div id="canvasContainer">
+    <canvas id="orig"></canvas>
+    <canvas id="mask"></canvas>
+  </div>
 
   <div id="tools">
     <button id="auto">Auto Remove</button>
@@ -35,19 +66,18 @@
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
   <script>
   (async ()=> {
-    // **Load U²-Net directly from jsDelivr** (no need to host the .onnx yourself)
     const MODEL_URL = 'https://cdn.jsdelivr.net/gh/onnx/models@main/vision/body_analysis/u2net/model/u2net.onnx';
     const session = await ort.InferenceSession.create(MODEL_URL);
 
-    const fileInput    = document.getElementById('file');
-    const orig         = document.getElementById('orig');
-    const mask         = document.getElementById('mask');
-    const octx         = orig.getContext('2d');
-    const mctx         = mask.getContext('2d');
-    const autoBtn      = document.getElementById('auto');
-    const downloadBtn  = document.getElementById('download');
-    const modeSelect   = document.getElementById('mode');
-    const brushSize    = document.getElementById('brushSize');
+    const fileInput   = document.getElementById('file');
+    const orig        = document.getElementById('orig');
+    const mask        = document.getElementById('mask');
+    const octx        = orig.getContext('2d');
+    const mctx        = mask.getContext('2d');
+    const autoBtn     = document.getElementById('auto');
+    const downloadBtn = document.getElementById('download');
+    const modeSelect  = document.getElementById('mode');
+    const brushSize   = document.getElementById('brushSize');
 
     let imgW, imgH, drawing = false;
 
@@ -58,19 +88,23 @@
       img.onload = () => {
         imgW = img.width; imgH = img.height;
         [orig, mask].forEach(c => {
-          c.width = imgW; c.height = imgH;
-          c.style.width = imgW + 'px';
+          c.width  = imgW;
+          c.height = imgH;
+          c.style.width  = imgW + 'px';
           c.style.height = imgH + 'px';
         });
+        // draw the image
         octx.clearRect(0,0,imgW,imgH);
         octx.drawImage(img, 0, 0);
+        // clear any old mask
         mctx.clearRect(0,0,imgW,imgH);
+        // allow brush events now that mask matches size
+        mask.style.pointerEvents = 'auto';
       };
       img.src = URL.createObjectURL(file);
     });
 
     async function runModel() {
-      // preprocess to 320×320
       const tmp = document.createElement('canvas');
       tmp.width = 320; tmp.height = 320;
       tmp.getContext('2d').drawImage(orig, 0, 0, 320, 320);
@@ -83,9 +117,9 @@
       }
       const feeds   = { input: new ort.Tensor('float32', input, [1,3,320,320]) };
       const results = await session.run(feeds);
-      const maskArr = results.out.data; // shape [1,1,320,320]
+      const maskArr = results.out.data; 
 
-      // draw scaled mask
+      // draw mask upscaled
       const mImg = mctx.createImageData(320,320);
       for (let i = 0; i < 320*320; i++) {
         const a = Math.min(255, Math.max(0, maskArr[i]*255|0));
@@ -103,7 +137,7 @@
 
     autoBtn.addEventListener('click', runModel);
 
-    // brush controls
+    // brush refine
     mask.addEventListener('pointerdown', e => { drawing = true; paint(e); });
     mask.addEventListener('pointermove', e => drawing && paint(e));
     mask.addEventListener('pointerup',   () => drawing = false);
@@ -124,10 +158,11 @@
       mctx.globalCompositeOperation = 'source-over';
     }
 
-    // download PNG with transparency
+    // download PNG
     downloadBtn.addEventListener('click', () => {
       const out = document.createElement('canvas');
-      out.width = imgW; out.height = imgH;
+      out.width  = imgW;
+      out.height = imgH;
       const ctx = out.getContext('2d');
       ctx.drawImage(orig, 0, 0);
       const mData = mctx.getImageData(0,0,imgW,imgH);
