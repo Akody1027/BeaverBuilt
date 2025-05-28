@@ -19,20 +19,47 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
+<body class="bg-gray-50 text-gray-800 antialiased pt-16">
+
+  <!-- Fixed Header -->
+  <header class="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo / Title -->
+      <a href="#" class="text-2xl font-bold">Beaver Built Furniture</a>
+      <!-- Navigation -->
+      <nav>
+        <ul class="flex items-center space-x-6">
+          <li><a href="#" class="hover:text-gray-600">Home</a></li>
+          <li><a href="#about" class="hover:text-gray-600">About</a></li>
+          <li class="relative group">
+            <button class="flex items-center hover:text-gray-600 focus:outline-none">
+              <span>Products</span>
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <ul class="absolute left-0 mt-2 w-40 bg-white border rounded-lg shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all">
+              <li><a href="#outdoor" class="block px-4 py-2 hover:bg-gray-100">Outdoor</a></li>
+              <li><a href="#tables" class="block px-4 py-2 hover:bg-gray-100">Tables</a></li>
+              <li><a href="#bedrooms" class="block px-4 py-2 hover:bg-gray-100">Bedrooms</a></li>
+              <li><a href="#games" class="block px-4 py-2 hover:bg-gray-100">Games</a></li>
+              <li><a href="#green-thumb" class="block px-4 py-2 hover:bg-gray-100">Green Thumbs</a></li>
+              <li><a href="#kids" class="block px-4 py-2 hover:bg-gray-100">Kids</a></li>
+              <li><a href="#misc" class="block px-4 py-2 hover:bg-gray-100">Miscellaneous</a></li>
+            </ul>
+          </li>
+          <li>
+            <button class="snipcart-checkout bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition">
+              Cart (<span class="snipcart-items-count">0</span>)
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
   <!-- Snipcart shopping cart container -->
   <div hidden id="snipcart" data-api-key="YOUR_SNIPCART_API_KEY"></div>
-  
-  <!-- Header -->
-  <header class="bg-white shadow-lg">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Beaver Built Furniture</h1>
-      <button class="snipcart-checkout bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition">
-        Cart (<span class="snipcart-items-count">0</span>)
-      </button>
-    </div>
-  </header>
 
   <!-- Hero Section -->
   <section class="relative bg-cover bg-center h-96" style="background-image:url('hero.jpg')">
@@ -50,8 +77,7 @@
   <main id="products" class="max-w-6xl mx-auto px-6 py-16">
     <h3 class="text-3xl font-semibold mb-8 text-center">Our Collection</h3>
     <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-      
-      <!-- Product Card -->
+      <!-- Product Card Example -->
       <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 animate-fadeInUp">
         <img src="chair1.jpg" alt="Handcrafted Chair" class="w-full h-56 object-cover"/>
         <div class="p-6">
@@ -72,10 +98,7 @@
           </div>
         </div>
       </div>
-
-      <!-- Repeat similar cards for other products -->
-      <!-- ... -->
-
+      <!-- Repeat for other products -->
     </div>
   </main>
 
