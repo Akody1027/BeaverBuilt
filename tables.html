@@ -1,0 +1,29 @@
+<!-- tables.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tables | Beaver Built Furniture</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased pt-16">
+  <!-- header & snipcart container same as outdoor.html -->
+  <!-- … -->
+  <main class="max-w-6xl mx-auto px-6 py-16">
+    <h3 class="text-3xl font-semibold mb-8 text-center">Tables Collection</h3>
+    <div id="products" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
+  </main>
+  <!-- footer same -->
+  <script>
+    const products = [
+      { id: 'tables1', name: 'Dining Table', price: 499.00, description: 'Solid oak, seats 6.', image: 'tables1.jpg' },
+      { id: 'tables2', name: 'Coffee Table', price: 199.00, description: 'Modern style with storage shelf.', image: 'tables2.jpg' },
+      { id: 'tables3', name: 'Console Table', price: 149.00, description: 'Slim design, perfect for entryways.', image: 'tables3.jpg' }
+    ];
+    /* same render script as above, updating data-item-url to tables.html */
+  </script>
+  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
+</body>
+</html>
