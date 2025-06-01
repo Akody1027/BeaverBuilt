@@ -1,37 +1,75 @@
-<!-- miscellaneous.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Miscellaneous | Beaver Built Furniture</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
+  <meta charset="UTF-8">
+  <title>Image Gallery</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      color: #333;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-gap: 15px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gallery img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .gallery img:hover {
+      transform: scale(1.05);
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased pt-16">
-  <!-- header & cart -->
-  <main class="max-w-6xl mx-auto px-6 py-16">
-    <h3 class="text-3xl font-semibold mb-8 text-center">Miscellaneous</h3>
-    <div id="products" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
-  </main>
-  <!-- footer -->
-  <script>
-    const products = [
-      { id: 'misc2', name: 'Wall Art Shelf', price: 99.00, description: 'Showcase your favorite pieces.', image: '/ecomassets/mis2.jpg' },
-      { id: 'misc3', name: 'Entryway Bench', price: 179.00, description: 'Bench with shoe storage below.', image: '/ecomassets/mis3.jpg' },
-      { id: 'misc4', name: 'Magazine Rack', price: 59.00, description: 'Keeps reading materials tidy.', image: '/ecomassets/mis4.jpg' }
-      { id: 'misc5', name: 'Wall Art Shelf', price: 99.00, description: 'Showcase your favorite pieces.', image: '/ecomassets/mis5.jpg' },
-      { id: 'misc6', name: 'Entryway Bench', price: 179.00, description: 'Bench with shoe storage below.', image: '/ecomassets/mis6.jpg' },
-      { id: 'misc7', name: 'Magazine Rack', price: 59.00, description: 'Keeps reading materials tidy.', image: '/ecomassets/mis7.jpg' }
-      { id: 'misc8', name: 'Wall Art Shelf', price: 99.00, description: 'Showcase your favorite pieces.', image: '/ecomassets/mis8.jpg' },
-      { id: 'misc9', name: 'Entryway Bench', price: 179.00, description: 'Bench with shoe storage below.', image: '/ecomassets/mis9.jpg' },
-      { id: 'misc10', name: 'Magazine Rack', price: 59.00, description: 'Keeps reading materials tidy.', image: '/ecomassets/mis10.jpg' }
-      { id: 'misc11', name: 'Wall Art Shelf', price: 99.00, description: 'Showcase your favorite pieces.', image: '/ecomassets/mis11.jpg' },
-      { id: 'misc12', name: 'Entryway Bench', price: 179.00, description: 'Bench with shoe storage below.', image: '/ecomassets/mis12.jpg' },
-      { id: 'misc13', name: 'Magazine Rack', price: 59.00, description: 'Keeps reading materials tidy.', image: '/ecomassets/mis13.jpg' }
-    ];
-    /* render code */
-  </script>
-  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
+<body>
+
+  <h1>My Image Gallery</h1>
+
+  <div class="gallery">
+    <!-- Images from mis2.jpg to mis25.jpg -->
+    <img src="ecomassets/mis2.jpg" alt="Image 2">
+    <img src="ecomassets/mis3.jpg" alt="Image 3">
+    <img src="ecomassets/mis4.jpg" alt="Image 4">
+    <img src="ecomassets/mis5.jpg" alt="Image 5">
+    <img src="ecomassets/mis6.jpg" alt="Image 6">
+    <img src="ecomassets/mis7.jpg" alt="Image 7">
+    <img src="ecomassets/mis8.jpg" alt="Image 8">
+    <img src="ecomassets/mis9.jpg" alt="Image 9">
+    <img src="ecomassets/mis10.jpg" alt="Image 10">
+    <img src="ecomassets/mis11.jpg" alt="Image 11">
+    <img src="ecomassets/mis12.jpg" alt="Image 12">
+    <img src="ecomassets/mis13.jpg" alt="Image 13">
+    <img src="ecomassets/mis14.jpg" alt="Image 14">
+    <img src="ecomassets/mis15.jpg" alt="Image 15">
+    <img src="ecomassets/mis16.jpg" alt="Image 16">
+    <img src="ecomassets/mis17.jpg" alt="Image 17">
+    <img src="ecomassets/mis18.jpg" alt="Image 18">
+    <img src="ecomassets/mis19.jpg" alt="Image 19">
+    <img src="ecomassets/mis20.jpg" alt="Image 20">
+    <img src="ecomassets/mis21.jpg" alt="Image 21">
+    <img src="ecomassets/mis22.jpg" alt="Image 22">
+    <img src="ecomassets/mis23.jpg" alt="Image 23">
+    <img src="ecomassets/mis24.jpg" alt="Image 24">
+    <img src="ecomassets/mis25.jpg" alt="Image 25">
+  </div>
+
 </body>
 </html>
