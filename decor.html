@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Image Gallery</title>
+  <title>Home Decor</title>
   <style>
     body {
       margin: 0;
@@ -26,49 +26,56 @@
       margin: 0 auto;
     }
 
-    .gallery img {
+    .gallery-item {
       width: 100%;
-      height: auto;
+      height: 200px; /* set the uniform height you want */
+      overflow: hidden;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       transition: transform 0.3s ease;
     }
 
-    .gallery img:hover {
+    .gallery-item img:hover {
       transform: scale(1.05);
     }
   </style>
 </head>
 <body>
 
-  <h1>Home Decor</h1>
+  <h1>Uniform Image Gallery</h1>
 
   <div class="gallery">
     <!-- Images from mis2.jpg to mis25.jpg -->
-    <img src="ecomassets/mis2.jpg" alt="Image 2">
-    <img src="ecomassets/mis3.jpg" alt="Image 3">
-    <img src="ecomassets/mis4.jpg" alt="Image 4">
-    <img src="ecomassets/mis5.jpg" alt="Image 5">
-    <img src="ecomassets/mis6.jpg" alt="Image 6">
-    <img src="ecomassets/mis7.jpg" alt="Image 7">
-    <img src="ecomassets/mis8.jpg" alt="Image 8">
-    <img src="ecomassets/mis9.jpg" alt="Image 9">
-    <img src="ecomassets/mis10.jpg" alt="Image 10">
-    <img src="ecomassets/mis11.jpg" alt="Image 11">
-    <img src="ecomassets/mis12.jpg" alt="Image 12">
-    <img src="ecomassets/mis13.jpg" alt="Image 13">
-    <img src="ecomassets/mis14.jpg" alt="Image 14">
-    <img src="ecomassets/mis15.jpg" alt="Image 15">
-    <img src="ecomassets/mis16.jpg" alt="Image 16">
-    <img src="ecomassets/mis17.jpg" alt="Image 17">
-    <img src="ecomassets/mis18.jpg" alt="Image 18">
-    <img src="ecomassets/mis19.jpg" alt="Image 19">
-    <img src="ecomassets/mis20.jpg" alt="Image 20">
-    <img src="ecomassets/mis21.jpg" alt="Image 21">
-    <img src="ecomassets/mis22.jpg" alt="Image 22">
-    <img src="ecomassets/mis23.jpg" alt="Image 23">
-    <img src="ecomassets/mis24.jpg" alt="Image 24">
-    <img src="ecomassets/mis25.jpg" alt="Image 25">
+    <div class="gallery-item"><img src="ecomassets/mis2.jpg" alt="Image 2"></div>
+    <div class="gallery-item"><img src="ecomassets/mis3.jpg" alt="Image 3"></div>
+    <div class="gallery-item"><img src="ecomassets/mis4.jpg" alt="Image 4"></div>
+    <div class="gallery-item"><img src="ecomassets/mis5.jpg" alt="Image 5"></div>
+    <div class="gallery-item"><img src="ecomassets/mis6.jpg" alt="Image 6"></div>
+    <div class="gallery-item"><img src="ecomassets/mis7.jpg" alt="Image 7"></div>
+    <div class="gallery-item"><img src="ecomassets/mis8.jpg" alt="Image 8"></div>
+    <div class="gallery-item"><img src="ecomassets/mis9.jpg" alt="Image 9"></div>
+    <div class="gallery-item"><img src="ecomassets/mis10.jpg" alt="Image 10"></div>
+    <div class="gallery-item"><img src="ecomassets/mis11.jpg" alt="Image 11"></div>
+    <div class="gallery-item"><img src="ecomassets/mis12.jpg" alt="Image 12"></div>
+    <div class="gallery-item"><img src="ecomassets/mis13.jpg" alt="Image 13"></div>
+    <div class="gallery-item"><img src="ecomassets/mis14.jpg" alt="Image 14"></div>
+    <div class="gallery-item"><img src="ecomassets/mis15.jpg" alt="Image 15"></div>
+    <div class="gallery-item"><img src="ecomassets/mis16.jpg" alt="Image 16"></div>
+    <div class="gallery-item"><img src="ecomassets/mis17.jpg" alt="Image 17"></div>
+    <div class="gallery-item"><img src="ecomassets/mis18.jpg" alt="Image 18"></div>
+    <div class="gallery-item"><img src="ecomassets/mis19.jpg" alt="Image 19"></div>
+    <div class="gallery-item"><img src="ecomassets/mis20.jpg" alt="Image 20"></div>
+    <div class="gallery-item"><img src="ecomassets/mis21.jpg" alt="Image 21"></div>
+    <div class="gallery-item"><img src="ecomassets/mis22.jpg" alt="Image 22"></div>
+    <div class="gallery-item"><img src="ecomassets/mis23.jpg" alt="Image 23"></div>
+    <div class="gallery-item"><img src="ecomassets/mis24.jpg" alt="Image 24"></div>
+    <div class="gallery-item"><img src="ecomassets/mis25.jpg" alt="Image 25"></div>
   </div>
 
 </body>
