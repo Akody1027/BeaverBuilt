@@ -92,6 +92,12 @@
   <!-- Page Title -->
   <h1 class="text-3xl font-semibold text-center my-10">Home Decor</h1>
 
+
+<div class="carousel-container" style="max-width:600px; margin: 30px auto; overflow:hidden; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.2);">
+  <img id="random-carousel" src="" alt="Decor Image" style="width:100%; display:block; transition:0.5s ease;">
+</div>
+
+    
   <!-- Image Gallery -->
   <div class="gallery">
     <!-- Your existing images unchanged -->
@@ -138,5 +144,32 @@
   </footer>
 
   <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
+
+<script>
+  // Collect all images from your gallery into an array
+  const galleryImages = document.querySelectorAll(".gallery img");
+  const decorImages = Array.from(galleryImages).map(img => img.src);
+
+  let currentIndex = Math.floor(Math.random() * decorImages.length);
+  const carousel = document.getElementById("random-carousel");
+
+  // Set initial random image
+  carousel.src = decorImages[currentIndex];
+
+  // Function to randomly select a different image
+  function showNextRandomImage() {
+    if (decorImages.length < 2) return; // prevent unnecessary cycling if only one image
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * decorImages.length);
+    } while (newIndex === currentIndex);
+
+    currentIndex = newIndex;
+    carousel.src = decorImages[currentIndex];
+  }
+
+  // Change image every 3 seconds
+  setInterval(showNextRandomImage, 3000);
+</script>
 </body>
 </html>
