@@ -1,75 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Image Gallery</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beaver Built Furniture</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Snipcart CSS -->
+  <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
+    /* Custom animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-
-    h1 {
-      text-align: center;
-      margin: 20px 0;
-      color: #333;
-    }
-
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      grid-gap: 15px;
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .gallery img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      transition: transform 0.3s ease;
-    }
-
-    .gallery img:hover {
-      transform: scale(1.05);
+    .animate-fadeInUp {
+      animation: fadeInUp 0.6s ease-out both;
     }
   </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 antialiased pt-16">
 
-  <h1>My Image Gallery</h1>
+  <!-- Fixed Header -->
+  <header class="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo / Title -->
+      <a href="e-commerce.html" class="text-2xl font-bold">Beaver Built Furniture</a>
+      <!-- Navigation -->
+      <nav>
+        <ul class="flex items-center space-x-6">
+          <li class="relative group">
+            <button class="flex items-center hover:text-gray-600 focus:outline-none">
+              <span>Products</span>
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <ul class="absolute left-0 mt-2 w-44 bg-white border rounded-lg shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all">
+              <li><a href="outdoor.html" class="block px-4 py-2 hover:bg-gray-100">Outdoor</a></li>
+              <li><a href="tables.html" class="block px-4 py-2 hover:bg-gray-100">Tables</a></li>
+              <li><a href="bedrooms.html" class="block px-4 py-2 hover:bg-gray-100">Bedrooms</a></li>
+              <li><a href="games.html" class="block px-4 py-2 hover:bg-gray-100">Games</a></li>
+              <li><a href="green-thumbs.html" class="block px-4 py-2 hover:bg-gray-100">Green Thumbs</a></li>
+              <li><a href="kids.html" class="block px-4 py-2 hover:bg-gray-100">Kids</a></li>
+              <li><a href="miscellaneous.html" class="block px-4 py-2 hover:bg-gray-100">Miscellaneous</a></li>
+            </ul>
+          </li>
+          <li>
+            <button class="snipcart-checkout bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition">
+              Cart (<span class="snipcart-items-count">0</span>)
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
 
-  <div class="gallery">
-    <!-- Images from mis2.jpg to mis25.jpg -->
-    <img src="ecomassets/mis2.jpg" alt="Image 2">
-    <img src="ecomassets/mis3.jpg" alt="Image 3">
-    <img src="ecomassets/mis4.jpg" alt="Image 4">
-    <img src="ecomassets/mis5.jpg" alt="Image 5">
-    <img src="ecomassets/mis6.jpg" alt="Image 6">
-    <img src="ecomassets/mis7.jpg" alt="Image 7">
-    <img src="ecomassets/mis8.jpg" alt="Image 8">
-    <img src="ecomassets/mis9.jpg" alt="Image 9">
-    <img src="ecomassets/mis10.jpg" alt="Image 10">
-    <img src="ecomassets/mis11.jpg" alt="Image 11">
-    <img src="ecomassets/mis12.jpg" alt="Image 12">
-    <img src="ecomassets/mis13.jpg" alt="Image 13">
-    <img src="ecomassets/mis14.jpg" alt="Image 14">
-    <img src="ecomassets/mis15.jpg" alt="Image 15">
-    <img src="ecomassets/mis16.jpg" alt="Image 16">
-    <img src="ecomassets/mis17.jpg" alt="Image 17">
-    <img src="ecomassets/mis18.jpg" alt="Image 18">
-    <img src="ecomassets/mis19.jpg" alt="Image 19">
-    <img src="ecomassets/mis20.jpg" alt="Image 20">
-    <img src="ecomassets/mis21.jpg" alt="Image 21">
-    <img src="ecomassets/mis22.jpg" alt="Image 22">
-    <img src="ecomassets/mis23.jpg" alt="Image 23">
-    <img src="ecomassets/mis24.jpg" alt="Image 24">
-    <img src="ecomassets/mis25.jpg" alt="Image 25">
-  </div>
+  <!-- Snipcart shopping cart container -->
+  <div hidden id="snipcart" data-api-key="YOUR_SNIPCART_API_KEY"></div>
 
+  <!-- Hero Section -->
+  <section class="relative bg-cover bg-center h-96" style="background-image:url('hero.jpg')">
+    <div class="absolute inset-0 bg-black opacity-40"></div>
+    <div class="relative max-w-4xl mx-auto h-full flex flex-col justify-center items-center text-center px-4">
+      <h2 class="text-4xl md:text-5xl text-white font-extrabold animate-fadeInUp">Handmade Wood Products</h2>
+      <p class="mt-4 text-lg text-gray-200 animate-fadeInUp delay-200">Crafted to last a lifetime.</p>
+      <a href="#products" class="mt-6 bg-white text-gray-900 px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition animate-fadeInUp delay-400">
+        Shop Now
+      </a>
+    </div>
+  </section>
+
+  <!-- Products Grid -->
+  <main id="products" class="max-w-6xl mx-auto px-6 py-16">
+    <h3 class="text-3xl font-semibold mb-8 text-center">Our Collection</h3>
+    <div class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- Product Card Example -->
+      <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 animate-fadeInUp">
+        <img src="chair1.jpg" alt="Handcrafted Chair" class="w-full h-56 object-cover"/>
+        <div class="p-6">
+          <h4 class="font-semibold text-xl mb-2">XL Lounge Chair</h4>
+          <p class="text-gray-600 mb-4">Sustainably sourced black wood grain.</p>
+          <div class="flex items-center justify-between">
+            <span class="text-2xl font-bold">$249</span>
+            <button  
+              class="snipcart-add-item bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition"
+              data-item-id="xl-chair"
+              data-item-name="XL Lounge Chair"
+              data-item-price="249.00"
+              data-item-url="https://yourdomain.com/e-commerce.html"
+              data-item-description="Handcrafted XL lounge chair made from sustainably sourced lumber."
+              data-item-image="chair1.jpg">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Repeat for other products -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t py-8">
+    <div class="max-w-6xl mx-auto px-6 text-center text-gray-600">
+      © 2025 Beaver Built Furniture. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- Snipcart JS -->
+  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
 </body>
 </html>
