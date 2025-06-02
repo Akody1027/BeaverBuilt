@@ -53,36 +53,21 @@
   });
 
     
-  document.addEventListener("DOMContentLoaded", function() {
-    const pricedImages = document.querySelectorAll('img.price-tagged');
+document.querySelectorAll('.price-tagged').forEach(img => {
+  const price = img.getAttribute('data-price');
+  
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.style.display = 'inline-block';
 
-    pricedImages.forEach(img => {
-      // Create price label
-      const priceLabel = document.createElement('div');
-      priceLabel.className = 'price-label';
-      priceLabel.textContent = `$${img.getAttribute('data-price')}`;
-      priceLabel.style.position = 'absolute';
-      priceLabel.style.top = '10px';
-      priceLabel.style.left = '50%';
-      priceLabel.style.transform = 'translateX(-50%)';
-      priceLabel.style.background = 'rgba(31,41,55,0.85)';
-      priceLabel.style.color = '#fff';
-      priceLabel.style.padding = '4px 10px';
-      priceLabel.style.borderRadius = '6px';
-      priceLabel.style.fontSize = '16px';
-      priceLabel.style.zIndex = '10';
+  const overlay = document.createElement('div');
+  overlay.className = 'price-overlay';
+  overlay.innerText = `$${parseFloat(price).toFixed(2)}`;
 
-      // Wrap image in relative container
-      const wrapper = document.createElement('div');
-      wrapper.style.position = 'relative';
-      wrapper.style.display = 'inline-block';
-
-      // Move image into wrapper
-      img.parentNode.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
-      wrapper.appendChild(priceLabel);
-    });
-  });
+  img.parentNode.insertBefore(wrapper, img);
+  wrapper.appendChild(img);
+  wrapper.appendChild(overlay);
+});
 
   </script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
@@ -98,13 +83,20 @@
   background: #374151;
     }
 
-    .price-label {
-  font-family: Arial, sans-serif;
-  transition: background 0.3s ease;
-}
-
-.price-label:hover {
-  background: rgba(55,65,81,1);
+.price-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 6px 0;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  pointer-events: none; /* ensures clicks go to the image */
 }
 
     .gallery {
