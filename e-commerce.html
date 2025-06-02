@@ -6,58 +6,6 @@
   <title>Beaver Built Furniture</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-<script>
-
-// Set page enter animation on load based on last navDirection
-let navDir = sessionStorage.getItem('navDirection') || 'right';
-document.body.classList.add(navDir === 'left' ? 'page-slide-in-left' : 'page-slide-in-right');
-
-// Intercept link clicks to control exit animation + navigation
-document.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', function(e) {
-    // Only intercept local links
-    if (this.getAttribute('href') && !this.getAttribute('target')) {
-      e.preventDefault();
-
-      // Set navDirection based on if link has 'back-link' class
-      let isBack = this.classList.contains('back-link');
-      sessionStorage.setItem('navDirection', isBack ? 'left' : 'right');
-
-      // Apply exit animation
-      document.body.classList.add(isBack ? 'page-slide-out-right' : 'page-slide-out-left');
-
-      // Wait for animation to finish then navigate
-      setTimeout(() => {
-        window.location.href = this.getAttribute('href');
-      }, 500);
-    }
-  });
-});
-
-  
-  window.addEventListener('load', () => {
-    const page = document.getElementById('pageContent');
-    page.classList.add('page-enter-active');
-  });
-
-  // Optional: Animate exit before navigating away
-  document.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', function(e) {
-      const href = this.getAttribute('href');
-      if (href && href !== '#' && !href.startsWith('javascript:')) {
-        e.preventDefault();
-        const page = document.getElementById('pageContent');
-        page.classList.remove('page-enter-active');
-        page.classList.add('page-exit-active');
-        setTimeout(() => {
-          window.location.href = href;
-        }, 500);
-      }
-    });
-  });
-</script>
-  
   <!-- Snipcart CSS -->
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
@@ -69,78 +17,9 @@ document.querySelectorAll('a').forEach(link => {
     .animate-fadeInUp {
       animation: fadeInUp 0.6s ease-out both;
     }
-
-
-  .page-enter {
-    transform: translateX(100%);
-    opacity: 0;
-    transition: transform 0.5s ease, opacity 0.5s ease;
-  }
-
-  .page-enter-active {
-    transform: translateX(0);
-    opacity: 1;
-  }
-
-  .page-exit {
-    transform: translateX(0);
-    opacity: 1;
-    transition: transform 0.5s ease, opacity 0.5s ease;
-  }
-
-  .page-exit-active {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-
-
-/* Page transition animations */
-.page-slide-in-right {
-  animation: slideInFromRight 0.5s forwards;
-}
-
-.page-slide-in-left {
-  animation: slideInFromLeft 0.5s forwards;
-}
-
-.page-slide-out-left {
-  animation: slideOutToLeft 0.5s forwards;
-}
-
-.page-slide-out-right {
-  animation: slideOutToRight 0.5s forwards;
-}
-
-/* Keyframes */
-@keyframes slideInFromRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideInFromLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOutToLeft {
-  from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(-100%); opacity: 0; }
-}
-
-@keyframes slideOutToRight {
-  from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(100%); opacity: 0; }
-}
-
-    
-    
   </style>
 </head>
-  
 <body class="bg-gray-50 text-gray-800 antialiased pt-16">
-  <div id="pageContent" class="page-enter">
-  <!-- your actual page stuff here -->
-  
 
   <!-- Fixed Header -->
   <header class="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
@@ -225,7 +104,5 @@ document.querySelectorAll('a').forEach(link => {
 
   <!-- Snipcart JS -->
   <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
-
-  </div>
 </body>
 </html>
