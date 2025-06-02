@@ -14,47 +14,107 @@
   <link rel="manifest" href="manifest.json"/>
 
   <style>
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; }
-    iframe { border:none; width:100%; height:100%; }
+    /* Reset & base */
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: Arial, sans-serif;
+      background: #f8f8f8;
+    }
 
+    /* Header styling same as home.html */
+    header {
+      background: #4a90e2;
+      color: #fff;
+      padding: 12px 20px;
+      font-size: 20px;
+      position: relative;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    /* Dropdown inside header */
     .dropdown {
-      position: fixed;
+      position: absolute;
       top: 10px;
-      left: 10px;
-      z-index: 1000;
+      right: 20px;
     }
 
     .dropdown select {
-      padding: 8px 12px;
-      font-size: 16px;
-      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 5px;
       border: 1px solid #ccc;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Iframe fills below header */
+    iframe {
+      border: none;
+      width: 100%;
+      height: calc(100% - 48px); /* header height approx 48px */
+      display: block;
+    }
+
+    /* Preloader overlay */
+    .preloader {
+      position: fixed;
+      top: 48px; /* below header */
+      left: 0;
+      width: 100%;
+      height: calc(100% - 48px);
+      background: #fff;
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      user-select: none;
+    }
+
+    .preloader.hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <!-- Dropdown Navigation -->
-  <div class="dropdown">
-    <select id="pageSelector">
-      <option value="home.html">🏠 Home</option>
-      <option value="furniture.html">🪑 Furniture</option>
-      <option value="decor.html">🖼️ Decor</option>
-    </select>
-  </div>
+  <header>
+    Beaver Built Home
+    <div class="dropdown">
+      <select id="pageSelector">
+        <option value="home.html">🏠 Home</option>
+        <option value="furniture.html">🪑 Furniture</option>
+        <option value="decor.html">🖼️ Decor</option>
+      </select>
+    </div>
+  </header>
 
-  <!-- Viewport -->
-  <iframe id="mainViewport" src="home.html"></iframe>
+  <div id="preloader" class="preloader">Loading...</div>
+
+  <iframe id="mainViewport" src="home.html" title="Main Content"></iframe>
 
   <script>
     const selector = document.getElementById('pageSelector');
-    const viewport = document.getElementById('mainViewport');
+    const iframe = document.getElementById('mainViewport');
+    const preloader = document.getElementById('preloader');
 
-    selector.addEventListener('change', function() {
-      viewport.src = this.value;
+    // Set dropdown initial value to current iframe src
+    selector.value = iframe.src.split('/').pop();
+
+    // When dropdown changes, show preloader and change iframe src
+    selector.addEventListener('change', () => {
+      preloader.classList.remove('hidden');
+      iframe.src = selector.value;
     });
 
-    // Service Worker
+    // When iframe finishes loading, hide preloader
+    iframe.addEventListener('load', () => {
+      preloader.classList.add('hidden');
+    });
+
+    // Register Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
     }
