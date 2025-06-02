@@ -53,21 +53,32 @@
   });
 
     
-document.querySelectorAll('.price-tagged').forEach(img => {
-  const price = img.getAttribute('data-price');
-  
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'relative';
-  wrapper.style.display = 'inline-block';
 
-  const overlay = document.createElement('div');
-  overlay.className = 'price-overlay';
-  overlay.innerText = `$${parseFloat(price).toFixed(2)}`;
+    
+  document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('.cart-image');
 
-  img.parentNode.insertBefore(wrapper, img);
-  wrapper.appendChild(img);
-  wrapper.appendChild(overlay);
-});
+    images.forEach(img => {
+      const price = img.getAttribute('data-price');
+      if (price) {
+        // Wrap image in a container
+        const container = document.createElement('div');
+        container.classList.add('price-container');
+
+        // Create price overlay
+        const overlay = document.createElement('div');
+        overlay.classList.add('price-overlay');
+        overlay.textContent = price;
+
+        // Insert container and append image + overlay
+        img.parentNode.insertBefore(container, img);
+        container.appendChild(img);
+        container.appendChild(overlay);
+      }
+    });
+  });
+
+    
 
   </script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
@@ -83,21 +94,33 @@ document.querySelectorAll('.price-tagged').forEach(img => {
   background: #374151;
     }
 
-.price-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 6px 0;
-  text-align: center;
-  background: rgba(0, 0, 0, 0.5); /* semi-transparent black */
-  color: #fff;
-  font-size: 16px;
-  font-weight: bold;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  pointer-events: none; /* ensures clicks go to the image */
-}
+
+  .price-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 2;
+  }
+
+  .price-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .cart-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
 
     .gallery {
       column-count: 4;
