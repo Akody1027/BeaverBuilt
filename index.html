@@ -2,40 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <!-- iOS home screen icons -->
-  <link rel="apple-touch-icon" width="80%" href="beaverlogo.png">
-  <link rel="apple-touch-icon" width="80%" href="beaverlogo.png">
-
-  <!-- Android/Chrome home screen icon & favicon fallbacks -->
-  <link rel="icon" type="image/png" width="80%" href="beaverlogo.png">
-  <link rel="icon" type="image/png" width="80%" href="beaverlogo.png">
-
-  <!-- Manifest for Android “Add to Home Screen” -->
+  <link rel="apple-touch-icon" href="beaverlogo.png">
+  <link rel="icon" type="image/png" href="beaverlogo.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
   <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
   <title>Beaver Built Furniture</title>
-  <!-- theme color for Android status bar -->
   <meta name="theme-color" content="#4a90e2"/>
-  <!-- iOS standalone mode -->
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <!-- link to the manifest -->
   <link rel="manifest" href="manifest.json"/>
+
   <style>
     html, body { margin:0; padding:0; height:100%; overflow:hidden; }
     iframe { border:none; width:100%; height:100%; }
+
+    .dropdown {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
+
+    .dropdown select {
+      padding: 8px 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
-  <!-- ← REPLACE this URL: -->
-  <iframe src="https://www.beaverbuiltfurniture.com/home.html"></iframe>
 
-  <!-- register the service worker -->
+  <!-- Dropdown Navigation -->
+  <div class="dropdown">
+    <select id="pageSelector">
+      <option value="home.html">🏠 Home</option>
+      <option value="furniture.html">🪑 Furniture</option>
+      <option value="decor.html">🖼️ Decor</option>
+    </select>
+  </div>
+
+  <!-- Viewport -->
+  <iframe id="mainViewport" src="home.html"></iframe>
+
   <script>
+    const selector = document.getElementById('pageSelector');
+    const viewport = document.getElementById('mainViewport');
+
+    selector.addEventListener('change', function() {
+      viewport.src = this.value;
+    });
+
+    // Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
     }
   </script>
+
 </body>
 </html>
