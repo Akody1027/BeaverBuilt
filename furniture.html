@@ -79,6 +79,36 @@
     });
   });
 
+
+
+// Set page enter animation on load based on last navDirection
+let navDir = sessionStorage.getItem('navDirection') || 'right';
+document.body.classList.add(navDir === 'left' ? 'page-slide-in-left' : 'page-slide-in-right');
+
+// Intercept link clicks to control exit animation + navigation
+document.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    // Only intercept local links
+    if (this.getAttribute('href') && !this.getAttribute('target')) {
+      e.preventDefault();
+
+      // Set navDirection based on if link has 'back-link' class
+      let isBack = this.classList.contains('back-link');
+      sessionStorage.setItem('navDirection', isBack ? 'left' : 'right');
+
+      // Apply exit animation
+      document.body.classList.add(isBack ? 'page-slide-out-right' : 'page-slide-out-left');
+
+      // Wait for animation to finish then navigate
+      setTimeout(() => {
+        window.location.href = this.getAttribute('href');
+      }, 500);
+    }
+  });
+});
+
+
+
     
 
     
@@ -110,6 +140,45 @@
   </script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
+
+/* Page transition animations */
+.page-slide-in-right {
+  animation: slideInFromRight 0.5s forwards;
+}
+
+.page-slide-in-left {
+  animation: slideInFromLeft 0.5s forwards;
+}
+
+.page-slide-out-left {
+  animation: slideOutToLeft 0.5s forwards;
+}
+
+.page-slide-out-right {
+  animation: slideOutToRight 0.5s forwards;
+}
+
+/* Keyframes */
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes slideOutToRight {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+    
 
   .page-enter {
     transform: translateX(100%);
@@ -228,7 +297,7 @@
   <!-- Fixed Header -->
   <header class="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="e-commerce.html" class="text-2xl font-bold">Beaver Built Furniture</a>
+      <a href="e-commerce.html" class="text-2xl back-link font-bold">Beaver Built Furniture</a>
       <nav>
         <ul class="flex items-center space-x-6">
           <li class="relative group">
