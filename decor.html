@@ -185,6 +185,17 @@
 </div>
 
 <script>
+ window.addEventListener('load', () => {
+      window.scrollTo(0,0);
+      setTimeout(() => {
+        const pre = document.getElementById('preloader');
+        pre.classList.add('fade-out');
+        setTimeout(() => pre.style.display = 'none', 1000);
+      }, 2000);
+    });
+
+
+  
   window.addEventListener("load", () => {
     const galleryImages = document.querySelectorAll(".gallery img");
     const decorImages = Array.from(galleryImages).map(img => img.src);
