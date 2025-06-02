@@ -5,6 +5,53 @@
   <title>Furniture | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Select all images with class 'cart-image'
+    const images = document.querySelectorAll('img.cart-image');
+
+    images.forEach(img => {
+      // Create the Add to Cart button
+      const button = document.createElement('button');
+      button.textContent = 'Add to Cart';
+      button.className = 'add-cart-btn';
+      button.style.display = 'none';
+      button.style.position = 'absolute';
+      button.style.bottom = '10px';
+      button.style.left = '50%';
+      button.style.transform = 'translateX(-50%)';
+      button.style.padding = '8px 16px';
+      button.style.background = '#1f2937';
+      button.style.color = '#fff';
+      button.style.border = 'none';
+      button.style.borderRadius = '8px';
+      button.style.cursor = 'pointer';
+      button.style.zIndex = '10';
+
+      // Wrap image in a relative container
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.display = 'inline-block';
+
+      // Move image into wrapper
+      img.parentNode.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+      wrapper.appendChild(button);
+
+      // Show button on image click
+      img.addEventListener('click', () => {
+        button.style.display = 'block';
+      });
+
+      // Hide button if clicking outside the wrapper
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+          button.style.display = 'none';
+        }
+      });
+    });
+  });
+  </script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
     body {
@@ -12,6 +59,10 @@
       padding: 0;
       font-family: Arial, sans-serif;
       background-color: #f0f0f0;
+    }
+
+    .add-cart-btn:hover {
+  background: #374151;
     }
 
     .gallery {
@@ -155,53 +206,53 @@
   <!-- Image Gallery -->
   <div class="gallery">
     <!-- Your existing images unchanged -->
-    <img src="ecomassets/furniture1.jpg" alt="Image 1">
-    <img src="ecomassets/furniture2.jpg" alt="Image 2">
-    <img src="ecomassets/furniture3.jpg" alt="Image 3">
-    <img src="ecomassets/furniture4.jpg" alt="Image 4">
-    <img src="ecomassets/furniture5.jpg" alt="Image 5">
-    <img src="ecomassets/furniture6.jpg" alt="Image 6">
-    <img src="ecomassets/furniture7.jpg" alt="Image 7">
-    <img src="ecomassets/furniture8.jpg" alt="Image 8">
-    <img src="ecomassets/furniture10.jpg" alt="Image 10">
-    <img src="ecomassets/furniture11.jpg" alt="Image 11">
-    <img src="ecomassets/furniture12.jpg" alt="Image 12">
-    <img src="ecomassets/furniture13.jpg" alt="Image 13">
-    <img src="ecomassets/furniture14.jpg" alt="Image 14">
-    <img src="ecomassets/furniture15.jpg" alt="Image 15">
-    <img src="ecomassets/furniture16.jpg" alt="Image 16">
-    <img src="ecomassets/furniture17.jpg" alt="Image 17">
-    <img src="ecomassets/furniture18.jpg" alt="Image 18">
-    <img src="ecomassets/furniture19.jpg" alt="Image 19">
-    <img src="ecomassets/furniture20.jpg" alt="Image 20">
-    <img src="ecomassets/furniture21.jpg" alt="Image 21">
-    <img src="ecomassets/furniture22.jpg" alt="Image 22">
-    <img src="ecomassets/furniture23.jpg" alt="Image 23">
-    <img src="ecomassets/furniture24.jpg" alt="Image 24">
-    <img src="ecomassets/furniture26.jpg" alt="Image 26">
-    <img src="ecomassets/furniture27.jpg" alt="Image 27">
-    <img src="ecomassets/furniture28.jpg" alt="Image 28">
-    <img src="ecomassets/furniture29.jpg" alt="Image 29">
-    <img src="ecomassets/furniture30.jpg" alt="Image 30">
-    <img src="ecomassets/furniture31.jpg" alt="Image 31">
-    <img src="ecomassets/furniture32.jpg" alt="Image 32">
-    <img src="ecomassets/furniture33.jpg" alt="Image 33">
-    <img src="ecomassets/furniture34.jpg" alt="Image 34">
-    <img src="ecomassets/furniture35.jpg" alt="Image 35">
-    <img src="ecomassets/furniture36.jpg" alt="Image 36">
-    <img src="ecomassets/furniture37.jpg" alt="Image 37">
-    <img src="ecomassets/furniture38.jpg" alt="Image 38">
-    <img src="ecomassets/furniture39.jpg" alt="Image 39">
-    <img src="ecomassets/furniture41.jpg" alt="Image 41">
-    <img src="ecomassets/furniture42.jpg" alt="Image 42">
-    <img src="ecomassets/furniture43.jpg" alt="Image 43">
-    <img src="ecomassets/furniture44.jpg" alt="Image 44">
-    <img src="ecomassets/furniture45.jpg" alt="Image 45">
-    <img src="ecomassets/furniture46.jpg" alt="Image 46">
-    <img src="ecomassets/furniture47.jpg" alt="Image 47">
-    <img src="ecomassets/furniture48.jpg" alt="Image 48">
-    <img src="ecomassets/furniture49.jpg" alt="Image 49">
-    <img src="ecomassets/furniture50.jpg" alt="Image 50">
+    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image">
+    <img src="ecomassets/furniture2.jpg" alt="Image 2" class="cart-image">
+    <img src="ecomassets/furniture3.jpg" alt="Image 3" class="cart-image">
+    <img src="ecomassets/furniture4.jpg" alt="Image 4" class="cart-image">
+    <img src="ecomassets/furniture5.jpg" alt="Image 5" class="cart-image">
+    <img src="ecomassets/furniture6.jpg" alt="Image 6" class="cart-image">
+    <img src="ecomassets/furniture7.jpg" alt="Image 7" class="cart-image">
+    <img src="ecomassets/furniture8.jpg" alt="Image 8" class="cart-image">
+    <img src="ecomassets/furniture10.jpg" alt="Image 10" class="cart-image">
+    <img src="ecomassets/furniture11.jpg" alt="Image 11" class="cart-image">
+    <img src="ecomassets/furniture12.jpg" alt="Image 12" class="cart-image">
+    <img src="ecomassets/furniture13.jpg" alt="Image 13" class="cart-image">
+    <img src="ecomassets/furniture14.jpg" alt="Image 14" class="cart-image">
+    <img src="ecomassets/furniture15.jpg" alt="Image 15" class="cart-image">
+    <img src="ecomassets/furniture16.jpg" alt="Image 16" class="cart-image">
+    <img src="ecomassets/furniture17.jpg" alt="Image 17" class="cart-image">
+    <img src="ecomassets/furniture18.jpg" alt="Image 18" class="cart-image">
+    <img src="ecomassets/furniture19.jpg" alt="Image 19" class="cart-image">
+    <img src="ecomassets/furniture20.jpg" alt="Image 20" class="cart-image">
+    <img src="ecomassets/furniture21.jpg" alt="Image 21" class="cart-image">
+    <img src="ecomassets/furniture22.jpg" alt="Image 22" class="cart-image">
+    <img src="ecomassets/furniture23.jpg" alt="Image 23" class="cart-image">
+    <img src="ecomassets/furniture24.jpg" alt="Image 24" class="cart-image">
+    <img src="ecomassets/furniture26.jpg" alt="Image 26" class="cart-image">
+    <img src="ecomassets/furniture27.jpg" alt="Image 27" class="cart-image">
+    <img src="ecomassets/furniture28.jpg" alt="Image 28" class="cart-image">
+    <img src="ecomassets/furniture29.jpg" alt="Image 29" class="cart-image">
+    <img src="ecomassets/furniture30.jpg" alt="Image 30" class="cart-image">
+    <img src="ecomassets/furniture31.jpg" alt="Image 31" class="cart-image">
+    <img src="ecomassets/furniture32.jpg" alt="Image 32" class="cart-image">
+    <img src="ecomassets/furniture33.jpg" alt="Image 33" class="cart-image">
+    <img src="ecomassets/furniture34.jpg" alt="Image 34" class="cart-image">
+    <img src="ecomassets/furniture35.jpg" alt="Image 35" class="cart-image">
+    <img src="ecomassets/furniture36.jpg" alt="Image 36" class="cart-image">
+    <img src="ecomassets/furniture37.jpg" alt="Image 37" class="cart-image">
+    <img src="ecomassets/furniture38.jpg" alt="Image 38" class="cart-image">
+    <img src="ecomassets/furniture39.jpg" alt="Image 39" class="cart-image">
+    <img src="ecomassets/furniture41.jpg" alt="Image 41" class="cart-image">
+    <img src="ecomassets/furniture42.jpg" alt="Image 42" class="cart-image">
+    <img src="ecomassets/furniture43.jpg" alt="Image 43" class="cart-image">
+    <img src="ecomassets/furniture44.jpg" alt="Image 44" class="cart-image">
+    <img src="ecomassets/furniture45.jpg" alt="Image 45" class="cart-image">
+    <img src="ecomassets/furniture46.jpg" alt="Image 46" class="cart-image">
+    <img src="ecomassets/furniture47.jpg" alt="Image 47" class="cart-image">
+    <img src="ecomassets/furniture48.jpg" alt="Image 48" class="cart-image">
+    <img src="ecomassets/furniture49.jpg" alt="Image 49" class="cart-image">
+    <img src="ecomassets/furniture50.jpg" alt="Image 50" class="cart-image">
   </div>
 
   <!-- Footer -->
