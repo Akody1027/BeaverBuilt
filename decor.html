@@ -124,7 +124,36 @@
     }
     .dropdown a:hover { background: rgba(255,255,255,0.1); }
 
-    
+        .add-cart-btn:hover {
+  background: #374151;
+    }
+
+
+  .price-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 2;
+  }
+
+  .price-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .cart-image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
     
   </style>
 </head>
@@ -197,6 +226,79 @@
 function toggleMenu() {
       document.getElementById('navDropdown').classList.toggle('open');
     }
+
+
+  document.addEventListener("DOMContentLoaded", function() {
+    // Select all images with class 'cart-image'
+    const images = document.querySelectorAll('img.cart-image');
+
+    images.forEach(img => {
+      // Create the Add to Cart button
+      const button = document.createElement('button');
+      button.textContent = 'Add to Cart';
+      button.className = 'add-cart-btn';
+      button.style.display = 'none';
+      button.style.position = 'absolute';
+      button.style.bottom = '10px';
+      button.style.left = '50%';
+      button.style.transform = 'translateX(-50%)';
+      button.style.padding = '8px 16px';
+      button.style.background = '#1f2937';
+      button.style.color = '#fff';
+      button.style.border = 'none';
+      button.style.borderRadius = '8px';
+      button.style.cursor = 'pointer';
+      button.style.zIndex = '10';
+
+      // Wrap image in a relative container
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.display = 'inline-block';
+
+      // Move image into wrapper
+      img.parentNode.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+      wrapper.appendChild(button);
+
+      // Show button on image click
+      img.addEventListener('click', () => {
+        button.style.display = 'block';
+      });
+
+      // Hide button if clicking outside the wrapper
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+          button.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('.cart-image');
+
+    images.forEach(img => {
+      const price = img.getAttribute('data-price');
+      if (price) {
+        // Wrap image in a container
+        const container = document.createElement('div');
+        container.classList.add('price-container');
+
+        // Create price overlay
+        const overlay = document.createElement('div');
+        overlay.classList.add('price-overlay');
+        overlay.textContent = price;
+
+        // Insert container and append image + overlay
+        img.parentNode.insertBefore(container, img);
+        container.appendChild(img);
+        container.appendChild(overlay);
+      }
+    });
+  });
+
+
+
   
   window.addEventListener("load", () => {
     const galleryImages = document.querySelectorAll(".gallery img");
@@ -235,7 +337,7 @@ function toggleMenu() {
   <!-- Image Gallery -->
   <div class="gallery">
     <!-- Your existing images unchanged -->
-    <img src="ecomassets/mis2.jpg" alt="Image 2">
+    <img src="ecomassets/mis2.jpg" alt="Image 2" class="cart-image price-tagged" data-price="125.00" >
     <img src="ecomassets/mis3.jpg" alt="Image 3">
     <img src="ecomassets/mis4.jpg" alt="Image 4">
     <img src="ecomassets/mis5.jpg" alt="Image 5">
