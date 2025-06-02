@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
   <meta charset="UTF-8">
   <title>Home Decor | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
+    
     body {
       margin: 0;
       padding: 0;
@@ -54,37 +56,102 @@
         column-count: 1;
       }
     }
+    /* Accent bar & section titles */
+    .accent-bar { height: 6px; background: url('wood-texture.jpg') center/cover; }
+    .section-title {
+      font-size: 2rem; margin-bottom: 0.5rem;
+      display: inline-block; position: relative;
+      animation: fadeInUp 0.6s ease both;
+    }
+
+   /* Preloader */
+    #preloader {
+      position: fixed; inset: 0;
+      background-color: #fff;
+      transition: opacity 1s ease-out;
+      z-index: 2000;
+    }
+    #preloader::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url('background.jpg') center/cover no-repeat;
+      opacity: 0.2;
+    }
+    #preloader.fade-out {
+      opacity: 0; pointer-events: none;
+    }
+    #preloader .prelogo {
+      position: fixed; top: 20px; left: 20px;
+      height: 50px; z-index: 2001;
+    }
+    #preloader .spinner {
+      position: fixed; top: 50%; left: 50%;
+      margin: -25px 0 0 -25px;
+      width: 50px; height: 50px;
+      border: 5px solid rgba(0,0,0,0.1);
+      border-top-color: #111; border-radius: 50%;
+      animation: spin 1s linear infinite;
+      z-index: 2001;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Header */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 80px;
+      background: rgba(17,17,17,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+    header .logo {
+      position: fixed; top: 20px; left: 20px;
+      height: 50px; z-index: 1001;
+    }
+    .menu-btn {
+      position: fixed; top: 20px; right: 20px;
+      background: none; border: none; color: #fff;
+      font-size: 1.5rem; cursor: pointer; z-index: 1001;
+    }
+    .dropdown {
+      position: fixed; top: 60px; right: 20px;
+      display: none; background: #222; border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1001;
+    }
+    .dropdown.open { display: block; }
+    .dropdown a {
+      display: block; padding: 0.75rem 1rem; color: #fff;
+      white-space: nowrap;
+    }
+    .dropdown a:hover { background: rgba(255,255,255,0.1); }
+
+    
+    
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased pt-16">
 
-  <!-- Fixed Header -->
-  <header class="fixed top-0 left-0 w-full bg-white shadow-lg z-50">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <a href="index.html" class="text-2xl font-bold">Beaver Built Furniture</a>
-      <nav>
-        <ul class="flex items-center space-x-6">
-          <li class="relative group">
-            <button class="flex items-center hover:text-gray-600 focus:outline-none">
-              <span>Products</span>
-              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <ul class="absolute left-0 mt-2 w-40 bg-white border rounded-lg shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all">
-              <li><a href="furniture.html" class="block px-4 py-2 hover:bg-gray-100">Furniture</a></li>
-              <li><a href="decor.html" class="block px-4 py-2 hover:bg-gray-100">Decor</a></li>
-            </ul>
-          </li>
-          <li>
-            <button class="snipcart-checkout bg-gray-800 text-white px-4 py-2 rounded-lg shadow hover:shadow-md transition">
-              Cart (<span class="snipcart-items-count">0</span>)
-            </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
+  <div id="preloader">
+    <img src="beaverlogo.jpg" alt="Logo" class="prelogo">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <nav class="dropdown" id="navDropdown">
+      <a href="index.html">Home</a>
+      <a href="furniture.html" class="block px-4 py-2 hover:bg-gray-100">Furniture</a>
+      <a href="decor.html" class="block px-4 py-2 hover:bg-gray-100">Decor</a>
+    </nav>
+    <div class="accent-bar"></div>
   </header>
+
+
+
+
+  
+
 
   <!-- Snipcart Container -->
   <div hidden id="snipcart" data-api-key="YOUR_SNIPCART_API_KEY"></div>
