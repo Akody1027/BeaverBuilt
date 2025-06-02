@@ -51,6 +51,39 @@
       });
     });
   });
+
+    
+  document.addEventListener("DOMContentLoaded", function() {
+    const pricedImages = document.querySelectorAll('img.price-tagged');
+
+    pricedImages.forEach(img => {
+      // Create price label
+      const priceLabel = document.createElement('div');
+      priceLabel.className = 'price-label';
+      priceLabel.textContent = `$${img.getAttribute('data-price')}`;
+      priceLabel.style.position = 'absolute';
+      priceLabel.style.top = '10px';
+      priceLabel.style.left = '50%';
+      priceLabel.style.transform = 'translateX(-50%)';
+      priceLabel.style.background = 'rgba(31,41,55,0.85)';
+      priceLabel.style.color = '#fff';
+      priceLabel.style.padding = '4px 10px';
+      priceLabel.style.borderRadius = '6px';
+      priceLabel.style.fontSize = '16px';
+      priceLabel.style.zIndex = '10';
+
+      // Wrap image in relative container
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.display = 'inline-block';
+
+      // Move image into wrapper
+      img.parentNode.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+      wrapper.appendChild(priceLabel);
+    });
+  });
+
   </script>
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
   <style>
@@ -64,6 +97,15 @@
     .add-cart-btn:hover {
   background: #374151;
     }
+
+    .price-label {
+  font-family: Arial, sans-serif;
+  transition: background 0.3s ease;
+}
+
+.price-label:hover {
+  background: rgba(55,65,81,1);
+}
 
     .gallery {
       column-count: 4;
@@ -206,7 +248,7 @@
   <!-- Image Gallery -->
   <div class="gallery">
     <!-- Your existing images unchanged -->
-    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image">
+    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image" class="price-tagged" data-price="129.00">
     <img src="ecomassets/furniture2.jpg" alt="Image 2" class="cart-image">
     <img src="ecomassets/furniture3.jpg" alt="Image 3" class="cart-image">
     <img src="ecomassets/furniture4.jpg" alt="Image 4" class="cart-image">
