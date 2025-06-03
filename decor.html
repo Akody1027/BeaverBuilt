@@ -16,11 +16,8 @@
     position: fixed;
     top: 15px;
     right: 50px;
-    font-size:-10px;
-    
+    font-size:10px;
     padding: 10px 14px;
-    
-    
     cursor: pointer;
     z-index: 9999;
     
@@ -182,7 +179,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    padding: 8px;
+    padding: 3px;
     background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
     color: #fff;
     text-align: center;
@@ -199,7 +196,7 @@
 
   .cart-image {
     display: block;
-    width: 80%;
+    width: 100%;
     height: auto;
   }
     
@@ -323,7 +320,7 @@ function toggleMenu() {
   });
 
   document.addEventListener('DOMContentLoaded', function() {
-    const images = document.querySelectorAll('.cart-image');
+    const images = document.querySelectorAll('.add-cart-btn');
 
     images.forEach(img => {
       const price = img.getAttribute('data-price');
@@ -477,7 +474,7 @@ function toggleMenu() {
   // Attach click event to existing .cart-image buttons
   document.querySelectorAll('.cart-image').forEach(button => {
     button.addEventListener('click', () => {
-      const productName = button.getAttribute('data-product') || 'Unnamed Product';
+      const productName = button.getAttribute('data-product') || 'Decor Product';
       const price = parseFloat(button.getAttribute('data-price')) || 0;
       addToCart(productName, price);
     });
