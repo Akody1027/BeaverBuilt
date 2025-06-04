@@ -23,7 +23,7 @@
       right: 45px;
       background: transparent;
       padding: 10px;
-      z-index: 900; /* lowered so modal sits above */
+      z-index: 900;
       cursor: pointer;
     }
     #cart-popover {
@@ -35,7 +35,7 @@
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       padding: 15px;
-      width: 280px;
+      width: 320px; /* widened */
       display: none;
       z-index: 800;
     }
@@ -67,6 +67,32 @@
       font-weight: bold;
       font-size: 0.95rem;
       margin-left: 8px;
+    }
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      margin-left: 10px;
+    }
+    .quantity-button {
+      background: #e5e7eb;
+      border: none;
+      border-radius: 4px;
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 18px;
+      cursor: pointer;
+      margin: 0 4px;
+      font-weight: bold;
+      color: #374151;
+    }
+    .quantity-button:hover {
+      background: #d1d5db;
+    }
+    .quantity-display {
+      min-width: 20px;
+      text-align: center;
+      font-size: 0.9rem;
     }
     #checkout-btn {
       background: #1f2937;
@@ -218,7 +244,7 @@
     .menu-btn {
       position: fixed;
       top: 20px;
-      right: 80px;
+      right: 20px; /* restored */
       background: none;
       border: none;
       color: #fff;
@@ -229,7 +255,7 @@
     .dropdown {
       position: fixed;
       top: 60px;
-      right: 80px;
+      right: 20px; /* restored */
       display: none;
       background: #222;
       border-radius: 6px;
@@ -262,8 +288,10 @@
     #modal-content {
       background: #fff;
       width: 90%;
-      max-width: 450px; /* a bit narrower */
-      max-height: 70vh; /* shorter vertically */
+      max-width: 450px;
+      height: 90vh;        /* 90% height */
+      margin-top: 5vh;     /* 5% from top */
+      margin-bottom: 5vh;  /* 5% from bottom */
       overflow-y: auto;
       border-radius: 8px;
       padding: 20px;
@@ -608,8 +636,29 @@
     var cart = [];
 
     function addToCart(name, price, imgSrc) {
-      cart.push({ name: name, price: price, img: imgSrc });
+      // Check if item exists already
+      var existing = cart.find(function(i) {
+        return i.name === name;
+      });
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ name: name, price: price, img: imgSrc, qty: 1 });
+      }
       updateCart();
+    }
+
+    function removeFromCart(name) {
+      var idx = cart.findIndex(function(i) {
+        return i.name === name;
+      });
+      if (idx !== -1) {
+        cart[idx].qty--;
+        if (cart[idx].qty <= 0) {
+          cart.splice(idx, 1);
+        }
+        updateCart();
+      }
     }
 
     function updateCart() {
@@ -617,15 +666,34 @@
       itemsDiv.innerHTML = '';
       var total = 0;
       cart.forEach(function(item) {
-        total += item.price;
+        total += item.price * item.qty;
         itemsDiv.innerHTML += 
           '<div class="cart-item">' +
             '<img src="' + item.img + '" alt="' + item.name + '">' +
             '<div class="cart-item-name">' + item.name + '</div>' +
-            '<div class="cart-item-price">$' + item.price.toFixed(2) + '</div>' +
+            '<div class="quantity-controls">' +
+              '<button class="quantity-button minus-button" data-name="' + item.name + '">−</button>' +
+              '<div class="quantity-display">' + item.qty + '</div>' +
+              '<button class="quantity-button plus-button" data-name="' + item.name + '">+</button>' +
+            '</div>' +
+            '<div class="cart-item-price">$' + (item.price * item.qty).toFixed(2) + '</div>' +
           '</div>';
       });
       document.getElementById('cart-total').innerText = total.toFixed(2);
+
+      // Attach plus/minus handlers
+      document.querySelectorAll('.plus-button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var name = this.getAttribute('data-name');
+          addToCart(name, cart.find(i => i.name === name).price, cart.find(i => i.name === name).img);
+        });
+      });
+      document.querySelectorAll('.minus-button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var name = this.getAttribute('data-name');
+          removeFromCart(name);
+        });
+      });
     }
 
     // 4) Cart icon click toggles popover; close on outside click
@@ -654,7 +722,7 @@
             product_data: { name: i.name },
             unit_amount: i.price * 100
           },
-          quantity: 1
+          quantity: i.qty
         };
       });
       var response = await fetch('https://www.beaverbuiltfurniture.com/furniture.html/create-checkout-session', {
@@ -684,7 +752,6 @@
       var galleryItems = document.querySelectorAll('.gallery-item');
       galleryItems.forEach(function(item) {
         var viewBtn = item.querySelector('.view-button');
-        var thumbnail = item.querySelector('img');
         viewBtn.addEventListener('click', function() {
           imgEl.src = item.getAttribute('data-img');
           titleEl.textContent = item.getAttribute('data-title');
