@@ -1,1052 +1,573 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
-
   <meta charset="UTF-8">
-
   <title>Furniture | Beaver Built Furniture</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
 
-
-
   <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
 
-<script src="https://js.stripe.com/v3/"></script>
+  <style>
+    .cart-img {
+      width: 25px;
+      margin-top: 2px;
+    }
 
+    #cart-icon {
+      position: fixed;
+      top: 15px;
+      right: 45px;
+      background: transparent;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 9999;
+    }
 
+    #cart-popover {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background: #fff;
+      border: 2px solid #333;
+      padding: 15px;
+      width: 250px;
+      display: none;
+      z-index: 9999;
+    }
 
-<style>
-.cart-img{
-  width:25px;
-  margin-top:2px;
-}
+    #cart-popover h3 {
+      margin-top: 0;
+    }
 
+    .cart-item {
+      margin: 5px 0;
+    }
 
-
-
-  
-  #cart-icon {
-
-    position: fixed;
-
-    top: 15px;
-
-    right: 45px;
-
-    background: transparent;
-
-    color: #fff;
-
-    padding: 10px 14px;
-
-    border-radius: 50%;
-
-    font-size: 18px;
-
-    cursor: pointer;
-
-    z-index: 9999;
-
-  }
-
-
-
-  #cart-popover {
-
-    position: fixed;
-
-    top: 60px;
-
-    right: 20px;
-
-    background: #fff;
-
-    border: 2px solid #333;
-
-    padding: 15px;
-
-    width: 250px;
-
-    display: none;
-
-    z-index: 9999;
-
-  }
-
-
-
-  #cart-popover h3 {
-
-    margin-top: 0;
-
-  }
-
-
-
-  .cart-item {
-
-    margin: 5px 0;
-
-  }
-
-
-
-  #checkout-btn {
-
-    background: #333;
-
-    color: #fff;
-
-    padding: 10px;
-
-    width: 100%;
-
-    border: none;
-
-    cursor: pointer;
-
-  }
-
-  
-
-  
-
-    
+    #checkout-btn {
+      background: #333;
+      color: #fff;
+      padding: 10px;
+      width: 100%;
+      border: none;
+      cursor: pointer;
+    }
 
     body {
-
       margin: 0;
-
       padding: 0;
-
       font-family: Arial, sans-serif;
-
       background-color: #f0f0f0;
-
     }
-
-
 
     .gallery {
-
       column-count: 4;
-
       column-gap: 15px;
-
       max-width: 1200px;
-
       margin: 0 auto;
-
       padding: 20px;
-
       padding-top: 80px;
-
     }
-
-
 
     .gallery img {
-
       width: 100%;
-
       height: auto;
-
       margin-bottom: 15px;
-
       border-radius: 8px;
-
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       display: block;
-
       transition: transform 0.3s ease;
-
     }
-
-
 
     .gallery img:hover {
-
       transform: scale(1.05);
-
     }
-
-
 
     @media (max-width: 1000px) {
-
       .gallery {
-
         column-count: 3;
-
       }
-
     }
-
-
 
     @media (max-width: 500px) {
-
       .gallery {
-
         column-count: 2;
-
       }
-
     }
 
-
-
     @media (max-width: 300px) {
-
       .gallery {
-
         column-count: 1;
-
       }
-
     }
 
     /* Accent bar & section titles */
-
-    .accent-bar { height: 6px; background: url('wood-texture.jpg') center/cover; }
-
-    .section-title {
-
-      font-size: 2rem; margin-bottom: 0.5rem;
-
-      display: inline-block; position: relative;
-
-      animation: fadeInUp 0.6s ease both;
-
+    .accent-bar {
+      height: 6px;
+      background: url('wood-texture.jpg') center/cover;
     }
 
+    .section-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+      position: relative;
+      animation: fadeInUp 0.6s ease both;
+    }
 
-
-   /* Preloader */
-
+    /* Preloader */
     #preloader {
-
-      position: fixed; inset: 0;
-
+      position: fixed;
+      inset: 0;
       background-color: #fff;
-
       transition: opacity 1s ease-out;
-
       z-index: 2000;
-
     }
 
     #preloader::before {
-
       content: '';
-
-      position: absolute; inset: 0;
-
+      position: absolute;
+      inset: 0;
       background: url('background.jpg') center/cover no-repeat;
-
       opacity: 0.2;
-
     }
 
     #preloader.fade-out {
-
-      opacity: 0; pointer-events: none;
-
+      opacity: 0;
+      pointer-events: none;
     }
 
     #preloader .prelogo {
-
-      position: fixed; top: 20px; left: 20px;
-
-      height: 50px; z-index: 2001;
-
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      height: 50px;
+      z-index: 2001;
     }
 
     #preloader .spinner {
-
-      position: fixed; top: 50%; left: 50%;
-
+      position: fixed;
+      top: 50%;
+      left: 50%;
       margin: -25px 0 0 -25px;
-
-      width: 50px; height: 50px;
-
-      border: 5px solid rgba(0,0,0,0.1);
-
-      border-top-color: #111; border-radius: 50%;
-
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      border-top-color: #111;
+      border-radius: 50%;
       animation: spin 1s linear infinite;
-
       z-index: 2001;
-
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
     /* Header */
-
     header {
-
-      position: fixed; top: 0; left: 0; right: 0;
-
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 80px;
-
-      background: rgba(17,17,17,0.9);
-
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-
+      background: rgba(17, 17, 17, 0.9);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       z-index: 1000;
-
     }
 
     header .logo {
-
-      position: fixed; top: 20px; left: 20px;
-
-      height: 50px; z-index: 1001;
-
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      height: 50px;
+      z-index: 1001;
     }
 
     .menu-btn {
-
-      position: fixed; top: 20px; right: 20px;
-
-      background: none; border: none; color: #fff;
-
-      font-size: 1.5rem; cursor: pointer; z-index: 1001;
-
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      z-index: 1001;
     }
 
     .dropdown {
-
-      position: fixed; top: 60px; right: 20px;
-
-      display: none; background: #222; border-radius: 4px;
-
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1001;
-
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      display: none;
+      background: #222;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 1001;
     }
 
-    .dropdown.open { display: block; }
+    .dropdown.open {
+      display: block;
+    }
 
     .dropdown a {
-
-      display: block; padding: 0.75rem 1rem; color: #fff;
-
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #fff;
       white-space: nowrap;
-
     }
 
-    .dropdown a:hover { background: rgba(255,255,255,0.1); }
-
-
-
-        .add-cart-btn:hover {
-
-  background: #374151;
-
+    .dropdown a:hover {
+      background: rgba(255, 255, 255, 0.1);
     }
 
+    .add-cart-btn:hover {
+      background: #374151;
+    }
 
+    .price-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 8px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      z-index: 2;
+    }
 
+    .price-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
 
-
-  .price-overlay {
-
-    position: absolute;
-
-    top: 0;
-
-    left: 0;
-
-    width: 100%;
-
-    padding: 8px;
-
-    background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
-
-    color: #fff;
-
-    text-align: center;
-
-    font-weight: bold;
-
-    font-size: 16px;
-
-    z-index: 2;
-
-  }
-
-
-
-  .price-container {
-
-    position: relative;
-
-    display: inline-block;
-
-    width: 100%;
-
-  }
-
-
-
-  .cart-image {
-
-    display: block;
-
-    width: 100%;
-
-    height: auto;
-
-  }
-
-    
-
+    .cart-image {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
   </style>
-
 </head>
 
 <body class="bg-gray-50 text-gray-800 antialiased pt-16">
-
-
-
   <div id="preloader">
-
     <img src="beaverlogo.jpg" alt="Logo" class="prelogo">
-
     <div class="spinner"></div>
-
   </div>
 
-
-
   <!-- Header -->
-
   <header>
-
     <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
-
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
-
     <nav class="dropdown" id="navDropdown">
-
       <a href="home.html">Home</a>
-
-      <a href="furniture.html" class="block px-4 py-2 hover:bg-gray-100">Furniture</a>
-
-      <a href="decor.html" class="block px-4 py-2 hover:bg-gray-100">Decor</a>
-
+      <a href="furniture.html">Furniture</a>
+      <a href="decor.html">Decor</a>
     </nav>
-
     <div class="accent-bar"></div>
-
   </header>
 
   <!-- Snipcart Container -->
   <div hidden id="snipcart" data-api-key="YOUR_SNIPCART_API_KEY"></div>
 
-
-
   <!-- Page Title -->
-
   <h1 class="text-3xl font-semibold text-center my-10">Furniture</h1>
 
-
-<!-- Random Image Carousel Viewport -->
-
-<div class="carousel-viewport" style="
-
-  width: 95%;
-
-  height: 60vh;
-
-  max-width: 1200px;
-
-  margin: 30px auto 40px auto;
-
-  overflow: hidden;
-
-  border-radius: 5px;
-
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  background: #fff;
-
-">
-
-  <img id="random-carousel" src="" alt="Decor Image" style="
-
-    width: auto;
-
-    height:100%;
-
-    object-fit: cover;
-
-    transition: opacity 1.0s ease-in-out;
-
-    display: block;
-
+  <!-- Random Image Carousel Viewport -->
+  <div class="carousel-viewport" style="
+    width: 95%;
+    height: 60vh;
+    max-width: 1200px;
+    margin: 30px auto 40px auto;
+    overflow: hidden;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
   ">
+    <img id="random-carousel" src="" alt="Decor Image" style="
+      width: auto;
+      height:100%;
+      object-fit: cover;
+      transition: opacity 1.0s ease-in-out;
+      display: block;
+    ">
+  </div>
 
-</div>
-
-
-
-
-
-  
-    
   <!-- Image Gallery -->
   <div class="gallery">
     <!-- Your existing images unchanged -->
-    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture2.jpg" alt="Image 2" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture3.jpg" alt="Image 3" class="cart-image price-tagged" data-price="425.00">
-    <img src="ecomassets/furniture4.jpg" alt="Image 4" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture5.jpg" alt="Image 5" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture6.jpg" alt="Image 6" class="cart-image price-tagged" data-price="225.00 ea.">
-    <img src="ecomassets/furniture7.jpg" alt="Image 7" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture8.jpg" alt="Image 8" class="cart-image price-tagged" data-price="95.00">
-    <img src="ecomassets/furniture10.jpg" alt="Image 10" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture11.jpg" alt="Image 11" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture13.jpg" alt="Image 13" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture14.jpg" alt="Image 14" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture15.jpg" alt="Image 15" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture16.jpg" alt="Image 16" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture17.jpg" alt="Image 17" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture18.jpg" alt="Image 18" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture19.jpg" alt="Image 19" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture20.jpg" alt="Image 20" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture21.jpg" alt="Image 21" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture22.jpg" alt="Image 22" class="cart-image price-tagged" data-price="425.00(King)">
-    <img src="ecomassets/furniture23.jpg" alt="Image 23" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture24.jpg" alt="Image 24" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture26.jpg" alt="Image 26" class="cart-image price-tagged" data-price="325.00">
-    <img src="ecomassets/furniture27.jpg" alt="Image 27" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture28.jpg" alt="Image 28" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture29.jpg" alt="Image 29" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture30.jpg" alt="Image 30" class="cart-image price-tagged" data-price="425.00">
-    <img src="ecomassets/furniture31.jpg" alt="Image 31" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture32.jpg" alt="Image 32" class="cart-image price-tagged" data-price="225.00 ea.">
-    <img src="ecomassets/furniture33.jpg" alt="Image 33" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture34.jpg" alt="Image 34" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture35.jpg" alt="Image 35" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture36.jpg" alt="Image 36" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture37.jpg" alt="Image 37" class="cart-image price-tagged" data-price="95.00">
-    <img src="ecomassets/furniture39.jpg" alt="Image 39" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture41.jpg" alt="Image 41" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture42.jpg" alt="Image 42" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture43.jpg" alt="Image 43" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture44.jpg" alt="Image 44" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture45.jpg" alt="Image 45" class="cart-image price-tagged" data-price="225.00 ea.">
-    <img src="ecomassets/furniture46.jpg" alt="Image 46" class="cart-image price-tagged" data-price="325.00">
-    <img src="ecomassets/furniture47.jpg" alt="Image 47" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture48.jpg" alt="Image 48" class="cart-image price-tagged" data-price="225.00">
-    <img src="ecomassets/furniture49.jpg" alt="Image 49" class="cart-image price-tagged" data-price="125.00">
-    <img src="ecomassets/furniture50.jpg" alt="Image 50" class="cart-image price-tagged" data-price="225.00">
+    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 1">
+    <img src="ecomassets/furniture2.jpg" alt="Image 2" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 2">
+    <img src="ecomassets/furniture3.jpg" alt="Image 3" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 3">
+    <img src="ecomassets/furniture4.jpg" alt="Image 4" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 4">
+    <img src="ecomassets/furniture5.jpg" alt="Image 5" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 5">
+    <img src="ecomassets/furniture6.jpg" alt="Image 6" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 6">
+    <img src="ecomassets/furniture7.jpg" alt="Image 7" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 7">
+    <img src="ecomassets/furniture8.jpg" alt="Image 8" class="cart-image price-tagged" data-price="95.00" data-product="Furniture 8">
+    <img src="ecomassets/furniture10.jpg" alt="Image 10" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 10">
+    <img src="ecomassets/furniture11.jpg" alt="Image 11" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 11">
+    <img src="ecomassets/furniture13.jpg" alt="Image 13" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 13">
+    <img src="ecomassets/furniture14.jpg" alt="Image 14" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 14">
+    <img src="ecomassets/furniture15.jpg" alt="Image 15" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 15">
+    <img src="ecomassets/furniture16.jpg" alt="Image 16" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 16">
+    <img src="ecomassets/furniture17.jpg" alt="Image 17" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 17">
+    <img src="ecomassets/furniture18.jpg" alt="Image 18" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 18">
+    <img src="ecomassets/furniture19.jpg" alt="Image 19" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 19">
+    <img src="ecomassets/furniture20.jpg" alt="Image 20" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 20">
+    <img src="ecomassets/furniture21.jpg" alt="Image 21" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 21">
+    <img src="ecomassets/furniture22.jpg" alt="Image 22" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 22">
+    <img src="ecomassets/furniture23.jpg" alt="Image 23" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 23">
+    <img src="ecomassets/furniture24.jpg" alt="Image 24" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 24">
+    <img src="ecomassets/furniture26.jpg" alt="Image 26" class="cart-image price-tagged" data-price="325.00" data-product="Furniture 26">
+    <img src="ecomassets/furniture27.jpg" alt="Image 27" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 27">
+    <img src="ecomassets/furniture28.jpg" alt="Image 28" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 28">
+    <img src="ecomassets/furniture29.jpg" alt="Image 29" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 29">
+    <img src="ecomassets/furniture30.jpg" alt="Image 30" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 30">
+    <img src="ecomassets/furniture31.jpg" alt="Image 31" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 31">
+    <img src="ecomassets/furniture32.jpg" alt="Image 32" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 32">
+    <img src="ecomassets/furniture33.jpg" alt="Image 33" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 33">
+    <img src="ecomassets/furniture34.jpg" alt="Image 34" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 34">
+    <img src="ecomassets/furniture35.jpg" alt="Image 35" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 35">
+    <img src="ecomassets/furniture36.jpg" alt="Image 36" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 36">
+    <img src="ecomassets/furniture37.jpg" alt="Image 37" class="cart-image price-tagged" data-price="95.00" data-product="Furniture 37">
+    <img src="ecomassets/furniture39.jpg" alt="Image 39" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 39">
+    <img src="ecomassets/furniture41.jpg" alt="Image 41" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 41">
+    <img src="ecomassets/furniture42.jpg" alt="Image 42" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 42">
+    <img src="ecomassets/furniture43.jpg" alt="Image 43" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 43">
+    <img src="ecomassets/furniture44.jpg" alt="Image 44" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 44">
+    <img src="ecomassets/furniture45.jpg" alt="Image 45" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 45">
+    <img src="ecomassets/furniture46.jpg" alt="Image 46" class="cart-image price-tagged" data-price="325.00" data-product="Furniture 46">
+    <img src="ecomassets/furniture47.jpg" alt="Image 47" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 47">
+    <img src="ecomassets/furniture48.jpg" alt="Image 48" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 48">
+    <img src="ecomassets/furniture49.jpg" alt="Image 49" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 49">
+    <img src="ecomassets/furniture50.jpg" alt="Image 50" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 50">
   </div>
 
-  
-
-
-
-
-<script>
-
- window.addEventListener('load', () => {
-
-      window.scrollTo(0,0);
-
+  <script>
+    window.addEventListener('load', () => {
+      window.scrollTo(0, 0);
       setTimeout(() => {
-
         const pre = document.getElementById('preloader');
-
         pre.classList.add('fade-out');
-
         setTimeout(() => pre.style.display = 'none', 1000);
-
       }, 2000);
-
     });
 
-
-
-function toggleMenu() {
-
+    function toggleMenu() {
       document.getElementById('navDropdown').classList.toggle('open');
-
     }
+  </script>
 
+  <script>
+    // Simplified and fixed Add to Cart functionality:
+    document.addEventListener("DOMContentLoaded", function () {
+      const images = document.querySelectorAll('img.cart-image');
 
+      images.forEach(image => {
+        // Wrap each image in a relative container
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline-block';
+        image.parentNode.insertBefore(wrapper, image);
+        wrapper.appendChild(image);
 
-
-
-  document.addEventListener("DOMContentLoaded", function() {
-
-    // Select all images with class 'cart-image'
-
-    const images = document.querySelectorAll('img.cart-image');
-
-
-
-    images.forEach(img => {
-
-      // Create the Add to Cart button
-
-      const button = document.createElement('button');
-
-      button.textContent = 'Add to Cart';
-
-      button.className = 'add-cart-btn';
-
-      button.style.display = 'none';
-
-      button.style.position = 'absolute';
-
-      button.style.bottom = '10px';
-
-      button.style.left = '50%';
-
-      button.style.transform = 'translateX(-50%)';
-
-      button.style.padding = '8px 16px';
-
-      button.style.background = '#1f2937';
-
-      button.style.color = '#fff';
-
-      button.style.border = 'none';
-
-      button.style.borderRadius = '8px';
-
-      button.style.cursor = 'pointer';
-
-      button.style.zIndex = '10';
-
-
-
-      // Wrap image in a relative container
-
-      const wrapper = document.createElement('div');
-
-      wrapper.style.position = 'relative';
-
-      wrapper.style.display = 'inline-block';
-
-
-
-      // Move image into wrapper
-
-      img.parentNode.insertBefore(wrapper, img);
-
-      wrapper.appendChild(img);
-
-      wrapper.appendChild(button);
-
-
-
-      // Only show the Add to Cart button when clicking the image
-images.forEach(image => {
-    image.addEventListener('click', (event) => {
-        // Prevent action if the user clicked the button itself
-        if (event.target.classList.contains('add-to-cart-button')) {
-            return;
-        }
-
-        // Remove existing buttons
-        const existingButton = document.querySelector('.add-to-cart-button');
-        if (existingButton) {
-            existingButton.remove();
-        }
-
-        // Create new Add to Cart button
+        // Create the Add to Cart button (initially hidden)
         const button = document.createElement('button');
         button.textContent = 'Add to Cart';
         button.className = 'add-to-cart-button';
+        button.style.display = 'none';
         button.style.position = 'absolute';
         button.style.bottom = '10px';
         button.style.left = '50%';
         button.style.transform = 'translateX(-50%)';
         button.style.padding = '8px 16px';
-        button.style.backgroundColor = '#000';
+        button.style.background = '#1f2937';
         button.style.color = '#fff';
         button.style.border = 'none';
+        button.style.borderRadius = '8px';
         button.style.cursor = 'pointer';
-        button.style.zIndex = '999';
-        button.style.opacity = '0.9';
+        button.style.zIndex = '10';
 
-        // Add button click handler
-        button.addEventListener('click', (e) => {
-            e.stopPropagation(); // prevent triggering parent click
-            const price = parseFloat(image.getAttribute('data-price')) || 0;
-            const name = image.getAttribute('data-product') || 'Furniture Product';
-            cart.push({ name, price });
-            updateCartDisplay();
-            button.remove();
+        wrapper.appendChild(button);
+
+        // Show this image's button when wrapper is clicked
+        wrapper.addEventListener('click', (event) => {
+          event.stopPropagation();
+          // Hide any other visible buttons
+          document.querySelectorAll('.add-to-cart-button').forEach(btn => {
+            if (btn !== button) btn.style.display = 'none';
+          });
+          button.style.display = 'block';
         });
 
-        // Append button to image container
-        image.appendChild(button);
-    });
-});
+        // Hide the button if clicking anywhere outside this wrapper
+        document.addEventListener('click', (e) => {
+          if (!wrapper.contains(e.target)) {
+            button.style.display = 'none';
+          }
+        });
 
-
-      // Hide button if clicking outside the wrapper
-
-      document.addEventListener('click', (e) => {
-
-        if (!wrapper.contains(e.target)) {
-
+        // When the button is clicked, add the item to cart
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const price = parseFloat(image.getAttribute('data-price')) || 0;
+          const name = image.getAttribute('data-product') || 'Furniture Product';
+          addToCart(name, price);
           button.style.display = 'none';
-
-        }
-
+        });
       });
-
     });
 
-  });
+    // Price-overlay wrapping (unchanged)
+    document.addEventListener("DOMContentLoaded", function () {
+      const images = document.querySelectorAll('.cart-image');
 
+      images.forEach(img => {
+        const price = img.getAttribute('data-price');
+        if (price) {
+          const container = document.createElement('div');
+          container.classList.add('price-container');
 
+          const overlay = document.createElement('div');
+          overlay.classList.add('price-overlay');
+          overlay.textContent = price;
 
-  document.addEventListener('DOMContentLoaded', function() {
+          img.parentNode.insertBefore(container, img);
+          container.appendChild(img);
+          container.appendChild(overlay);
+        }
+      });
+    });
 
-    const images = document.querySelectorAll('.cart-image');
+    // Random carousel logic (unchanged)
+    window.addEventListener("load", () => {
+      const galleryImages = document.querySelectorAll(".gallery img");
+      const decorImages = Array.from(galleryImages).map(img => img.src);
 
+      if (decorImages.length === 0) return;
 
+      const carousel = document.getElementById("random-carousel");
+      let currentIndex = Math.floor(Math.random() * decorImages.length);
+      carousel.src = decorImages[currentIndex];
 
-    images.forEach(img => {
-
-      const price = img.getAttribute('data-price');
-
-      if (price) {
-
-        // Wrap image in a container
-
-        const container = document.createElement('div');
-
-        container.classList.add('price-container');
-
-
-
-        // Create price overlay
-
-        const overlay = document.createElement('div');
-
-        overlay.classList.add('price-overlay');
-
-        overlay.textContent = price;
-
-
-
-        // Insert container and append image + overlay
-
-        img.parentNode.insertBefore(container, img);
-
-        container.appendChild(img);
-
-        container.appendChild(overlay);
-
+      function showNextRandomImage() {
+        if (decorImages.length < 2) return;
+        let newIndex;
+        do {
+          newIndex = Math.floor(Math.random() * decorImages.length);
+        } while (newIndex === currentIndex);
+        currentIndex = newIndex;
+        carousel.style.opacity = 0;
+        setTimeout(() => {
+          carousel.src = decorImages[currentIndex];
+          carousel.style.opacity = 1;
+        }, 300);
       }
 
+      setInterval(showNextRandomImage, 4000);
     });
-
-  });
-
-
-
-
-
-
-
-  
-
-  window.addEventListener("load", () => {
-
-    const galleryImages = document.querySelectorAll(".gallery img");
-
-    const decorImages = Array.from(galleryImages).map(img => img.src);
-
-
-
-    if (decorImages.length === 0) return;
-
-
-
-    const carousel = document.getElementById("random-carousel");
-
-    let currentIndex = Math.floor(Math.random() * decorImages.length);
-
-    carousel.src = decorImages[currentIndex];
-
-
-
-    function showNextRandomImage() {
-
-      if (decorImages.length < 2) return;
-
-
-
-      let newIndex;
-
-      do {
-
-        newIndex = Math.floor(Math.random() * decorImages.length);
-
-      } while (newIndex === currentIndex);
-
-
-
-      currentIndex = newIndex;
-
-
-
-      carousel.style.opacity = 0;
-
-      setTimeout(() => {
-
-        carousel.src = decorImages[currentIndex];
-
-        carousel.style.opacity = 1;
-
-      }, 300);
-
-    }
-
-
-
-    setInterval(showNextRandomImage, 4000);
-
-  });
-
-</script>
-
-  
-
-
-
-
-
-    
-
-
+  </script>
 
   <!-- Footer -->
-
   <footer class="bg-white border-t py-8 mt-12">
-
     <div class="max-w-6xl mx-auto px-6 text-center text-gray-600">
-
       © 2025 Beaver Built Furniture. All rights reserved.
-
     </div>
-
   </footer>
-
-
 
   <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
 
-
-
-
-
   <!-- Cart Icon -->
-
-<div id="cart-icon">
-  <img src="ecomassets/Cart.png" class="cart-img">
-</div>
-
-
-
-<!-- Cart Popover -->
-
-<div id="cart-popover">
-
-  <h3>Your Cart</h3>
-
-  <div id="cart-items"></div>
-
-  <p><strong>Total: $<span id="cart-total">0</span></strong></p>
-
-  <button id="checkout-btn">Checkout</button>
-
-</div>
-
-
-
-<script>
-
-  const stripe = Stripe('pk_test_51RVvT106Co1PBhHg2su0AuKgtFXeS8vXU8Ea37hagFNU9wQSsEfIDQyMbnCdYsbw5aw5DuF232VGxyCVp7K0zHvK00XomXmKmm');
-
-
-
-  let cart = [];
-
-
-
-  // Toggle cart popover
-
-  document.getElementById('cart-icon').onclick = () => {
-
-    const popover = document.getElementById('cart-popover');
-
-    popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
-
-  };
-
-
-
-  // Function to add item to cart
-
-  function addToCart(productName, price) {
-
-    cart.push({ name: productName, price: price });
-
-    updateCart();
-
-  }
-
-
-
-  // Update cart display
-
-  function updateCart() {
-
-    const cartItemsDiv = document.getElementById('cart-items');
-
-    cartItemsDiv.innerHTML = '';
-
-    let total = 0;
-
-
-
-    cart.forEach((item, index) => {
-
-      total += item.price;
-
-      cartItemsDiv.innerHTML += `<div class="cart-item">${item.name} - $${item.price}</div>`;
-
-    });
-
-
-
-    document.getElementById('cart-total').innerText = total;
-
-  }
-
-
-
-  // Attach click event to existing .cart-image buttons
-
-  document.querySelectorAll('.cart-image').forEach(button => {
-
-    button.addEventListener('click', () => {
-
-      const productName = button.getAttribute('data-product') || 'Furniture Product';
-
-      const price = parseFloat(button.getAttribute('data-price')) || 0;
-
-      addToCart(productName, price);
-
-    });
-
-  });
-
-
-
-  // Checkout button click
-
-  document.getElementById('checkout-btn').addEventListener('click', async () => {
-
-    if (cart.length === 0) {
-
-      alert('Your cart is empty!');
-
-      return;
-
+  <div id="cart-icon">
+    <img src="ecomassets/Cart.png" class="cart-img">
+  </div>
+
+  <!-- Cart Popover -->
+  <div id="cart-popover">
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
+    <button id="checkout-btn">Checkout</button>
+  </div>
+
+  <script>
+    const stripe = Stripe('pk_test_51RVvT106Co1PBhHg2su0AuKgtFXeS8vXU8Ea37hagFNU9wQSsEfIDQyMbnCdYsbw5aw5DuF232VGxyCVp7K0zHvK00XomXmKmm');
+
+    let cart = [];
+
+    // Toggle cart popover
+    document.getElementById('cart-icon').onclick = () => {
+      const popover = document.getElementById('cart-popover');
+      popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Add an item to the cart array and update display
+    function addToCart(productName, price) {
+      cart.push({ name: productName, price: price });
+      updateCart();
     }
 
+    // Update cart display
+    function updateCart() {
+      const cartItemsDiv = document.getElementById('cart-items');
+      cartItemsDiv.innerHTML = '';
+      let total = 0;
 
+      cart.forEach((item, index) => {
+        total += item.price;
+        cartItemsDiv.innerHTML += `<div class="cart-item">${item.name} - $${item.price.toFixed(2)}</div>`;
+      });
 
-    // Example line items (ideally created via backend, demo-only)
-
-    const lineItems = cart.map(item => ({
-
-      price_data: {
-
-        currency: 'usd',
-
-        product_data: { name: item.name },
-
-        unit_amount: item.price * 100,
-
-      },
-
-      quantity: 1,
-
-    }));
-
-
-
-    // Call backend endpoint to create Checkout Session — you'll replace this URL
-
-    const response = await fetch('https://www.beaverbuiltfurniture/furniture.html/create-checkout-session', {
-
-      method: 'POST',
-
-      headers: { 'Content-Type': 'application/json' },
-
-      body: JSON.stringify({ lineItems: lineItems })
-
-    });
-
-
-
-    const session = await response.json();
-
-
-
-    // Redirect to Stripe Checkout
-
-    const result = await stripe.redirectToCheckout({ sessionId: session.id });
-
-    if (result.error) {
-
-      alert(result.error.message);
-
+      document.getElementById('cart-total').innerText = total.toFixed(2);
     }
 
-  });
+    // Checkout button click
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
 
-</script>
+      // Convert cart items to Stripe line items
+      const lineItems = cart.map(item => ({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: item.name },
+          unit_amount: item.price * 100,
+        },
+        quantity: 1,
+      }));
 
-  
+      // Call backend endpoint to create Checkout Session — replace this URL with your actual endpoint
+      const response = await fetch('https://www.beaverbuiltfurniture.com/furniture.html/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineItems: lineItems })
+      });
 
-  
+      const session = await response.json();
 
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({ sessionId: session.id });
+      if (result.error) {
+        alert(result.error.message);
+      }
+    });
+  </script>
 </body>
-
 </html>
-  
-
-
-
