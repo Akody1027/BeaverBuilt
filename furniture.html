@@ -925,7 +925,7 @@ function toggleMenu() {
 
     button.addEventListener('click', () => {
 
-      const productName = button.getAttribute('data-product') || 'Decor Product';
+      const productName = button.getAttribute('data-product') || 'Furniture Product';
 
       const price = parseFloat(button.getAttribute('data-price')) || 0;
 
@@ -973,7 +973,7 @@ function toggleMenu() {
 
     // Call backend endpoint to create Checkout Session — you'll replace this URL
 
-    const response = await fetch('https://YOUR_BACKEND_ENDPOINT/create-checkout-session', {
+    const response = await fetch('https://www.beaverbuiltfurniture/furniture.html/create-checkout-session', {
 
       method: 'POST',
 
