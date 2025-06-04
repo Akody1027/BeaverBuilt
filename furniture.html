@@ -359,7 +359,7 @@
       <img src="ecomassets/furniture8.jpg" alt="Furniture 8" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-price="125.00" data-title="Furniture 10" data-description="Compact nightstand with a single drawer.">
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 10" data-description="Compact nightstand with a single drawer."> 
       <img src="ecomassets/furniture10.jpg" alt="Furniture 10" />
       <div class="view-button">View</div>
     </div>
@@ -546,4 +546,137 @@
     window.addEventListener('load', function() {
       window.scrollTo(0, 0);
       setTimeout(function() {
-        var pre = d
+        var pre = document.getElementById('preloader');
+        pre.classList.add('fade-out');
+        setTimeout(function() {
+          pre.style.display = 'none';
+        }, 1000);
+      }, 2000);
+    });
+
+    // 2) Toggle navigation dropdown
+    function toggleMenu() {
+      document.getElementById('navDropdown').classList.toggle('open');
+    }
+
+    // 3) Initialize Stripe and cart logic
+    var stripe = Stripe('pk_test_51RVvT106Co1PBhHg2su0AuKgtFXeS8vXU8Ea37hagFNU9wQSsEfIDQyMbnCdYsbw5aw5DuF232VGxyCVp7K0zHvK00XomXmKmm');
+    var cart = [];
+
+    function addToCart(name, price) {
+      cart.push({ name: name, price: price });
+      updateCart();
+    }
+
+    function updateCart() {
+      var itemsDiv = document.getElementById('cart-items');
+      itemsDiv.innerHTML = '';
+      var total = 0;
+      cart.forEach(function(item) {
+        total += item.price;
+        itemsDiv.innerHTML += '<div class="cart-item">' + item.name + ' - $' + item.price.toFixed(2) + '</div>';
+      });
+      document.getElementById('cart-total').innerText = total.toFixed(2);
+    }
+
+    // 4) Cart icon click toggles popover
+    document.getElementById('cart-icon').addEventListener('click', function() {
+      var pop = document.getElementById('cart-popover');
+      pop.style.display = (pop.style.display === 'block') ? 'none' : 'block';
+    });
+
+    // 5) Checkout button
+    document.getElementById('checkout-btn').addEventListener('click', async function() {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      var lineItems = cart.map(function(i) {
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: i.name },
+            unit_amount: i.price * 100
+          },
+          quantity: 1
+        };
+      });
+      var response = await fetch('https://www.beaverbuiltfurniture.com/furniture.html/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineItems: lineItems })
+      });
+      var session = await response.json();
+      var result = await stripe.redirectToCheckout({ sessionId: session.id });
+      if (result.error) {
+        alert(result.error.message);
+      }
+    });
+
+    // 6) DOMContentLoaded: modal, gallery, and carousel setup
+    document.addEventListener('DOMContentLoaded', function() {
+      // Modal elements
+      var modal = document.getElementById('detail-modal');
+      var imgEl = document.getElementById('modal-image');
+      var titleEl = document.getElementById('modal-title');
+      var descEl = document.getElementById('modal-description');
+      var priceEl = document.getElementById('modal-price');
+      var addBtn = document.getElementById('modal-add-btn');
+      var closeBtn = document.getElementById('modal-close');
+
+      // "View" button click
+      var galleryItems = document.querySelectorAll('.gallery-item');
+      galleryItems.forEach(function(item) {
+        var viewBtn = item.querySelector('.view-button');
+        var thumbnail = item.querySelector('img');
+        viewBtn.addEventListener('click', function() {
+          imgEl.src = thumbnail.src;
+          titleEl.textContent = item.getAttribute('data-title');
+          descEl.textContent = item.getAttribute('data-description');
+          var price = parseFloat(item.getAttribute('data-price')) || 0;
+          priceEl.textContent = 'Price: $' + price.toFixed(2);
+
+          modal.style.display = 'flex';
+          addBtn.onclick = function() {
+            addToCart(item.getAttribute('data-title'), price);
+            modal.style.display = 'none';
+          };
+        });
+      });
+
+      // Close modal when clicking "×" or outside content
+      closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+      });
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Random carousel initialization
+      var galleryImgs = document.querySelectorAll('.gallery-item img');
+      var decorImgs = Array.prototype.map.call(galleryImgs, function(i) { return i.src; });
+      if (decorImgs.length) {
+        var carousel = document.getElementById('random-carousel');
+        var idx = Math.floor(Math.random() * decorImgs.length);
+        carousel.src = decorImgs[idx];
+        setInterval(function() {
+          var newIdx;
+          do {
+            newIdx = Math.floor(Math.random() * decorImgs.length);
+          } while (newIdx === idx);
+          idx = newIdx;
+          carousel.style.opacity = 0;
+          setTimeout(function() {
+            carousel.src = decorImgs[idx];
+            carousel.style.opacity = 1;
+          }, 300);
+        }, 4000);
+      }
+    });
+  </script>
+
+  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
+</body>
+</html>
