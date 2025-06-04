@@ -543,9 +543,8 @@
   </div>
 
   <script>
-    // Preloader fade-out
-    window.addEventListener('load', () => {
+    // Preloader fade-out now uses DOMContentLoaded
+    window.addEventListener('DOMContentLoaded', () => {
       window.scrollTo(0, 0);
       setTimeout(() => {
-        const pre = document.getElementById('preloader');
-        pre.classList.add('fade
+        const pre = document.getElementById('preloa
