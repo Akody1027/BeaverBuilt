@@ -75,18 +75,37 @@
       padding-top: 80px;
     }
 
-    .gallery img {
+    .gallery-item {
+      position: relative;
+      margin-bottom: 15px;
+    }
+
+    .gallery-item img {
       width: 100%;
       height: auto;
-      margin-bottom: 15px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       display: block;
       transition: transform 0.3s ease;
     }
 
-    .gallery img:hover {
+    .gallery-item img:hover {
       transform: scale(1.05);
+    }
+
+    .magnifier-icon {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border-radius: 50%;
+      padding: 6px;
+      cursor: pointer;
+      z-index: 5;
+      font-size: 14px;
+      line-height: 1;
     }
 
     @media (max-width: 1000px) {
@@ -229,34 +248,73 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    .add-cart-btn:hover {
-      background: #374151;
-    }
-
-    .price-overlay {
-      position: absolute;
+    /* Modal Window */
+    #detail-modal {
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 8px;
-      background-color: rgba(0, 0, 0, 0.5);
-      color: #fff;
-      text-align: center;
-      font-weight: bold;
-      font-size: 16px;
-      z-index: 2;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
     }
 
-    .price-container {
+    #modal-content {
+      background: #fff;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 8px;
+      padding: 20px;
       position: relative;
-      display: inline-block;
-      width: 100%;
     }
 
-    .cart-image {
-      display: block;
+    #modal-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    #modal-image {
       width: 100%;
       height: auto;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+
+    #modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #modal-description {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    #modal-price {
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    #modal-add-btn {
+      background: #1f2937;
+      color: #fff;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    #modal-add-btn:hover {
+      background: #374151;
     }
   </style>
 </head>
@@ -310,52 +368,199 @@
 
   <!-- Image Gallery -->
   <div class="gallery">
-    <!-- Your existing images unchanged -->
-    <img src="ecomassets/furniture1.jpg" alt="Image 1" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 1">
-    <img src="ecomassets/furniture2.jpg" alt="Image 2" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 2">
-    <img src="ecomassets/furniture3.jpg" alt="Image 3" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 3">
-    <img src="ecomassets/furniture4.jpg" alt="Image 4" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 4">
-    <img src="ecomassets/furniture5.jpg" alt="Image 5" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 5">
-    <img src="ecomassets/furniture6.jpg" alt="Image 6" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 6">
-    <img src="ecomassets/furniture7.jpg" alt="Image 7" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 7">
-    <img src="ecomassets/furniture8.jpg" alt="Image 8" class="cart-image price-tagged" data-price="95.00" data-product="Furniture 8">
-    <img src="ecomassets/furniture10.jpg" alt="Image 10" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 10">
-    <img src="ecomassets/furniture11.jpg" alt="Image 11" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 11">
-    <img src="ecomassets/furniture13.jpg" alt="Image 13" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 13">
-    <img src="ecomassets/furniture14.jpg" alt="Image 14" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 14">
-    <img src="ecomassets/furniture15.jpg" alt="Image 15" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 15">
-    <img src="ecomassets/furniture16.jpg" alt="Image 16" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 16">
-    <img src="ecomassets/furniture17.jpg" alt="Image 17" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 17">
-    <img src="ecomassets/furniture18.jpg" alt="Image 18" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 18">
-    <img src="ecomassets/furniture19.jpg" alt="Image 19" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 19">
-    <img src="ecomassets/furniture20.jpg" alt="Image 20" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 20">
-    <img src="ecomassets/furniture21.jpg" alt="Image 21" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 21">
-    <img src="ecomassets/furniture22.jpg" alt="Image 22" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 22">
-    <img src="ecomassets/furniture23.jpg" alt="Image 23" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 23">
-    <img src="ecomassets/furniture24.jpg" alt="Image 24" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 24">
-    <img src="ecomassets/furniture26.jpg" alt="Image 26" class="cart-image price-tagged" data-price="325.00" data-product="Furniture 26">
-    <img src="ecomassets/furniture27.jpg" alt="Image 27" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 27">
-    <img src="ecomassets/furniture28.jpg" alt="Image 28" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 28">
-    <img src="ecomassets/furniture29.jpg" alt="Image 29" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 29">
-    <img src="ecomassets/furniture30.jpg" alt="Image 30" class="cart-image price-tagged" data-price="425.00" data-product="Furniture 30">
-    <img src="ecomassets/furniture31.jpg" alt="Image 31" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 31">
-    <img src="ecomassets/furniture32.jpg" alt="Image 32" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 32">
-    <img src="ecomassets/furniture33.jpg" alt="Image 33" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 33">
-    <img src="ecomassets/furniture34.jpg" alt="Image 34" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 34">
-    <img src="ecomassets/furniture35.jpg" alt="Image 35" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 35">
-    <img src="ecomassets/furniture36.jpg" alt="Image 36" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 36">
-    <img src="ecomassets/furniture37.jpg" alt="Image 37" class="cart-image price-tagged" data-price="95.00" data-product="Furniture 37">
-    <img src="ecomassets/furniture39.jpg" alt="Image 39" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 39">
-    <img src="ecomassets/furniture41.jpg" alt="Image 41" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 41">
-    <img src="ecomassets/furniture42.jpg" alt="Image 42" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 42">
-    <img src="ecomassets/furniture43.jpg" alt="Image 43" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 43">
-    <img src="ecomassets/furniture44.jpg" alt="Image 44" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 44">
-    <img src="ecomassets/furniture45.jpg" alt="Image 45" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 45">
-    <img src="ecomassets/furniture46.jpg" alt="Image 46" class="cart-image price-tagged" data-price="325.00" data-product="Furniture 46">
-    <img src="ecomassets/furniture47.jpg" alt="Image 47" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 47">
-    <img src="ecomassets/furniture48.jpg" alt="Image 48" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 48">
-    <img src="ecomassets/furniture49.jpg" alt="Image 49" class="cart-image price-tagged" data-price="125.00" data-product="Furniture 49">
-    <img src="ecomassets/furniture50.jpg" alt="Image 50" class="cart-image price-tagged" data-price="225.00" data-product="Furniture 50">
+    <!-- Each .gallery-item wraps an image + magnifier icon. Data attributes include price, title, description. -->
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 1" data-description="This is a handcrafted wooden chair perfect for living rooms.">
+      <img src="ecomassets/furniture1.jpg" alt="Furniture 1">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 2" data-description="Elegant oak dining table with a smooth finish.">
+      <img src="ecomassets/furniture2.jpg" alt="Furniture 2">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="425.00" data-title="Furniture 3" data-description="Modern bookshelf with adjustable shelves.">
+      <img src="ecomassets/furniture3.jpg" alt="Furniture 3">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 4" data-description="Comfortable accent chair with plush cushions.">
+      <img src="ecomassets/furniture4.jpg" alt="Furniture 4">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 5" data-description="Stylish coffee table made from reclaimed wood.">
+      <img src="ecomassets/furniture5.jpg" alt="Furniture 5">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 6" data-description="Set of two side tables with metal legs.">
+      <img src="ecomassets/furniture6.jpg" alt="Furniture 6">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 7" data-description="Rustic wooden bench for entryways or patios.">
+      <img src="ecomassets/furniture7.jpg" alt="Furniture 7">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="95.00" data-title="Furniture 8" data-description="Minimalist floating shelf set of three.">
+      <img src="ecomassets/furniture8.jpg" alt="Furniture 8">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 10" data-description="Compact nightstand with a single drawer.">
+      <img src="ecomassets/furniture10.jpg" alt="Furniture 10">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 11" data-description="Tall ladder bookshelf for small spaces.">
+      <img src="ecomassets/furniture11.jpg" alt="Furniture 11">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 13" data-description="Classic rocking chair with smooth curves.">
+      <img src="ecomassets/furniture13.jpg" alt="Furniture 13">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 14" data-description="Armchair upholstered in soft linen fabric.">
+      <img src="ecomassets/furniture14.jpg" alt="Furniture 14">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 15" data-description="Set of bar stools with swivel seats.">
+      <img src="ecomassets/furniture15.jpg" alt="Furniture 15">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 16" data-description="Rustic dining bench with metal legs.">
+      <img src="ecomassets/furniture16.jpg" alt="Furniture 16">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 17" data-description="Contemporary end table with glass top.">
+      <img src="ecomassets/furniture17.jpg" alt="Furniture 17">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 18" data-description="Cozy loveseat with plush upholstery.">
+      <img src="ecomassets/furniture18.jpg" alt="Furniture 18">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 19" data-description="Mid-century modern TV stand with storage.">
+      <img src="ecomassets/furniture19.jpg" alt="Furniture 19">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 20" data-description="Adjustable height coffee table.">
+      <img src="ecomassets/furniture20.jpg" alt="Furniture 20">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 21" data-description="Corner shelf unit for extra storage.">
+      <img src="ecomassets/furniture21.jpg" alt="Furniture 21">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="425.00" data-title="Furniture 22" data-description="King-size bed frame with headboard.">
+      <img src="ecomassets/furniture22.jpg" alt="Furniture 22">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 23" data-description="Small writing desk with two drawers.">
+      <img src="ecomassets/furniture23.jpg" alt="Furniture 23">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 24" data-description="Reclaimed wood console table.">
+      <img src="ecomassets/furniture24.jpg" alt="Furniture 24">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="325.00" data-title="Furniture 26" data-description="Custom entertainment center with cabinets.">
+      <img src="ecomassets/furniture26.jpg" alt="Furniture 26">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 27" data-description="Set of nesting tables in walnut finish.">
+      <img src="ecomassets/furniture27.jpg" alt="Furniture 27">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 28" data-description="Simple side cabinet with sliding door.">
+      <img src="ecomassets/furniture28.jpg" alt="Furniture 28">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 29" data-description="Adjustable office chair with wheels.">
+      <img src="ecomassets/furniture29.jpg" alt="Furniture 29">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="425.00" data-title="Furniture 30" data-description="Large sectional sofa with chaise.">
+      <img src="ecomassets/furniture30.jpg" alt="Furniture 30">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 31" data-description="Compact TV stand with rustic finish.">
+      <img src="ecomassets/furniture31.jpg" alt="Furniture 31">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 32" data-description="Pair of bedside tables with drawers.">
+      <img src="ecomassets/furniture32.jpg" alt="Furniture 32">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 33" data-description="Small folding tray table set.">
+      <img src="ecomassets/furniture33.jpg" alt="Furniture 33">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 34" data-description="Reversible ottoman with storage inside.">
+      <img src="ecomassets/furniture34.jpg" alt="Furniture 34">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 35" data-description="Wooden stool with carved legs.">
+      <img src="ecomassets/furniture35.jpg" alt="Furniture 35">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 36" data-description="Industrial-style shelving unit with metal frame.">
+      <img src="ecomassets/furniture36.jpg" alt="Furniture 36">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="95.00" data-title="Furniture 37" data-description="Set of floating corner shelves.">
+      <img src="ecomassets/furniture37.jpg" alt="Furniture 37">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 39" data-description="Compact rolling storage cart.">
+      <img src="ecomassets/furniture39.jpg" alt="Furniture 39">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 41" data-description="Low-profile TV cabinet with sliding doors.">
+      <img src="ecomassets/furniture41.jpg" alt="Furniture 41">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 42" data-description="High-back upholstered dining chair.">
+      <img src="ecomassets/furniture42.jpg" alt="Furniture 42">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 43" data-description="Reclaimed wood side table with metal accents.">
+      <img src="ecomassets/furniture43.jpg" alt="Furniture 43">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 44" data-description="Set of nesting ottomans with fabric upholstery.">
+      <img src="ecomassets/furniture44.jpg" alt="Furniture 44">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 45" data-description="Modern media console with open shelving.">
+      <img src="ecomassets/furniture45.jpg" alt="Furniture 45">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="325.00" data-title="Furniture 46" data-description="Large wooden wardrobe with sliding doors.">
+      <img src="ecomassets/furniture46.jpg" alt="Furniture 46">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 47" data-description="Contemporary curved-back accent chair.">
+      <img src="ecomassets/furniture47.jpg" alt="Furniture 47">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 48" data-description="Rustic console table with X-frame legs.">
+      <img src="ecomassets/furniture48.jpg" alt="Furniture 48">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="125.00" data-title="Furniture 49" data-description="Small decorative stool with cushioned top.">
+      <img src="ecomassets/furniture49.jpg" alt="Furniture 49">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+    <div class="gallery-item" data-price="225.00" data-title="Furniture 50" data-description="Set of two end tables with marble tops.">
+      <img src="ecomassets/furniture50.jpg" alt="Furniture 50">
+      <div class="magnifier-icon">🔍</div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal">
+    <div id="modal-content">
+      <button id="modal-close">&times;</button>
+      <img id="modal-image" src="" alt="Detail">
+      <div id="modal-title"></div>
+      <div id="modal-description"></div>
+      <div id="modal-price"></div>
+      <button id="modal-add-btn">Add to Cart</button>
+    </div>
   </div>
 
   <script>
@@ -374,200 +579,9 @@
   </script>
 
   <script>
-    // Simplified and fixed Add to Cart functionality:
-    document.addEventListener("DOMContentLoaded", function () {
-      const images = document.querySelectorAll('img.cart-image');
-
-      images.forEach(image => {
-        // Wrap each image in a relative container
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'inline-block';
-        image.parentNode.insertBefore(wrapper, image);
-        wrapper.appendChild(image);
-
-        // Create the Add to Cart button (initially hidden)
-        const button = document.createElement('button');
-        button.textContent = 'Add to Cart';
-        button.className = 'add-to-cart-button';
-        button.style.display = 'none';
-        button.style.position = 'absolute';
-        button.style.bottom = '10px';
-        button.style.left = '50%';
-        button.style.transform = 'translateX(-50%)';
-        button.style.padding = '8px 16px';
-        button.style.background = '#1f2937';
-        button.style.color = '#fff';
-        button.style.border = 'none';
-        button.style.borderRadius = '8px';
-        button.style.cursor = 'pointer';
-        button.style.zIndex = '10';
-
-        wrapper.appendChild(button);
-
-        // Show this image's button when wrapper is clicked
-        wrapper.addEventListener('click', (event) => {
-          event.stopPropagation();
-          // Hide any other visible buttons
-          document.querySelectorAll('.add-to-cart-button').forEach(btn => {
-            if (btn !== button) btn.style.display = 'none';
-          });
-          button.style.display = 'block';
-        });
-
-        // Hide the button if clicking anywhere outside this wrapper
-        document.addEventListener('click', (e) => {
-          if (!wrapper.contains(e.target)) {
-            button.style.display = 'none';
-          }
-        });
-
-        // When the button is clicked, add the item to cart
-        button.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const price = parseFloat(image.getAttribute('data-price')) || 0;
-          const name = image.getAttribute('data-product') || 'Furniture Product';
-          addToCart(name, price);
-          button.style.display = 'none';
-        });
-      });
-    });
-
-    // Price-overlay wrapping (unchanged)
-    document.addEventListener("DOMContentLoaded", function () {
-      const images = document.querySelectorAll('.cart-image');
-
-      images.forEach(img => {
-        const price = img.getAttribute('data-price');
-        if (price) {
-          const container = document.createElement('div');
-          container.classList.add('price-container');
-
-          const overlay = document.createElement('div');
-          overlay.classList.add('price-overlay');
-          overlay.textContent = price;
-
-          img.parentNode.insertBefore(container, img);
-          container.appendChild(img);
-          container.appendChild(overlay);
-        }
-      });
-    });
-
-    // Random carousel logic (unchanged)
-    window.addEventListener("load", () => {
-      const galleryImages = document.querySelectorAll(".gallery img");
-      const decorImages = Array.from(galleryImages).map(img => img.src);
-
-      if (decorImages.length === 0) return;
-
-      const carousel = document.getElementById("random-carousel");
-      let currentIndex = Math.floor(Math.random() * decorImages.length);
-      carousel.src = decorImages[currentIndex];
-
-      function showNextRandomImage() {
-        if (decorImages.length < 2) return;
-        let newIndex;
-        do {
-          newIndex = Math.floor(Math.random() * decorImages.length);
-        } while (newIndex === currentIndex);
-        currentIndex = newIndex;
-        carousel.style.opacity = 0;
-        setTimeout(() => {
-          carousel.src = decorImages[currentIndex];
-          carousel.style.opacity = 1;
-        }, 300);
-      }
-
-      setInterval(showNextRandomImage, 4000);
-    });
-  </script>
-
-  <!-- Footer -->
-  <footer class="bg-white border-t py-8 mt-12">
-    <div class="max-w-6xl mx-auto px-6 text-center text-gray-600">
-      © 2025 Beaver Built Furniture. All rights reserved.
-    </div>
-  </footer>
-
-  <script async src="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.js"></script>
-
-  <!-- Cart Icon -->
-  <div id="cart-icon">
-    <img src="ecomassets/Cart.png" class="cart-img">
-  </div>
-
-  <!-- Cart Popover -->
-  <div id="cart-popover">
-    <h3>Your Cart</h3>
-    <div id="cart-items"></div>
-    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
-    <button id="checkout-btn">Checkout</button>
-  </div>
-
-  <script>
     const stripe = Stripe('pk_test_51RVvT106Co1PBhHg2su0AuKgtFXeS8vXU8Ea37hagFNU9wQSsEfIDQyMbnCdYsbw5aw5DuF232VGxyCVp7K0zHvK00XomXmKmm');
 
     let cart = [];
 
     // Toggle cart popover
-    document.getElementById('cart-icon').onclick = () => {
-      const popover = document.getElementById('cart-popover');
-      popover.style.display = popover.style.display === 'none' ? 'block' : 'none';
-    };
-
-    // Add an item to the cart array and update display
-    function addToCart(productName, price) {
-      cart.push({ name: productName, price: price });
-      updateCart();
-    }
-
-    // Update cart display
-    function updateCart() {
-      const cartItemsDiv = document.getElementById('cart-items');
-      cartItemsDiv.innerHTML = '';
-      let total = 0;
-
-      cart.forEach((item, index) => {
-        total += item.price;
-        cartItemsDiv.innerHTML += `<div class="cart-item">${item.name} - $${item.price.toFixed(2)}</div>`;
-      });
-
-      document.getElementById('cart-total').innerText = total.toFixed(2);
-    }
-
-    // Checkout button click
-    document.getElementById('checkout-btn').addEventListener('click', async () => {
-      if (cart.length === 0) {
-        alert('Your cart is empty!');
-        return;
-      }
-
-      // Convert cart items to Stripe line items
-      const lineItems = cart.map(item => ({
-        price_data: {
-          currency: 'usd',
-          product_data: { name: item.name },
-          unit_amount: item.price * 100,
-        },
-        quantity: 1,
-      }));
-
-      // Call backend endpoint to create Checkout Session — replace this URL with your actual endpoint
-      const response = await fetch('https://www.beaverbuiltfurniture.com/furniture.html/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lineItems: lineItems })
-      });
-
-      const session = await response.json();
-
-      // Redirect to Stripe Checkout
-      const result = await stripe.redirectToCheckout({ sessionId: session.id });
-      if (result.error) {
-        alert(result.error.message);
-      }
-    });
-  </script>
-</body>
-</html>
+    document.getElementById('cart-icon').onclick
