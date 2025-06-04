@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.0.31/default/snipcart.css" />
 
   <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://js.stripe.com/v3"></script>
 
   <style>
     /* Cart Icon */
@@ -543,8 +543,8 @@
   </div>
 
   <script>
-    // Preloader fade-out now uses DOMContentLoaded
-    window.addEventListener('DOMContentLoaded', () => {
+    // Preloader fade-out uses window.load instead of DOMContentLoaded
+    window.addEventListener('load', () => {
       window.scrollTo(0, 0);
       setTimeout(() => {
-        const pre = document.getElementById('preloa
+        const pre = document.getElementById('
