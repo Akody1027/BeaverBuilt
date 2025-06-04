@@ -30,11 +30,11 @@
 
     position: fixed;
 
-    top: 20px;
+    top: 15px;
 
-    right: 20px;
+    right: 45px;
 
-    background: #333;
+    background: transparent;
 
     color: #fff;
 
@@ -950,11 +950,11 @@ function toggleMenu() {
 
   // Attach click event to existing .cart-image buttons
 
-  document.querySelectorAll('.cart-image').forEach(button => {
+  document.querySelectorAll('.add-cart-btn').forEach(button => {
 
     button.addEventListener('click', () => {
 
-      const productName = button.getAttribute('data-product') || 'Unnamed Product';
+      const productName = button.getAttribute('data-product') || 'Decor Product';
 
       const price = parseFloat(button.getAttribute('data-price')) || 0;
 
