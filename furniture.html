@@ -663,14 +663,50 @@ function toggleMenu() {
 
 
 
-      // Show button on image click
+      // Only show the Add to Cart button when clicking the image
+images.forEach(image => {
+    image.addEventListener('click', (event) => {
+        // Prevent action if the user clicked the button itself
+        if (event.target.classList.contains('add-to-cart-button')) {
+            return;
+        }
 
-      img.addEventListener('click', () => {
+        // Remove existing buttons
+        const existingButton = document.querySelector('.add-to-cart-button');
+        if (existingButton) {
+            existingButton.remove();
+        }
 
-        button.style.display = 'block';
+        // Create new Add to Cart button
+        const button = document.createElement('button');
+        button.textContent = 'Add to Cart';
+        button.className = 'add-to-cart-button';
+        button.style.position = 'absolute';
+        button.style.bottom = '10px';
+        button.style.left = '50%';
+        button.style.transform = 'translateX(-50%)';
+        button.style.padding = '8px 16px';
+        button.style.backgroundColor = '#000';
+        button.style.color = '#fff';
+        button.style.border = 'none';
+        button.style.cursor = 'pointer';
+        button.style.zIndex = '999';
+        button.style.opacity = '0.9';
 
-      });
+        // Add button click handler
+        button.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent triggering parent click
+            const price = parseFloat(image.getAttribute('data-price')) || 0;
+            const name = image.getAttribute('data-product') || 'Furniture Product';
+            cart.push({ name, price });
+            updateCartDisplay();
+            button.remove();
+        });
 
+        // Append button to image container
+        image.appendChild(button);
+    });
+});
 
 
       // Hide button if clicking outside the wrapper
