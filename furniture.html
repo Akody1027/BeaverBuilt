@@ -244,7 +244,7 @@
     .menu-btn {
       position: fixed;
       top: 20px;
-      right: 20px; /* restored */
+      right: 20px;
       background: none;
       border: none;
       color: #fff;
@@ -255,7 +255,7 @@
     .dropdown {
       position: fixed;
       top: 60px;
-      right: 20px; /* restored */
+      right: 20px;
       display: none;
       background: #222;
       border-radius: 6px;
@@ -636,22 +636,22 @@
     var stripe = Stripe('pk_test_51RVvT106Co1PBhHg2su0AuKgtFXeS8vXU8Ea37hagFNU9wQSsEfIDQyMbnCdYsbw5aw5DuF232VGxyCVp7K0zHvK00XomXmKmm');
     var cart = [];
 
-    function addToCart(name, price, imgSrc) {
+    function addToCart(itemNum, price, imgSrc) {
       // Check if item exists already
       var existing = cart.find(function(i) {
-        return i.name === name;
+        return i.itemNum === itemNum;
       });
       if (existing) {
         existing.qty++;
       } else {
-        cart.push({ name: name, price: price, img: imgSrc, qty: 1 });
+        cart.push({ itemNum: itemNum, price: price, img: imgSrc, qty: 1 });
       }
       updateCart();
     }
 
-    function removeFromCart(name) {
+    function removeFromCart(itemNum) {
       var idx = cart.findIndex(function(i) {
-        return i.name === name;
+        return i.itemNum === itemNum;
       });
       if (idx !== -1) {
         cart[idx].qty--;
@@ -670,12 +670,12 @@
         total += item.price * item.qty;
         itemsDiv.innerHTML += 
           '<div class="cart-item">' +
-            '<img src="' + item.img + '" alt="' + item.name + '">' +
-            '<div class="cart-item-name">' + item.name + '</div>' +
+            '<img src="' + item.img + '" alt="Item ' + item.itemNum + '">' +
+            '<div class="cart-item-name">Item #: ' + item.itemNum + '</div>' +
             '<div class="quantity-controls">' +
-              '<button class="quantity-button minus-button" data-name="' + item.name + '">−</button>' +
+              '<button class="quantity-button minus-button" data-item="' + item.itemNum + '">−</button>' +
               '<div class="quantity-display">' + item.qty + '</div>' +
-              '<button class="quantity-button plus-button" data-name="' + item.name + '">+</button>' +
+              '<button class="quantity-button plus-button" data-item="' + item.itemNum + '">+</button>' +
             '</div>' +
             '<div class="cart-item-price">$' + (item.price * item.qty).toFixed(2) + '</div>' +
           '</div>';
@@ -685,15 +685,15 @@
       // Attach plus/minus handlers
       document.querySelectorAll('.plus-button').forEach(function(btn) {
         btn.addEventListener('click', function() {
-          var name = this.getAttribute('data-name');
-          var itm = cart.find(i => i.name === name);
-          addToCart(name, itm.price, itm.img);
+          var num = parseInt(this.getAttribute('data-item'));
+          var itm = cart.find(i => i.itemNum === num);
+          addToCart(num, itm.price, itm.img);
         });
       });
       document.querySelectorAll('.minus-button').forEach(function(btn) {
         btn.addEventListener('click', function() {
-          var name = this.getAttribute('data-name');
-          removeFromCart(name);
+          var num = parseInt(this.getAttribute('data-item'));
+          removeFromCart(num);
         });
       });
     }
@@ -724,7 +724,7 @@
         return {
           price_data: {
             currency: 'usd',
-            product_data: { name: i.name },
+            product_data: { name: 'Item #: ' + i.itemNum },
             unit_amount: i.price * 100
           },
           quantity: i.qty
@@ -755,18 +755,23 @@
 
       // "View" button click
       var galleryItems = document.querySelectorAll('.gallery-item');
-      galleryItems.forEach(function(item, index) {
+      galleryItems.forEach(function(item) {
         var viewBtn = item.querySelector('.view-button');
         viewBtn.addEventListener('click', function() {
-          imgEl.src = item.getAttribute('data-img');
+          // Extract number from filename
+          var imgPath = item.getAttribute('data-img');
+          var match = imgPath.match(/furniture(\d+)\.jpg/);
+          var itemNum = match ? parseInt(match[1]) : null;
+
+          imgEl.src = imgPath;
           descEl.textContent = item.getAttribute('data-description');
-          itemNumEl.textContent = 'Item #: ' + (index + 1);
+          itemNumEl.textContent = 'Item #: ' + itemNum;
           var price = parseFloat(item.getAttribute('data-price')) || 0;
           priceEl.textContent = 'Price: $' + price.toFixed(2);
 
           modal.style.display = 'flex';
           addBtn.onclick = function() {
-            addToCart(item.getAttribute('data-title'), price, item.getAttribute('data-img'));
+            addToCart(itemNum, price, imgPath);
             modal.style.display = 'none';
           };
         });
