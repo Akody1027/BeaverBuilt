@@ -80,22 +80,6 @@
       font-family: 'Lily Script One', cursive;
       font-size: 2rem; color: #ffffff;
     }
-    .menu-btn {
-      position: fixed; top: 20px; right: 20px;
-      background: none; border: none; color: #fff;
-      font-size: 1.5rem; cursor: pointer; z-index: 1001;
-    }
-    .dropdown {
-      position: fixed; top: 60px; right: 20px;
-      display: none; background: #222; border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1001;
-    }
-    .dropdown.open { display: block; }
-    .dropdown a {
-      display: block; padding: 0.75rem 1rem; color: #fff;
-      white-space: nowrap;
-    }
-    .dropdown a:hover { background: rgba(255,255,255,0.1); }
 
     /* Animations */
     @keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
@@ -157,20 +141,23 @@
       transform: translateY(-5px); box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
-    /* Masonry-style Gallery */
+    /* Masonry-style Gallery with smaller images */
     #gallery .masonry {
-      column-count: 3;
-      column-gap: 1rem;
+      column-count: 4;
+      column-gap: 0.75rem;
     }
-    @media (max-width: 900px) {
+    @media (max-width: 1000px) {
+      #gallery .masonry { column-count: 3; }
+    }
+    @media (max-width: 700px) {
       #gallery .masonry { column-count: 2; }
     }
-    @media (max-width: 600px) {
+    @media (max-width: 500px) {
       #gallery .masonry { column-count: 1; }
     }
     .gallery-item-masonry {
       break-inside: avoid;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
       position: relative;
       overflow: hidden;
       border-radius: 6px;
@@ -220,7 +207,7 @@
     /* Cart Popover */
     #cart-popover {
       position: fixed;
-      bottom: 70px;           /* above bottom nav (60px high + 10px margin) */
+      bottom: 70px;           
       right: 15px;
       background: #ffffff;
       border: 1px solid #cccccc;
@@ -294,9 +281,6 @@
       box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
       animation: fadeInUp 0.6s ease both;
     }
-    @media (max-width:600px) {
-      .hero h1 { font-size: 2.2rem; }
-    }
   </style>
 </head>
 
@@ -312,13 +296,7 @@
     <a href="home.html">
       <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
     </a>
-    <div class="page-title">Beaver Built Furniture</div>
-    <button class="menu-btn" onclick="toggleMenu()">☰</button>
-    <nav class="dropdown" id="navDropdown">
-      <a href="home.html">Home</a>
-      <a href="furniture.html">Furniture</a>
-      <a href="decor.html">Decor</a>
-    </nav>
+    <div class="page-title">Home</div>
     <div class="accent-bar"></div>
   </header>
 
@@ -359,58 +337,57 @@
     </div>
   </section>
 
-  <!-- Gallery (Masonry Style) -->
+  <!-- Gallery (Masonry Style, 12 images smaller) -->
   <section id="gallery" class="fade-in">
     <div class="container">
       <h2 class="section-title">Gallery</h2>
       <div class="masonry">
-        <!-- Mixture of decor (misXX) and furniture (furnitureXX) images -->
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis2.jpg" alt="Masonry 1">
+          <img src="ecomassets/mis2.jpg" alt="Gallery Image 1">
           <div class="caption">Wall Mirror</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture1.jpg" alt="Masonry 2">
+          <img src="ecomassets/furniture1.jpg" alt="Gallery Image 2">
           <div class="caption">Wooden Chair</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis3.jpg" alt="Masonry 3">
+          <img src="ecomassets/mis3.jpg" alt="Gallery Image 3">
           <div class="caption">Ceramic Vase</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture2.jpg" alt="Masonry 4">
+          <img src="ecomassets/furniture2.jpg" alt="Gallery Image 4">
           <div class="caption">Oak Dining Table</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis4.jpg" alt="Masonry 5">
+          <img src="ecomassets/mis4.jpg" alt="Gallery Image 5">
           <div class="caption">Table Lamp</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture3.jpg" alt="Masonry 6">
-          <div class="caption">Adjustable Bookshelf</div>
+          <img src="ecomassets/furniture3.jpg" alt="Gallery Image 6">
+          <div class="caption">Bookshelf</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis5.jpg" alt="Masonry 7">
-          <div class="caption">Wall Art Panel</div>
+          <img src="ecomassets/mis5.jpg" alt="Gallery Image 7">
+          <div class="caption">Wall Art</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture4.jpg" alt="Masonry 8">
+          <img src="ecomassets/furniture4.jpg" alt="Gallery Image 8">
           <div class="caption">Accent Chair</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis6.jpg" alt="Masonry 9">
+          <img src="ecomassets/mis6.jpg" alt="Gallery Image 9">
           <div class="caption">Floating Shelves</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture5.jpg" alt="Masonry 10">
+          <img src="ecomassets/furniture5.jpg" alt="Gallery Image 10">
           <div class="caption">Coffee Table</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/mis7.jpg" alt="Masonry 11">
+          <img src="ecomassets/mis7.jpg" alt="Gallery Image 11">
           <div class="caption">Ceramic Planter</div>
         </div>
         <div class="gallery-item-masonry">
-          <img src="ecomassets/furniture6.jpg" alt="Masonry 12">
+          <img src="ecomassets/furniture6.jpg" alt="Gallery Image 12">
           <div class="caption">Side Tables</div>
         </div>
       </div>
@@ -486,10 +463,6 @@
   </footer>
 
   <script>
-    function toggleMenu() {
-      document.getElementById('navDropdown').classList.toggle('open');
-    }
-
     // 1) Preloader fade-out
     window.addEventListener('load', () => {
       window.scrollTo(0,0);
@@ -530,7 +503,7 @@
       }
     }
 
-    // 4) Add/remove items (used on Furniture/Decor pages)
+    // 4) Add/remove items (called from furniture & decor pages)
     function addToCart(itemNum, price, imgSrc) {
       const existing = cart.find(i => i.itemNum === itemNum);
       if (existing) {
@@ -542,7 +515,6 @@
       updateCart();
       updateBadge();
     }
-
     function removeFromCart(itemNum) {
       const idx = cart.findIndex(i => i.itemNum === itemNum);
       if (idx !== -1) {
@@ -555,7 +527,6 @@
         updateBadge();
       }
     }
-
     function updateCart() {
       const itemsDiv = document.getElementById('cart-items');
       itemsDiv.innerHTML = '';
