@@ -8,15 +8,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Beaver Built Furniture</title>
 
-  <!-- Modern fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3"></script>
 
   <style>
-    /* Reset & base */
+    /* Reset & Base */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; }
-    body { padding-top: 80px; }
+    body {
+      padding-top: 80px;   /* space for fixed header */
+      padding-bottom: 60px; /* space for bottom nav */
+      background: url('background.jpg') center/cover scroll;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85);
+      pointer-events: none; z-index: -1;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font: inherit; background: none; border: none; }
 
     /* Preloader */
     #preloader {
@@ -52,16 +69,17 @@
     /* Header */
     header {
       position: fixed; top: 0; left: 0; right: 0;
-      height: 80px;
-      background: rgba(17,17,17,0.9);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      z-index: 1000;
+      height: 80px; background: rgba(17,17,17,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000;
+      display: flex; align-items: center; padding: 0 20px;
     }
     header .logo {
-      position: fixed; top: 20px; left: 20px;
-      height: 50px; z-index: 1001;
+      height: 50px; margin-right: 15px;
     }
-
+    header .page-title {
+      font-family: 'Lily Script One', cursive;
+      font-size: 2rem; color: #ffffff;
+    }
     .menu-btn {
       position: fixed; top: 20px; right: 20px;
       background: none; border: none; color: #fff;
@@ -79,44 +97,9 @@
     }
     .dropdown a:hover { background: rgba(255,255,255,0.1); }
 
-    
-
-    
-    /* Page background & overlay */
-    body {
-      background: url('background.jpg') center/cover scroll;
-      position: relative;
-    }
-    body::before {
-      content: ''; position: fixed; inset: 0;
-      background: rgba(255,255,255,0.85);
-      pointer-events: none; z-index: -1;
-    }
-
-    a { color: inherit; text-decoration: none; }
-
     /* Animations */
     @keyframes fadeInUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
     .fade-in { animation: fadeInUp 0.6s ease both; }
-
-    /* Title fonts */
-    h1, .section-title {
-      font-family: 'Lily Script One', cursive;
-    }
-
-    /* Accent bar & section titles */
-    .accent-bar { height: 6px; background: url('wood-texture.jpg') center/cover; }
-    .section-title {
-      font-size: 2rem; margin-bottom: 0.5rem;
-      display: inline-block; position: relative;
-      animation: fadeInUp 0.6s ease both;
-    }
-    .section-title::after {
-      content: ''; position: absolute; left: 0; bottom: -6px;
-      width: 100%; height: 6px;
-      background: url('wood-texture.jpg') center/cover;
-      opacity: 0.4;
-    }
 
     /* Container */
     .container {
@@ -130,14 +113,36 @@
       background: rgba(245,245,245,0.9);
       box-shadow: inset 0 -4px 8px rgba(0,0,0,0.05);
     }
-    .hero h1 { font-size: 3rem; margin-bottom: 1rem; animation: fadeInUp 0.8s ease both; }
-    .hero p { max-width: 600px; margin: 0 auto; color: #444; animation: fadeInUp 1s ease both; }
+    .hero h1 {
+      font-family: 'Lily Script One', cursive;
+      font-size: 3rem; margin-bottom: 1rem; animation: fadeInUp 0.8s ease both;
+    }
+    .hero p {
+      max-width: 600px; margin: 0 auto; color: #444;
+      animation: fadeInUp 1s ease both;
+    }
 
     /* About */
     #about {
       background: rgba(34,34,34,0.85); color: #eee; padding: 4rem 1rem;
     }
-    #about p { max-width: 800px; margin: 0 auto; color: #ccc; animation: fadeInUp 0.8s ease both; }
+    #about p {
+      max-width: 800px; margin: 0 auto; color: #ccc;
+      animation: fadeInUp 0.8s ease both;
+    }
+    .section-title {
+      font-family: 'Lily Script One', cursive;
+      font-size: 2rem; margin-bottom: 0.5rem; display: inline-block;
+      position: relative; animation: fadeInUp 0.6s ease both;
+    }
+    .accent-bar {
+      height: 6px; background: url('wood-texture.jpg') center/cover; 
+    }
+    .section-title::after {
+      content: ''; position: absolute; left: 0; bottom: -6px;
+      width: 100%; height: 6px; background: url('wood-texture.jpg') center/cover;
+      opacity: 0.4;
+    }
 
     /* Services */
     #services .grid {
@@ -152,25 +157,36 @@
       transform: translateY(-5px); box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
-    /* Gallery */
-    #gallery .grid {
-      display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 1.5rem;
+    /* Masonry-style Gallery */
+    #gallery .masonry {
+      column-count: 3;
+      column-gap: 1rem;
     }
-    .gallery-item {
-      overflow: hidden; position: relative; background: #000;
-      border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    @media (max-width: 900px) {
+      #gallery .masonry { column-count: 2; }
+    }
+    @media (max-width: 600px) {
+      #gallery .masonry { column-count: 1; }
+    }
+    .gallery-item-masonry {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       animation: fadeInUp 0.6s ease both;
     }
-    .gallery-item img {
-      width: 100%; display: block; filter: grayscale(50%);
-      transition: filter 0.3s, transform 0.3s;
+    .gallery-item-masonry img {
+      width: 100%; display: block;
+      filter: grayscale(50%); transition: filter 0.3s, transform 0.3s;
     }
-    .gallery-item:hover img {
+    .gallery-item-masonry:hover img {
       filter: grayscale(0%); transform: scale(1.05);
     }
-    .gallery-item .caption {
+    .gallery-item-masonry .caption {
       position: absolute; left:0; bottom:0; width:100%;
-      background: rgba(17,17,17,0.7); color: #fff; padding: 0.75rem;
+      background: rgba(17,17,17,0.7); color: #fff; padding: 0.5rem;
       text-align: center; font-size: 0.9rem;
       border-top: 1px solid rgba(255,255,255,0.1);
     }
@@ -201,6 +217,76 @@
       background: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
 
+    /* Cart Popover */
+    #cart-popover {
+      position: fixed;
+      bottom: 70px;           /* above bottom nav (60px high + 10px margin) */
+      right: 15px;
+      background: #ffffff;
+      border: 1px solid #cccccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 15px;
+      width: 60%;
+      max-width: 600px;
+      max-height: 70vh;
+      overflow-y: auto;
+      display: none;
+      z-index: 905;
+    }
+    #cart-popover h3 {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      border-bottom: 1px solid #eeeeee;
+      padding-bottom: 5px;
+    }
+    .cart-item {
+      display: flex; align-items: center; margin: 8px 0;
+    }
+    .cart-item img {
+      width: 40px; height: 40px; object-fit: cover; border-radius: 4px;
+      margin-right: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .cart-item-name { flex: 1; font-size: 0.95rem; }
+    .cart-item-price { font-weight: bold; font-size: 0.95rem; margin-left: 8px; }
+    .quantity-controls {
+      display: flex; align-items: center; margin-left: 10px;
+    }
+    .quantity-button {
+      background: #e5e7eb; border: none; border-radius: 4px;
+      width: 20px; height: 20px; text-align: center; line-height: 18px;
+      margin: 0 4px; font-weight: bold; color: #374151;
+    }
+    .quantity-button:hover { background: #d1d5db; }
+    .quantity-display { min-width: 20px; text-align: center; font-size: 0.9rem; }
+    #checkout-btn {
+      background: #1f2937; color: #ffffff; padding: 10px; width: 100%;
+      border-radius: 6px; margin-top: 10px;
+    }
+    #checkout-btn:hover { background: #374151; }
+
+    /* Bottom Navigation */
+    #bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 60px; background: rgba(17, 17, 17, 0.9);
+      display: flex; justify-content: space-around; align-items: center; z-index: 900;
+    }
+    #bottom-nav a {
+      position: relative; display: flex; flex-direction: column; align-items: center;
+      color: #ffffff; font-size: 0.75rem; text-decoration: none;
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px; margin-bottom: 2px; color: #ffffff;
+    }
+    #bottom-nav #bottom-cart img {
+      width: 24px; height: 24px; margin-bottom: 2px;
+    }
+    #cart-badge {
+      position: absolute; top: 2px; right: 10px;
+      background: #ff3b30; color: #ffffff; font-size: 0.65rem;
+      font-weight: bold; border-radius: 50%; padding: 2px 5px; display: none;
+    }
+
     /* Footer */
     footer {
       background: rgba(17,17,17,0.9); color: #eee; text-align: center;
@@ -208,14 +294,13 @@
       box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
       animation: fadeInUp 0.6s ease both;
     }
-
     @media (max-width:600px) {
       .hero h1 { font-size: 2.2rem; }
     }
   </style>
 </head>
-<body>
 
+<body>
   <!-- Preloader -->
   <div id="preloader">
     <img src="beaverlogo.jpg" alt="Logo" class="prelogo">
@@ -224,16 +309,18 @@
 
   <!-- Header -->
   <header>
-    <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
+    <a href="home.html">
+      <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo">
+    </a>
+    <div class="page-title">Beaver Built Furniture</div>
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
     <nav class="dropdown" id="navDropdown">
       <a href="home.html">Home</a>
-      <a href="furniture.html" class="block px-4 py-2 hover:bg-gray-100">Furniture</a>
-      <a href="decor.html" class="block px-4 py-2 hover:bg-gray-100">Decor</a>
+      <a href="furniture.html">Furniture</a>
+      <a href="decor.html">Decor</a>
     </nav>
     <div class="accent-bar"></div>
   </header>
-
 
   <!-- Hero -->
   <section id="home" class="hero fade-in">
@@ -272,43 +359,59 @@
     </div>
   </section>
 
-  <!-- Gallery -->
+  <!-- Gallery (Masonry Style) -->
   <section id="gallery" class="fade-in">
     <div class="container">
       <h2 class="section-title">Gallery</h2>
-
-      <!-- First six images -->
-      <div class="grid">
-        <div class="gallery-item"><img src="Gal1.jpg" alt="Gallery 1"><div class="caption">Gallery 1</div></div>
-        <div class="gallery-item"><img src="Gal2.jpg" alt="Gallery 2"><div class="caption">Gallery 2</div></div>
-        <div class="gallery-item"><img src="Gal3.jpg" alt="Gallery 3"><div class="caption">Gallery 3</div></div>
-        <div class="gallery-item"><img src="Gal4.jpg" alt="Gallery 4"><div class="caption">Gallery 4</div></div>
-        <div class="gallery-item"><img src="Gal5.jpg" alt="Gallery 5"><div class="caption">Gallery 5</div></div>
-        <div class="gallery-item"><img src="Gal6.jpg" alt="Gallery 6"><div class="caption">Gallery 6</div></div>
-      </div>
-
-      <!-- Show more/less toggle -->
-      <button id="toggleGalleryBtn" onclick="toggleGallery()" style="margin:1.5rem auto; display:block; background:#111; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:4px; cursor:pointer;">
-        Show More
-      </button>
-
-      <!-- Hidden extra images -->
-      <div id="moreGallery" style="display:none;">
-        <div class="grid">
-          <div class="gallery-item"><img src="Gal7.jpg"  alt="Gallery 7"><div class="caption">Gallery 7</div></div>
-          <div class="gallery-item"><img src="Gal8.jpg"  alt="Gallery 8"><div class="caption">Gallery 8</div></div>
-          <div class="gallery-item"><img src="Gal9.jpg"  alt="Gallery 9"><div class="caption">Gallery 9</div></div>
-          <div class="gallery-item"><img src="Gal10.jpg" alt="Gallery 10"><div class="caption">Gallery 10</div></div>
-          <div class="gallery-item"><img src="Gal11.jpg" alt="Gallery 11"><div class="caption">Gallery 11</div></div>
-          <div class="gallery-item"><img src="Gal12.jpg" alt="Gallery 12"><div class="caption">Gallery 12</div></div>
-          <div class="gallery-item"><img src="Gal13.jpg" alt="Gallery 13"><div class="caption">Gallery 13</div></div>
-          <div class="gallery-item"><img src="Gal14.jpg" alt="Gallery 14"><div class="caption">Gallery 14</div></div>
-          <div class="gallery-item"><img src="Gal15.jpg" alt="Gallery 15"><div class="caption">Gallery 15</div></div>
-          <div class="gallery-item"><img src="Gal16.jpg" alt="Gallery 16"><div class="caption">Gallery 16</div></div>
-          <div class="gallery-item"><img src="Gal17.jpg" alt="Gallery 17"><div class="caption">Gallery 17</div></div>
-          <div class="gallery-item"><img src="Gal18.jpg" alt="Gallery 18"><div class="caption">Gallery 18</div></div>
-          <div class="gallery-item"><img src="Gal19.jpg" alt="Gallery 19"><div class="caption">Gallery 19</div></div>
-          <div class="gallery-item"><img src="Gal20.jpg" alt="Gallery 20"><div class="caption">Gallery 20</div></div>
+      <div class="masonry">
+        <!-- Mixture of decor (misXX) and furniture (furnitureXX) images -->
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis2.jpg" alt="Masonry 1">
+          <div class="caption">Wall Mirror</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture1.jpg" alt="Masonry 2">
+          <div class="caption">Wooden Chair</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis3.jpg" alt="Masonry 3">
+          <div class="caption">Ceramic Vase</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture2.jpg" alt="Masonry 4">
+          <div class="caption">Oak Dining Table</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis4.jpg" alt="Masonry 5">
+          <div class="caption">Table Lamp</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture3.jpg" alt="Masonry 6">
+          <div class="caption">Adjustable Bookshelf</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis5.jpg" alt="Masonry 7">
+          <div class="caption">Wall Art Panel</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture4.jpg" alt="Masonry 8">
+          <div class="caption">Accent Chair</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis6.jpg" alt="Masonry 9">
+          <div class="caption">Floating Shelves</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture5.jpg" alt="Masonry 10">
+          <div class="caption">Coffee Table</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/mis7.jpg" alt="Masonry 11">
+          <div class="caption">Ceramic Planter</div>
+        </div>
+        <div class="gallery-item-masonry">
+          <img src="ecomassets/furniture6.jpg" alt="Masonry 12">
+          <div class="caption">Side Tables</div>
         </div>
       </div>
     </div>
@@ -318,8 +421,14 @@
   <section id="testimonials" class="fade-in">
     <div class="container">
       <h2 class="section-title">Testimonials</h2>
-      <div class="card"><blockquote>“Our custom dining table from Beaver Built is the centerpiece of our home. Absolutely stunning workmanship!”</blockquote><cite>— Sarah K.</cite></div>
-      <div class="card"><blockquote>“Fantastic service and attention to detail. Our restored cherry-wood chest looks brand new.”</blockquote><cite>— Mark T.</cite></div>
+      <div class="card">
+        <blockquote>“Our custom dining table from Beaver Built is the centerpiece of our home. Absolutely stunning workmanship!”</blockquote>
+        <cite>— Sarah K.</cite>
+      </div>
+      <div class="card">
+        <blockquote>“Fantastic service and attention to detail. Our restored cherry-wood chest looks brand new.”</blockquote>
+        <cite>— Mark T.</cite>
+      </div>
     </div>
   </section>
 
@@ -328,16 +437,45 @@
     <div class="container">
       <h2 class="section-title">Get in Touch</h2>
       <form action="https://formsubmit.co/beaverbuiltfurniture@gmail.com" method="POST">
-     <input type="text" name="name" placeholder="Name" required>
-     <input type="email" name="email" placeholder="Email" >
-     <input type="text" rows="5" name="Message" placeholder="Your Message">
-     <button type="submit">Send</button>
-     <input type="hidden" name="_subject" value="New submission!">
-    <input type="hidden" name="_cc" value="akody81@gmail.com">
-    <input type="hidden" name="_template" value="box">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="email" name="email" placeholder="Email">
+        <textarea name="Message" rows="5" placeholder="Your Message"></textarea>
+        <button type="submit">Send</button>
+        <input type="hidden" name="_subject" value="New submission!">
+        <input type="hidden" name="_cc" value="akody81@gmail.com">
+        <input type="hidden" name="_template" value="box">
       </form>
     </div>
   </section>
+
+  <!-- Cart Popover -->
+  <div id="cart-popover">
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
+    <button id="checkout-btn">Checkout</button>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav id="bottom-nav">
+    <a href="home.html">
+      <span class="material-icons">home</span>
+      <span>Home</span>
+    </a>
+    <a href="furniture.html">
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
+    </a>
+    <a href="decor.html">
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
+    </a>
+    <a href="#" id="bottom-cart">
+      <img src="ecomassets/Cart.png" alt="Cart" />
+      <span>Cart</span>
+      <span id="cart-badge"></span>
+    </a>
+  </nav>
 
   <!-- Footer -->
   <footer class="fade-in">
@@ -348,22 +486,11 @@
   </footer>
 
   <script>
-function toggleMenu() {
+    function toggleMenu() {
       document.getElementById('navDropdown').classList.toggle('open');
     }
-  
-  
-    function toggleGallery() {
-      const more = document.getElementById('moreGallery');
-      const btn  = document.getElementById('toggleGalleryBtn');
-      if (more.style.display === 'none') {
-        more.style.display = 'grid';
-        btn.textContent = 'Show Less';
-      } else {
-        more.style.display = 'none';
-        btn.textContent = 'Show More';
-      }
-    }
+
+    // 1) Preloader fade-out
     window.addEventListener('load', () => {
       window.scrollTo(0,0);
       setTimeout(() => {
@@ -372,6 +499,147 @@ function toggleMenu() {
         setTimeout(() => pre.style.display = 'none', 1000);
       }, 2000);
     });
+
+    // 2) Persist cart in localStorage
+    let cart = [];
+    function loadCart() {
+      const saved = localStorage.getItem('bbf_cart');
+      if (saved) {
+        try {
+          cart = JSON.parse(saved);
+        } catch {
+          cart = [];
+        }
+      }
+      updateCart();
+      updateBadge();
+    }
+    function saveCart() {
+      localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    }
+
+    // 3) Update badge visibility & count
+    function updateBadge() {
+      const badge = document.getElementById('cart-badge');
+      const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+      if (totalQty > 0) {
+        badge.textContent = totalQty;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // 4) Add/remove items (used on Furniture/Decor pages)
+    function addToCart(itemNum, price, imgSrc) {
+      const existing = cart.find(i => i.itemNum === itemNum);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ itemNum, price, img: imgSrc, qty: 1 });
+      }
+      saveCart();
+      updateCart();
+      updateBadge();
+    }
+
+    function removeFromCart(itemNum) {
+      const idx = cart.findIndex(i => i.itemNum === itemNum);
+      if (idx !== -1) {
+        cart[idx].qty--;
+        if (cart[idx].qty <= 0) {
+          cart.splice(idx, 1);
+        }
+        saveCart();
+        updateCart();
+        updateBadge();
+      }
+    }
+
+    function updateCart() {
+      const itemsDiv = document.getElementById('cart-items');
+      itemsDiv.innerHTML = '';
+      let total = 0;
+      cart.forEach(item => {
+        total += item.price * item.qty;
+        itemsDiv.innerHTML += `
+          <div class="cart-item">
+            <img src="${item.img}" alt="Item ${item.itemNum}">
+            <div class="cart-item-name">Item #: ${item.itemNum}</div>
+            <div class="quantity-controls">
+              <button class="quantity-button minus-button" data-item="${item.itemNum}">−</button>
+              <div class="quantity-display">${item.qty}</div>
+              <button class="quantity-button plus-button" data-item="${item.itemNum}">+</button>
+            </div>
+            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+          </div>
+        `;
+      });
+      document.getElementById('cart-total').innerText = total.toFixed(2);
+
+      document.querySelectorAll('.plus-button').forEach(btn => {
+        btn.onclick = () => {
+          const num = parseInt(btn.getAttribute('data-item'));
+          const itm = cart.find(i => i.itemNum === num);
+          addToCart(num, itm.price, itm.img);
+        };
+      });
+      document.querySelectorAll('.minus-button').forEach(btn => {
+        btn.onclick = () => {
+          const num = parseInt(btn.getAttribute('data-item'));
+          removeFromCart(num);
+        };
+      });
+    }
+
+    // 5) Cart icon toggle
+    const cartIcon = document.getElementById('bottom-cart');
+    const cartPopover = document.getElementById('cart-popover');
+    cartIcon.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      cartPopover.style.display = cartPopover.style.display === 'block' ? 'none' : 'block';
+    });
+    cartPopover.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', e => {
+      if (cartPopover.style.display === 'block' && !cartPopover.contains(e.target) && e.target !== cartIcon) {
+        cartPopover.style.display = 'none';
+      }
+    });
+
+    // 6) Checkout
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      const lineItems = cart.map(i => ({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Item #: ' + i.itemNum },
+          unit_amount: i.price * 100
+        },
+        quantity: i.qty
+      }));
+      try {
+        const response = await fetch(
+          'https://your-username.your-project.repl.co/create-checkout-session',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lineItems: lineItems })
+          }
+        );
+        const session = await response.json();
+        const result = await stripe.redirectToCheckout({ sessionId: session.id });
+        if (result.error) alert(result.error.message);
+      } catch {
+        alert('Checkout failed. Please try again.');
+      }
+    });
+
+    // Initialize cart on DOM load
+    document.addEventListener('DOMContentLoaded', loadCart);
   </script>
 </body>
 </html>
