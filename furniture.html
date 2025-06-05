@@ -28,6 +28,8 @@
     button {
       cursor: pointer;
       font: inherit;
+      background: none;
+      border: none;
     }
 
     /* Preloader */
@@ -76,8 +78,6 @@
     }
     .menu-btn {
       margin-left: auto;
-      background: none;
-      border: none;
       color: #ffffff;
       font-size: 1.5rem;
     }
@@ -239,7 +239,6 @@
       background: #1f2937;
       color: #ffffff;
       padding: 10px 16px;
-      border: none;
       border-radius: 6px;
       width: 100%;
     }
@@ -330,7 +329,6 @@
       color: #ffffff;
       padding: 10px;
       width: 100%;
-      border: none;
       border-radius: 6px;
       margin-top: 10px;
     }
@@ -377,268 +375,164 @@
 
   <!-- Image Gallery -->
   <div class="gallery">
-    <!-- Example gallery items; replicate/update as needed -->
-    <div class="gallery-item"
-         data-img="ecomassets/furniture1.jpg"
-         data-price="125.00"
-         data-title="Furniture 1"
-         data-description="Handcrafted wooden chair perfect for living rooms.">
+    <div class="gallery-item" data-img="ecomassets/furniture1.jpg"  data-price="125.00" data-title="Furniture 1"  data-description="Handcrafted wooden chair perfect for living rooms.">
       <img src="ecomassets/furniture1.jpg" alt="Furniture 1" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item"
-         data-img="ecomassets/furniture2.jpg"
-         data-price="225.00"
-         data-title="Furniture 2"
-         data-description="Elegant oak dining table with a smooth finish.">
+    <div class="gallery-item" data-img="ecomassets/furniture2.jpg"  data-price="225.00" data-title="Furniture 2"  data-description="Elegant oak dining table with a smooth finish.">
       <img src="ecomassets/furniture2.jpg" alt="Furniture 2" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item"
-         data-img="ecomassets/furniture3.jpg"
-         data-price="425.00"
-         data-title="Furniture 3"
-         data-description="Modern bookshelf with adjustable shelves.">
+    <div class="gallery-item" data-img="ecomassets/furniture3.jpg"  data-price="425.00" data-title="Furniture 3"  data-description="Modern bookshelf with adjustable shelves.">
       <img src="ecomassets/furniture3.jpg" alt="Furniture 3" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item"
-         data-img="ecomassets/furniture4.jpg"
-         data-price="225.00"
-         data-title="Furniture 4"
-         data-description="Comfortable accent chair with plush cushions.">
+    <div class="gallery-item" data-img="ecomassets/furniture4.jpg"  data-price="225.00" data-title="Furniture 4"  data-description="Comfortable accent chair with plush cushions.">
       <img src="ecomassets/furniture4.jpg" alt="Furniture 4" />
       <div class="view-button">View</div>
     </div>
-    <!-- Continue adding all remaining gallery-item divs in the same pattern -->
-  </div>
-
-  <!-- Detail Modal -->
-  <div id="detail-modal">
-    <div id="modal-content">
-      <button id="modal-close">&times;</button>
-      <img id="modal-image" src="" alt="Detail View" />
-      <div id="modal-description"></div>
-      <div id="modal-itemnum"></div>
-      <div id="modal-price"></div>
-      <button id="modal-add-btn">Add to Cart</button>
+    <div class="gallery-item" data-img="ecomassets/furniture5.jpg"  data-price="225.00" data-title="Furniture 5"  data-description="Stylish coffee table made from reclaimed wood.">
+      <img src="ecomassets/furniture5.jpg" alt="Furniture 5" />
+      <div class="view-button">View</div>
     </div>
-  </div>
-
-  <!-- Cart Icon -->
-  <div id="cart-icon">
-    <img src="ecomassets/Cart.png" alt="Cart" />
-  </div>
-
-  <!-- Cart Popover -->
-  <div id="cart-popover">
-    <h3>Your Cart</h3>
-    <div id="cart-items"></div>
-    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
-    <button id="checkout-btn">Checkout</button>
-  </div>
-
-  <!-- Footer -->
-  <footer>
-    © 2025 Beaver Built Furniture. All rights reserved.
-  </footer>
-
-  <script>
-    // 1) Preloader fade-out
-    window.addEventListener('load', function() {
-      const pre = document.getElementById('preloader');
-      setTimeout(function() {
-        pre.classList.add('fade-out');
-        setTimeout(function() {
-          pre.style.display = 'none';
-        }, 1000);
-      }, 1000);
-    });
-
-    // 2) Toggle mobile menu
-    const menuBtn = document.getElementById('menu-btn');
-    const navDropdown = document.getElementById('navDropdown');
-    menuBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      navDropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', function(e) {
-      if (!navDropdown.contains(e.target) && e.target !== menuBtn) {
-        navDropdown.classList.remove('open');
-      }
-    });
-
-    // 3) Stripe & Cart Logic
-    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
-    let cart = [];
-
-    function addToCart(itemNum, price, imgSrc) {
-      const existing = cart.find(i => i.itemNum === itemNum);
-      if (existing) {
-        existing.qty++;
-      } else {
-        cart.push({ itemNum, price, img: imgSrc, qty: 1 });
-      }
-      updateCart();
-    }
-
-    function removeFromCart(itemNum) {
-      const idx = cart.findIndex(i => i.itemNum === itemNum);
-      if (idx !== -1) {
-        cart[idx].qty--;
-        if (cart[idx].qty <= 0) {
-          cart.splice(idx, 1);
-        }
-        updateCart();
-      }
-    }
-
-    function updateCart() {
-      const itemsDiv = document.getElementById('cart-items');
-      itemsDiv.innerHTML = '';
-      let total = 0;
-      cart.forEach(item => {
-        total += item.price * item.qty;
-        itemsDiv.innerHTML += `
-          <div class="cart-item">
-            <img src="${item.img}" alt="Item ${item.itemNum}">
-            <div class="cart-item-name">Item #: ${item.itemNum}</div>
-            <div class="quantity-controls">
-              <button class="quantity-button minus-button" data-item="${item.itemNum}">−</button>
-              <div class="quantity-display">${item.qty}</div>
-              <button class="quantity-button plus-button" data-item="${item.itemNum}">+</button>
-            </div>
-            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
-          </div>
-        `;
-      });
-      document.getElementById('cart-total').innerText = total.toFixed(2);
-
-      // Re-attach plus/minus handlers
-      document.querySelectorAll('.plus-button').forEach(btn => {
-        btn.onclick = () => {
-          const num = parseInt(btn.getAttribute('data-item'));
-          const itm = cart.find(i => i.itemNum === num);
-          addToCart(num, itm.price, itm.img);
-        };
-      });
-      document.querySelectorAll('.minus-button').forEach(btn => {
-        btn.onclick = () => {
-          const num = parseInt(btn.getAttribute('data-item'));
-          removeFromCart(num);
-        };
-      });
-    }
-
-    // 4) Cart icon toggle
-    const cartIcon = document.getElementById('cart-icon');
-    const cartPopover = document.getElementById('cart-popover');
-    cartIcon.addEventListener('click', function(e) {
-      e.stopPropagation();
-      cartPopover.style.display = cartPopover.style.display === 'block' ? 'none' : 'block';
-    });
-    cartPopover.addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('click', function(e) {
-      if (cartPopover.style.display === 'block' && !cartPopover.contains(e.target) && e.target !== cartIcon) {
-        cartPopover.style.display = 'none';
-      }
-    });
-
-    // 5) Checkout button
-    document.getElementById('checkout-btn').addEventListener('click', async function() {
-      if (cart.length === 0) {
-        alert('Your cart is empty!');
-        return;
-      }
-      const lineItems = cart.map(i => ({
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Item #: ' + i.itemNum },
-          unit_amount: i.price * 100
-        },
-        quantity: i.qty
-      }));
-      try {
-        const response = await fetch(
-          'https://f75eae02-5e5e-4934-a724-913553105975-00-3jy3mb3ziz8jh.kirk.replit.dev/create-checkout-session',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lineItems })
-          }
-        );
-        const session = await response.json();
-        const result = await stripe.redirectToCheckout({ sessionId: session.id });
-        if (result.error) {
-          alert(result.error.message);
-        }
-      } catch (err) {
-        alert('Checkout failed. Please try again.');
-      }
-    });
-
-    // 6) Modal, gallery & carousel setup
-    document.addEventListener('DOMContentLoaded', function() {
-      // Modal elements
-      const modal = document.getElementById('detail-modal');
-      const imgEl = document.getElementById('modal-image');
-      const descEl = document.getElementById('modal-description');
-      const itemNumEl = document.getElementById('modal-itemnum');
-      const priceEl = document.getElementById('modal-price');
-      const addBtn = document.getElementById('modal-add-btn');
-      const closeBtn = document.getElementById('modal-close');
-
-      // "View" button click
-      document.querySelectorAll('.gallery-item').forEach(item => {
-        const viewBtn = item.querySelector('.view-button');
-        viewBtn.addEventListener('click', () => {
-          const imgPath = item.getAttribute('data-img');
-          const match = imgPath.match(/furniture(\d+)\.jpg/);
-          const itemNum = match ? parseInt(match[1]) : null;
-          imgEl.src = imgPath;
-          descEl.textContent = item.getAttribute('data-description');
-          itemNumEl.textContent = 'Item #: ' + itemNum;
-          const price = parseFloat(item.getAttribute('data-price')) || 0;
-          priceEl.textContent = 'Price: $' + price.toFixed(2);
-          modal.style.display = 'flex';
-
-          addBtn.onclick = () => {
-            addToCart(itemNum, price, imgPath);
-            modal.style.display = 'none';
-          };
-        });
-      });
-
-      // Close modal
-      closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-      });
-      modal.addEventListener('click', e => {
-        if (e.target === modal) {
-          modal.style.display = 'none';
-        }
-      });
-
-      // Carousel initialization
-      const galleryImgs = Array.from(document.querySelectorAll('.gallery-item img')).map(i => i.src);
-      if (galleryImgs.length) {
-        const carousel = document.getElementById('random-carousel');
-        let idx = Math.floor(Math.random() * galleryImgs.length);
-        carousel.src = galleryImgs[idx];
-        setInterval(() => {
-          let newIdx;
-          do {
-            newIdx = Math.floor(Math.random() * galleryImgs.length);
-          } while (newIdx === idx);
-          idx = newIdx;
-          carousel.style.opacity = 0;
-          setTimeout(() => {
-            carousel.src = galleryImgs[idx];
-            carousel.style.opacity = 1;
-          }, 300);
-        }, 4000);
-      }
-    });
-  </script>
-</body>
-</html>
+    <div class="gallery-item" data-img="ecomassets/furniture6.jpg"  data-price="225.00" data-title="Furniture 6"  data-description="Set of two side tables with metal legs.">
+      <img src="ecomassets/furniture6.jpg" alt="Furniture 6" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture7.jpg"  data-price="125.00" data-title="Furniture 7"  data-description="Rustic wooden bench for entryways or patios.">
+      <img src="ecomassets/furniture7.jpg" alt="Furniture 7" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture8.jpg"  data-price="95.00" data-title="Furniture 8"  data-description="Minimalist floating shelf set of three.">
+      <img src="ecomassets/furniture8.jpg" alt="Furniture 8" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture10.jpg" data-price="125.00" data-title="Furniture 10" data-description="Compact nightstand with a single drawer.">
+      <img src="ecomassets/furniture10.jpg" alt="Furniture 10" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture11.jpg" data-price="125.00" data-title="Furniture 11" data-description="Tall ladder bookshelf for small spaces.">
+      <img src="ecomassets/furniture11.jpg" alt="Furniture 11" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture13.jpg" data-price="225.00" data-title="Furniture 13" data-description="Classic rocking chair with smooth curves.">
+      <img src="ecomassets/furniture13.jpg" alt="Furniture 13" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture14.jpg" data-price="225.00" data-title="Furniture 14" data-description="Armchair upholstered in soft linen fabric.">
+      <img src="ecomassets/furniture14.jpg" alt="Furniture 14" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture15.jpg" data-price="225.00" data-title="Furniture 15" data-description="Set of bar stools with swivel seats.">
+      <img src="ecomassets/furniture15.jpg" alt="Furniture 15" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture16.jpg" data-price="225.00" data-title="Furniture 16" data-description="Rustic dining bench with metal legs.">
+      <img src="ecomassets/furniture16.jpg" alt="Furniture 16" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture17.jpg" data-price="225.00" data-title="Furniture 17" data-description="Contemporary end table with glass top.">
+      <img src="ecomassets/furniture17.jpg" alt="Furniture 17" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture18.jpg" data-price="225.00" data-title="Furniture 18" data-description="Cozy loveseat with plush upholstery.">
+      <img src="ecomassets/furniture18.jpg" alt="Furniture 18" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture19.jpg" data-price="225.00" data-title="Furniture 19" data-description="Mid-century modern TV stand with storage.">
+      <img src="ecomassets/furniture19.jpg" alt="Furniture 19" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture20.jpg" data-price="225.00" data-title="Furniture 20" data-description="Adjustable height coffee table.">
+      <img src="ecomassets/furniture20.jpg" alt="Furniture 20" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture21.jpg" data-price="225.00" data-title="Furniture 21" data-description="Corner shelf unit for extra storage.">
+      <img src="ecomassets/furniture21.jpg" alt="Furniture 21" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture22.jpg" data-price="425.00" data-title="Furniture 22" data-description="King-size bed frame with headboard.">
+      <img src="ecomassets/furniture22.jpg" alt="Furniture 22" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture23.jpg" data-price="225.00" data-title="Furniture 23" data-description="Small writing desk with two drawers.">
+      <img src="ecomassets/furniture23.jpg" alt="Furniture 23" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture24.jpg" data-price="225.00" data-title="Furniture 24" data-description="Reclaimed wood console table.">
+      <img src="ecomassets/furniture24.jpg" alt="Furniture 24" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture26.jpg" data-price="325.00" data-title="Furniture 26" data-description="Custom entertainment center with cabinets.">
+      <img src="ecomassets/furniture26.jpg" alt="Furniture 26" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture27.jpg" data-price="225.00" data-title="Furniture 27" data-description="Set of nesting tables in walnut finish.">
+      <img src="ecomassets/furniture27.jpg" alt="Furniture 27" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture28.jpg" data-price="125.00" data-title="Furniture 28" data-description="Simple side cabinet with sliding door.">
+      <img src="ecomassets/furniture28.jpg" alt="Furniture 28" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture29.jpg" data-price="225.00" data-title="Furniture 29" data-description="Adjustable office chair with wheels.">
+      <img src="ecomassets/furniture29.jpg" alt="Furniture 29" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture30.jpg" data-price="425.00" data-title="Furniture 30" data-description="Large sectional sofa with chaise.">
+      <img src="ecomassets/furniture30.jpg" alt="Furniture 30" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture31.jpg" data-price="225.00" data-title="Furniture 31" data-description="Compact TV stand with rustic finish.">
+      <img src="ecomassets/furniture31.jpg" alt="Furniture 31" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture32.jpg" data-price="225.00" data-title="Furniture 32" data-description="Pair of bedside tables with drawers.">
+      <img src="ecomassets/furniture32.jpg" alt="Furniture 32" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture33.jpg" data-price="125.00" data-title="Furniture 33" data-description="Small folding tray table set.">
+      <img src="ecomassets/furniture33.jpg" alt="Furniture 33" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture34.jpg" data-price="225.00" data-title="Furniture 34" data-description="Reversible ottoman with storage inside.">
+      <img src="ecomassets/furniture34.jpg" alt="Furniture 34" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture35.jpg" data-price="125.00" data-title="Furniture 35" data-description="Wooden stool with carved legs.">
+      <img src="ecomassets/furniture35.jpg" alt="Furniture 35" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture36.jpg" data-price="225.00" data-title="Furniture 36" data-description="Industrial-style shelving unit with metal frame.">
+      <img src="ecomassets/furniture36.jpg" alt="Furniture 36" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture37.jpg" data-price="95.00"  data-title="Furniture 37" data-description="Set of floating corner shelves.">
+      <img src="ecomassets/furniture37.jpg" alt="Furniture 37" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture39.jpg" data-price="125.00" data-title="Furniture 39" data-description="Compact rolling storage cart.">
+      <img src="ecomassets/furniture39.jpg" alt="Furniture 39" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture41.jpg" data-price="225.00" data-title="Furniture 41" data-description="Low-profile TV cabinet with sliding doors.">
+      <img src="ecomassets/furniture41.jpg" alt="Furniture 41" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture42.jpg" data-price="225.00" data-title="Furniture 42" data-description="High-back upholstered dining chair.">
+      <img src="ecomassets/furniture42.jpg" alt="Furniture 42" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture43.jpg" data-price="225.00" data-title="Furniture 43" data-description="Reclaimed wood side table with metal accents.">
+      <img src="ecomassets/furniture43.jpg" alt="Furniture 43" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture44.jpg" data-price="225.00" data-title="Furniture 44" data-description="Set of nesting ottomans with fabric upholstery.">
+      <img src="ecomassets/furniture44.jpg" alt="Furniture 44" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture45.jpg" data-price="225.00" data-title="Furniture 45" data-description="Modern media console with open shelving.">
+      <img src="ecomassets/furniture45.jpg" alt="Furniture 45" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture46.jpg" data-price="325.00" data-title="Furniture 46" data-description="Large wooden wardrobe with sliding doors.">
