@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>Furniture | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Material Icons for bottom nav -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <!-- Stripe.js -->
   <script src="https://js.stripe.com/v3"></script>
 
@@ -19,7 +21,8 @@
       background-color: #f0f0f0;
       color: #1f2937;
       line-height: 1.5;
-      padding-top: 80px; /* space for fixed header */
+      padding-top: 80px;    /* space for fixed header */
+      padding-bottom: 80px; /* space for fixed bottom nav */
     }
     a {
       color: inherit;
@@ -76,18 +79,16 @@
     header .logo {
       height: 50px;
     }
-    /* Container for menu and cart, aligned to right */
     .header-controls {
       margin-left: auto;
       display: flex;
       align-items: center;
-      gap: 20px; /* space between menu button and cart icon */
+      gap: 20px;
     }
     .menu-btn {
       color: #ffffff;
       font-size: 1.5rem;
     }
-    /* Cart icon now stays inside header-controls */
     #cart-icon {
       cursor: pointer;
     }
@@ -135,7 +136,7 @@
       margin: 30px auto 40px;
       overflow: hidden;
       border-radius: 5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
       background: #ffffff;
       display: flex;
       align-items: center;
@@ -161,12 +162,13 @@
       margin-bottom: 15px;
       display: inline-block;
       width: 100%;
+      cursor: pointer; /* make entire item clickable */
     }
     .gallery-item img {
       width: 100%;
       height: auto;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       transition: transform 0.3s ease;
       display: block;
     }
@@ -186,6 +188,7 @@
       border-bottom-left-radius: 8px;
       border-bottom-right-radius: 8px;
       user-select: none;
+      pointer-events: none; /* allow clicks to pass through to parent */
     }
     @media (max-width: 1000px) {
       .gallery { column-count: 3; }
@@ -269,7 +272,7 @@
       background: #ffffff;
       border: 1px solid #cccccc;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       padding: 15px;
       width: 300px;
       display: none;
@@ -292,7 +295,7 @@
       object-fit: cover;
       border-radius: 4px;
       margin-right: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
     .cart-item-name {
       flex: 1;
@@ -349,6 +352,33 @@
       color: #6b7280;
       font-size: 0.9rem;
     }
+
+    /* Bottom Navigation (Etsy-style) */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: rgba(17, 17, 17, 0.9);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 900;
+    }
+    #bottom-nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #ffffff;
+      font-size: 0.75rem;
+      text-decoration: none;
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px;
+      margin-bottom: 2px;
+      color: #ffffff;
+    }
   </style>
 </head>
 
@@ -386,35 +416,35 @@
 
   <!-- Image Gallery -->
   <div class="gallery">
-    <div class="gallery-item" data-img="ecomassets/furniture1.jpg"  data-price="125.00" data-title="Furniture 1"  data-description="Handcrafted wooden chair perfect for living rooms.">
+    <div class="gallery-item" data-img="ecomassets/furniture1.jpg" data-price="125.00" data-title="Furniture 1" data-description="Handcrafted wooden chair perfect for living rooms.">
       <img src="ecomassets/furniture1.jpg" alt="Furniture 1" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture2.jpg"  data-price="225.00" data-title="Furniture 2"  data-description="Elegant oak dining table with a smooth finish.">
+    <div class="gallery-item" data-img="ecomassets/furniture2.jpg" data-price="225.00" data-title="Furniture 2" data-description="Elegant oak dining table with a smooth finish.">
       <img src="ecomassets/furniture2.jpg" alt="Furniture 2" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture3.jpg"  data-price="425.00" data-title="Furniture 3"  data-description="Modern bookshelf with adjustable shelves.">
+    <div class="gallery-item" data-img="ecomassets/furniture3.jpg" data-price="425.00" data-title="Furniture 3" data-description="Modern bookshelf with adjustable shelves.">
       <img src="ecomassets/furniture3.jpg" alt="Furniture 3" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture4.jpg"  data-price="225.00" data-title="Furniture 4"  data-description="Comfortable accent chair with plush cushions.">
+    <div class="gallery-item" data-img="ecomassets/furniture4.jpg" data-price="225.00" data-title="Furniture 4" data-description="Comfortable accent chair with plush cushions.">
       <img src="ecomassets/furniture4.jpg" alt="Furniture 4" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture5.jpg"  data-price="225.00" data-title="Furniture 5"  data-description="Stylish coffee table made from reclaimed wood.">
+    <div class="gallery-item" data-img="ecomassets/furniture5.jpg" data-price="225.00" data-title="Furniture 5" data-description="Stylish coffee table made from reclaimed wood.">
       <img src="ecomassets/furniture5.jpg" alt="Furniture 5" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture6.jpg"  data-price="225.00" data-title="Furniture 6"  data-description="Set of two side tables with metal legs.">
+    <div class="gallery-item" data-img="ecomassets/furniture6.jpg" data-price="225.00" data-title="Furniture 6" data-description="Set of two side tables with metal legs.">
       <img src="ecomassets/furniture6.jpg" alt="Furniture 6" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture7.jpg"  data-price="125.00" data-title="Furniture 7"  data-description="Rustic wooden bench for entryways or patios.">
+    <div class="gallery-item" data-img="ecomassets/furniture7.jpg" data-price="125.00" data-title="Furniture 7" data-description="Rustic wooden bench for entryways or patios.">
       <img src="ecomassets/furniture7.jpg" alt="Furniture 7" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture8.jpg"  data-price="95.00" data-title="Furniture 8"  data-description="Minimalist floating shelf set of three.">
+    <div class="gallery-item" data-img="ecomassets/furniture8.jpg" data-price="95.00" data-title="Furniture 8" data-description="Minimalist floating shelf set of three.">
       <img src="ecomassets/furniture8.jpg" alt="Furniture 8" />
       <div class="view-button">View</div>
     </div>
@@ -518,7 +548,7 @@
       <img src="ecomassets/furniture36.jpg" alt="Furniture 36" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture37.jpg" data-price="95.00"  data-title="Furniture 37" data-description="Set of floating corner shelves.">
+    <div class="gallery-item" data-img="ecomassets/furniture37.jpg" data-price="95.00" data-title="Furniture 37" data-description="Set of floating corner shelves.">
       <img src="ecomassets/furniture37.jpg" alt="Furniture 37" />
       <div class="view-button">View</div>
     </div>
@@ -587,6 +617,22 @@
     <p><strong>Total: $<span id="cart-total">0</span></strong></p>
     <button id="checkout-btn">Checkout</button>
   </div>
+
+  <!-- Bottom Navigation -->
+  <nav id="bottom-nav">
+    <a href="home.html">
+      <span class="material-icons">home</span>
+      <span>Home</span>
+    </a>
+    <a href="furniture.html">
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
+    </a>
+    <a href="decor.html">
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
+    </a>
+  </nav>
 
   <!-- Footer -->
   <footer>
@@ -710,14 +756,14 @@
         quantity: i.qty
       }));
       try {
-const response = await fetch(
-  'https://your-username.your-project.repl.co/create-checkout-session',
-  {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lineItems: lineItems })
-  }
-);
+        const response = await fetch(
+          'https://your-username.your-project.repl.co/create-checkout-session',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lineItems: lineItems })
+          }
+        );
         const session = await response.json();
         const result = await stripe.redirectToCheckout({ sessionId: session.id });
         if (result.error) alert(result.error.message);
@@ -737,10 +783,9 @@ const response = await fetch(
       const addBtn = document.getElementById('modal-add-btn');
       const closeBtn = document.getElementById('modal-close');
 
-      // "View" button click
+      // Make entire .gallery-item clickable
       document.querySelectorAll('.gallery-item').forEach(item => {
-        const viewBtn = item.querySelector('.view-button');
-        viewBtn.addEventListener('click', () => {
+        item.addEventListener('click', () => {
           const imgPath = item.getAttribute('data-img');
           const match = imgPath.match(/furniture(\d+)\.jpg/);
           const itemNum = match ? parseInt(match[1]) : null;
