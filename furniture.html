@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>Furniture | Beaver Built Furniture</title>
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Stripe.js -->
   <script src="https://js.stripe.com/v3"></script>
@@ -538,3 +536,252 @@
       <div class="view-button">View</div>
     </div>
     <div class="gallery-item" data-img="ecomassets/furniture46.jpg" data-price="325.00" data-title="Furniture 46" data-description="Large wooden wardrobe with sliding doors.">
+      <img src="ecomassets/furniture46.jpg" alt="Furniture 46" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture47.jpg" data-price="225.00" data-title="Furniture 47" data-description="Contemporary curved-back accent chair.">
+      <img src="ecomassets/furniture47.jpg" alt="Furniture 47" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture48.jpg" data-price="225.00" data-title="Furniture 48" data-description="Rustic console table with X-frame legs.">
+      <img src="ecomassets/furniture48.jpg" alt="Furniture 48" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture49.jpg" data-price="125.00" data-title="Furniture 49" data-description="Small decorative stool with cushioned top.">
+      <img src="ecomassets/furniture49.jpg" alt="Furniture 49" />
+      <div class="view-button">View</div>
+    </div>
+    <div class="gallery-item" data-img="ecomassets/furniture50.jpg" data-price="225.00" data-title="Furniture 50" data-description="Set of two end tables with marble tops.">
+      <img src="ecomassets/furniture50.jpg" alt="Furniture 50" />
+      <div class="view-button">View</div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal">
+    <div id="modal-content">
+      <button id="modal-close">&times;</button>
+      <img id="modal-image" src="" alt="Detail View" />
+      <div id="modal-description"></div>
+      <div id="modal-itemnum"></div>
+      <div id="modal-price"></div>
+      <button id="modal-add-btn">Add to Cart</button>
+    </div>
+  </div>
+
+  <!-- Cart Icon -->
+  <div id="cart-icon">
+    <img src="ecomassets/Cart.png" alt="Cart" />
+  </div>
+
+  <!-- Cart Popover -->
+  <div id="cart-popover">
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
+    <button id="checkout-btn">Checkout</button>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 Beaver Built Furniture. All rights reserved.
+  </footer>
+
+  <script>
+    // 1) Preloader fade-out
+    window.addEventListener('load', function() {
+      const pre = document.getElementById('preloader');
+      setTimeout(() => {
+        pre.classList.add('fade-out');
+        setTimeout(() => {
+          pre.style.display = 'none';
+        }, 1000);
+      }, 1000);
+    });
+
+    // 2) Toggle mobile menu
+    const menuBtn = document.getElementById('menu-btn');
+    const navDropdown = document.getElementById('navDropdown');
+    menuBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      navDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!navDropdown.contains(e.target) && e.target !== menuBtn) {
+        navDropdown.classList.remove('open');
+      }
+    });
+
+    // 3) Stripe & Cart Logic
+    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
+    let cart = [];
+
+    function addToCart(itemNum, price, imgSrc) {
+      const existing = cart.find(i => i.itemNum === itemNum);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ itemNum, price, img: imgSrc, qty: 1 });
+      }
+      updateCart();
+    }
+
+    function removeFromCart(itemNum) {
+      const idx = cart.findIndex(i => i.itemNum === itemNum);
+      if (idx !== -1) {
+        cart[idx].qty--;
+        if (cart[idx].qty <= 0) {
+          cart.splice(idx, 1);
+        }
+        updateCart();
+      }
+    }
+
+    function updateCart() {
+      const itemsDiv = document.getElementById('cart-items');
+      itemsDiv.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        total += item.price * item.qty;
+        itemsDiv.innerHTML += `
+          <div class="cart-item">
+            <img src="${item.img}" alt="Item ${item.itemNum}">
+            <div class="cart-item-name">Item #: ${item.itemNum}</div>
+            <div class="quantity-controls">
+              <button class="quantity-button minus-button" data-item="${item.itemNum}">−</button>
+              <div class="quantity-display">${item.qty}</div>
+              <button class="quantity-button plus-button" data-item="${item.itemNum}">+</button>
+            </div>
+            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+          </div>
+        `;
+      });
+
+      document.getElementById('cart-total').innerText = total.toFixed(2);
+
+      document.querySelectorAll('.plus-button').forEach(btn => {
+        btn.onclick = () => {
+          const num = parseInt(btn.getAttribute('data-item'));
+          const itm = cart.find(i => i.itemNum === num);
+          addToCart(num, itm.price, itm.img);
+        };
+      });
+      document.querySelectorAll('.minus-button').forEach(btn => {
+        btn.onclick = () => {
+          const num = parseInt(btn.getAttribute('data-item'));
+          removeFromCart(num);
+        };
+      });
+    }
+
+    // 4) Cart icon toggle
+    const cartIcon = document.getElementById('cart-icon');
+    const cartPopover = document.getElementById('cart-popover');
+    cartIcon.addEventListener('click', e => {
+      e.stopPropagation();
+      cartPopover.style.display = cartPopover.style.display === 'block' ? 'none' : 'block';
+    });
+    cartPopover.addEventListener('click', e => e.stopPropagation());
+    document.addEventListener('click', e => {
+      if (cartPopover.style.display === 'block' && !cartPopover.contains(e.target) && e.target !== cartIcon) {
+        cartPopover.style.display = 'none';
+      }
+    });
+
+    // 5) Checkout button
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      const lineItems = cart.map(i => ({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Item #: ' + i.itemNum },
+          unit_amount: i.price * 100
+        },
+        quantity: i.qty
+      }));
+      try {
+        const response = await fetch(
+          'https://f75eae02-5e5e-4934-a724-913553105975-00-3jy3mb3ziz8jh.kirk.replit.dev/create-checkout-session',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lineItems })
+          }
+        );
+        const session = await response.json();
+        const result = await stripe.redirectToCheckout({ sessionId: session.id });
+        if (result.error) alert(result.error.message);
+      } catch {
+        alert('Checkout failed. Please try again.');
+      }
+    });
+
+    // 6) Modal, gallery & carousel setup
+    document.addEventListener('DOMContentLoaded', () => {
+      // Modal elements
+      const modal = document.getElementById('detail-modal');
+      const imgEl = document.getElementById('modal-image');
+      const descEl = document.getElementById('modal-description');
+      const itemNumEl = document.getElementById('modal-itemnum');
+      const priceEl = document.getElementById('modal-price');
+      const addBtn = document.getElementById('modal-add-btn');
+      const closeBtn = document.getElementById('modal-close');
+
+      // "View" button click
+      document.querySelectorAll('.gallery-item').forEach(item => {
+        const viewBtn = item.querySelector('.view-button');
+        viewBtn.addEventListener('click', () => {
+          const imgPath = item.getAttribute('data-img');
+          const match = imgPath.match(/furniture(\d+)\.jpg/);
+          const itemNum = match ? parseInt(match[1]) : null;
+          imgEl.src = imgPath;
+          descEl.textContent = item.getAttribute('data-description');
+          itemNumEl.textContent = 'Item #: ' + itemNum;
+          const price = parseFloat(item.getAttribute('data-price')) || 0;
+          priceEl.textContent = 'Price: $' + price.toFixed(2);
+
+          modal.style.display = 'flex';
+          addBtn.onclick = () => {
+            addToCart(itemNum, price, imgPath);
+            modal.style.display = 'none';
+          };
+        });
+      });
+
+      // Close modal
+      closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      modal.addEventListener('click', e => {
+        if (e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // Carousel initialization
+      const galleryImgs = Array.from(document.querySelectorAll('.gallery-item img')).map(i => i.src);
+      if (galleryImgs.length) {
+        const carousel = document.getElementById('random-carousel');
+        let idx = Math.floor(Math.random() * galleryImgs.length);
+        carousel.src = galleryImgs[idx];
+        setInterval(() => {
+          let newIdx;
+          do {
+            newIdx = Math.floor(Math.random() * galleryImgs.length);
+          } while (newIdx === idx);
+          idx = newIdx;
+          carousel.style.opacity = 0;
+          setTimeout(() => {
+            carousel.src = galleryImgs[idx];
+            carousel.style.opacity = 1;
+          }, 300);
+        }, 4000);
+      }
+    });
+  </script>
+</body>
+</html>
