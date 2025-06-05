@@ -76,11 +76,26 @@
     header .logo {
       height: 50px;
     }
-    .menu-btn {
+    /* Container for menu and cart, aligned to right */
+    .header-controls {
       margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 20px; /* space between menu button and cart icon */
+    }
+    .menu-btn {
       color: #ffffff;
       font-size: 1.5rem;
     }
+    /* Cart icon now stays inside header-controls */
+    #cart-icon {
+      cursor: pointer;
+    }
+    #cart-icon img {
+      width: 28px;
+      height: 28px;
+    }
+
     .dropdown {
       position: fixed;
       top: 80px;
@@ -246,18 +261,7 @@
       background: #374151;
     }
 
-    /* Cart Icon & Popover */
-    #cart-icon {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      z-index: 910;
-      cursor: pointer;
-    }
-    #cart-icon img {
-      width: 28px;
-      height: 28px;
-    }
+    /* Cart Popover */
     #cart-popover {
       position: fixed;
       top: 60px;
@@ -356,8 +360,15 @@
 
   <!-- Header -->
   <header>
-    <a href="home.html"><img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo" /></a>
-    <button class="menu-btn" id="menu-btn">☰</button>
+    <a href="home.html">
+      <img src="beaverlogo.jpg" alt="Beaver Built Furniture" class="logo" />
+    </a>
+    <div class="header-controls">
+      <button class="menu-btn" id="menu-btn">☰</button>
+      <div id="cart-icon">
+        <img src="ecomassets/Cart.png" alt="Cart" />
+      </div>
+    </div>
     <nav class="dropdown" id="navDropdown">
       <a href="home.html">Home</a>
       <a href="furniture.html">Furniture</a>
@@ -567,11 +578,6 @@
       <div id="modal-price"></div>
       <button id="modal-add-btn">Add to Cart</button>
     </div>
-  </div>
-
-  <!-- Cart Icon -->
-  <div id="cart-icon">
-    <img src="ecomassets/Cart.png" alt="Cart" />
   </div>
 
   <!-- Cart Popover -->
