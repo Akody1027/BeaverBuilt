@@ -710,14 +710,14 @@
         quantity: i.qty
       }));
       try {
-        const response = await fetch(
-          'https://your-replit-username.your-replit-project.repl.co/create-checkout-session',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lineItems })
-          }
-        );
+const response = await fetch(
+  'https://your-username.your-project.repl.co/create-checkout-session',
+  {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lineItems: lineItems })
+  }
+);
         const session = await response.json();
         const result = await stripe.redirectToCheckout({ sessionId: session.id });
         if (result.error) alert(result.error.message);
