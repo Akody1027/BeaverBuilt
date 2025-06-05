@@ -5,9 +5,9 @@
   <title>Home Decor | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Montserrat Font -->
+  <!-- Lily Script One Font -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap"
     rel="stylesheet"
   />
   <!-- Material Icons (for Home, Furniture, Decor) -->
@@ -88,9 +88,8 @@
       margin-right: 15px;
     }
     header .page-title {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 600;
-      font-size: 1.5rem;
+      font-family: 'Lily Script One', cursive;
+      font-size: 2rem;
       color: #ffffff;
     }
 
@@ -391,35 +390,35 @@
 
   <!-- Image Gallery -->
   <div class="gallery">
-    <div class="gallery-item" data-img="ecomassets/mis2.jpg"  data-price="125.00" data-title="Decor 2"  data-description="Stylish wall mirror with wooden frame.">
+    <div class="gallery-item" data-img="ecomassets/mis2.jpg" data-price="125.00" data-title="Decor 2" data-description="Stylish wall mirror with wooden frame.">
       <img src="ecomassets/mis2.jpg" alt="Decor 2" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis3.jpg"  data-price="125.00" data-title="Decor 3"  data-description="Elegant ceramic vase with floral patterns.">
+    <div class="gallery-item" data-img="ecomassets/mis3.jpg" data-price="125.00" data-title="Decor 3" data-description="Elegant ceramic vase with floral patterns.">
       <img src="ecomassets/mis3.jpg" alt="Decor 3" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis4.jpg"  data-price="125.00" data-title="Decor 4"  data-description="Modern table lamp with fabric shade.">
+    <div class="gallery-item" data-img="ecomassets/mis4.jpg" data-price="125.00" data-title="Decor 4" data-description="Modern table lamp with fabric shade.">
       <img src="ecomassets/mis4.jpg" alt="Decor 4" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis5.jpg"  data-price="125.00" data-title="Decor 5"  data-description="Decorative wall art panel in abstract design.">
+    <div class="gallery-item" data-img="ecomassets/mis5.jpg" data-price="125.00" data-title="Decor 5" data-description="Decorative wall art panel in abstract design.">
       <img src="ecomassets/mis5.jpg" alt="Decor 5" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis6.jpg"  data-price="125.00" data-title="Decor 6"  data-description="Set of three floating shelves in walnut finish.">
+    <div class="gallery-item" data-img="ecomassets/mis6.jpg" data-price="125.00" data-title="Decor 6" data-description="Set of three floating shelves in walnut finish.">
       <img src="ecomassets/mis6.jpg" alt="Decor 6" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis7.jpg"  data-price="125.00" data-title="Decor 7"  data-description="Minimalist ceramic planter with stand.">
+    <div class="gallery-item" data-img="ecomassets/mis7.jpg" data-price="125.00" data-title="Decor 7" data-description="Minimalist ceramic planter with stand.">
       <img src="ecomassets/mis7.jpg" alt="Decor 7" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis8.jpg"  data-price="125.00" data-title="Decor 8"  data-description="Cozy throw blanket in neutral tones.">
+    <div class="gallery-item" data-img="ecomassets/mis8.jpg" data-price="125.00" data-title="Decor 8" data-description="Cozy throw blanket in neutral tones.">
       <img src="ecomassets/mis8.jpg" alt="Decor 8" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/mis9.jpg"  data-price="125.00" data-title="Decor 9"  data-description="Decorative table clock with metal frame.">
+    <div class="gallery-item" data-img="ecomassets/mis9.jpg" data-price="125.00" data-title="Decor 9" data-description="Decorative table clock with metal frame.">
       <img src="ecomassets/mis9.jpg" alt="Decor 9" />
       <div class="view-button">View</div>
     </div>
@@ -591,11 +590,25 @@
       }, 1000);
     });
 
-    // 2) Stripe & Cart Logic
-    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
+    // 2) Persist cart in localStorage
     let cart = [];
+    function loadCart() {
+      const saved = localStorage.getItem('bbf_cart');
+      if (saved) {
+        try {
+          cart = JSON.parse(saved);
+        } catch {
+          cart = [];
+        }
+      }
+      updateCart();
+      updateBadge();
+    }
+    function saveCart() {
+      localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    }
 
-    // Update badge visibility & count
+    // 3) Update badge visibility & count
     function updateBadge() {
       const badge = document.getElementById('cart-badge');
       const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -607,6 +620,7 @@
       }
     }
 
+    // 4) Add/remove items
     function addToCart(itemNum, price, imgSrc) {
       const existing = cart.find(i => i.itemNum === itemNum);
       if (existing) {
@@ -614,6 +628,7 @@
       } else {
         cart.push({ itemNum, price, img: imgSrc, qty: 1 });
       }
+      saveCart();
       updateCart();
       updateBadge();
     }
@@ -625,6 +640,7 @@
         if (cart[idx].qty <= 0) {
           cart.splice(idx, 1);
         }
+        saveCart();
         updateCart();
         updateBadge();
       }
@@ -668,7 +684,7 @@
       });
     }
 
-    // 3) Cart icon toggle from bottom nav
+    // 5) Cart icon toggle from bottom nav
     const cartIcon = document.getElementById('bottom-cart');
     const cartPopover = document.getElementById('cart-popover');
     cartIcon.addEventListener('click', e => {
@@ -683,7 +699,7 @@
       }
     });
 
-    // 4) Checkout button
+    // 6) Checkout button
     document.getElementById('checkout-btn').addEventListener('click', async () => {
       if (cart.length === 0) {
         alert('Your cart is empty!');
@@ -714,8 +730,10 @@
       }
     });
 
-    // 5) Modal, gallery & carousel setup
+    // 7) Modal, gallery & carousel setup
     document.addEventListener('DOMContentLoaded', () => {
+      loadCart();
+
       const modal = document.getElementById('detail-modal');
       const imgEl = document.getElementById('modal-image');
       const descEl = document.getElementById('modal-description');
@@ -724,8 +742,15 @@
       const addBtn = document.getElementById('modal-add-btn');
       const closeBtn = document.getElementById('modal-close');
 
-      document.querySelectorAll('.gallery-item').forEach(item => {
-        item.addEventListener('click', () => {
+      const galleryItems = document.querySelectorAll('.gallery-item');
+      galleryItems.forEach(item => {
+        item.addEventListener('click', e => {
+          // If cart popover is open, close it and do not open modal
+          if (cartPopover.style.display === 'block') {
+            cartPopover.style.display = 'none';
+            return;
+          }
+
           const imgPath = item.getAttribute('data-img');
           const match = imgPath.match(/mis(\d+)\.jpg/);
           const itemNum = match ? parseInt(match[1]) : null;
