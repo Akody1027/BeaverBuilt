@@ -9,7 +9,7 @@
   <script type="module">
     // ══ 1) IMPORT FIREBASE MODULES FROM CDN ══
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword }
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut }
       from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
     import { getDatabase, ref, onChildAdded, push }
       from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
@@ -43,6 +43,7 @@
     const replyBtn = document.getElementById("reply-btn");
 
     let currentThreadUid = null;
+    const ADMIN_UID = "LtKEk3kvMQgMpLPfUISsS5067xc2";
 
     // ══ 5) WHEN ADMIN CLICKS “Log In” ══
     loginBtn.addEventListener("click", () => {
@@ -54,7 +55,7 @@
       }
       signInWithEmailAndPassword(auth, email, pwd)
         .then(() => {
-          // onAuthStateChanged will handle the rest
+          // Let onAuthStateChanged handle the rest
         })
         .catch(err => {
           console.error("Login failed:", err);
@@ -65,7 +66,7 @@
     // ══ 6) ON AUTH STATE CHANGE ══
     onAuthStateChanged(auth, user => {
       if (!user) {
-        // Not signed in → show login form, hide admin UI
+        // No one is signed in → show login form, hide admin UI
         loginDiv.style.display = "block";
         threadListDiv.style.display = "none";
         messagesDiv.style.display = "none";
@@ -74,19 +75,29 @@
         return;
       }
 
-      // Signed in: hide login form, show admin UI
+      // A user is signed in; check if they are the admin
+      if (user.uid !== ADMIN_UID) {
+        // Not the admin: immediately sign them out and show login again
+        signOut(auth).then(() => {
+          alert("You are not authorized to access this page.");
+          loginDiv.style.display = "block";
+          threadListDiv.style.display = "none";
+          messagesDiv.style.display = "none";
+          replyInput.style.display = "none";
+          replyBtn.style.display = "none";
+        }).catch(err => {
+          console.error("Error signing out unauthorized user:", err);
+          loginDiv.style.display = "block";
+        });
+        return;
+      }
+
+      // Admin is correctly signed in: show admin UI
       loginDiv.style.display = "none";
       threadListDiv.style.display = "block";
       messagesDiv.style.display = "block";
       replyInput.style.display = "inline-block";
       replyBtn.style.display = "inline-block";
-
-      const adminUid = user.uid;
-      // ←── QUOTE THE UID STRING ──→
-      if (adminUid !== "LtKEk3kvMQgMpLPfUISsS5067xc2") {
-        document.body.innerHTML = "<h2>Access Denied</h2>";
-        return;
-      }
 
       loadAllThreads();
     });
@@ -164,7 +175,7 @@
       max-height: 400px;
       overflow-y: auto;
       padding-right: 10px;
-      display: none; /* hidden until login */
+      display: none; /* hidden until admin logs in */
     }
     #messages {
       width: 65%;
@@ -173,18 +184,18 @@
       overflow-y: auto;
       padding: 10px;
       background: #fafafa;
-      display: none; /* hidden until login */
+      display: none; /* hidden until admin logs in */
     }
     #reply-input {
       width: 75%;
       padding: 8px;
       margin-top: 10px;
-      display: none; /* hidden until login */
+      display: none; /* hidden until admin logs in */
     }
     #reply-btn {
       padding: 8px 12px;
       margin-top: 10px;
-      display: none; /* hidden until login */
+      display: none; /* hidden until admin logs in */
     }
     h3 {
       margin-bottom: 10px;
@@ -216,7 +227,7 @@
   <!-- ─── B) ADMIN INTERFACE (initially hidden) ─── -->
   <div id="thread-list">
     <h3>Visitor Threads</h3>
-    <!-- visitor list items will appear here -->
+    <!-- Visitor list items will appear here -->
   </div>
 
   <div style="width:65%; margin-left:5%;">
