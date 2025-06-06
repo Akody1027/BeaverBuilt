@@ -10,7 +10,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-    // 1) YOUR FIREBASE CONFIG ─ copy exactly from your console
+    // 1) YOUR FIREBASE CONFIG ── copy exactly from your console
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -25,14 +25,17 @@
     // 2) INITIALIZE FIREBASE
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    console.log("chat.html: Firebase initialized");
 
     // 3) GENERATE OR REUSE A visitorUid
     let visitorUid = localStorage.getItem("visitorUid");
     if (!visitorUid) {
-      // Reserve a new key under /threads without pushing content yet
       const newThreadRef = push(ref(db, "threads"));
       visitorUid = newThreadRef.key;
       localStorage.setItem("visitorUid", visitorUid);
+      console.log("chat.html: New visitorUid generated:", visitorUid);
+    } else {
+      console.log("chat.html: Reusing visitorUid from localStorage:", visitorUid);
     }
 
     // 4) UI ELEMENTS
@@ -44,6 +47,7 @@
     const thisThreadRef = ref(db, `threads/${visitorUid}`);
     onChildAdded(thisThreadRef, snapshot => {
       const m = snapshot.val();
+      console.log("chat.html: New message received:", m);
       const p = document.createElement("div");
       p.textContent = (m.sender === "visitor" ? "You: " : "Admin: ") + m.text;
       p.style.padding = "8px 12px";
@@ -68,12 +72,27 @@
     sendBtn.addEventListener("click", () => {
       const text = inputBox.value.trim();
       if (!text) return;
+      console.log("chat.html: Sending message:", text);
       push(thisThreadRef, {
         sender: "visitor",
         text,
         ts: Date.now()
-      });
+      })
+        .then(() => {
+          console.log("chat.html: Message successfully pushed to Firebase");
+        })
+        .catch(err => {
+          console.error("chat.html: Error pushing message:", err);
+        });
       inputBox.value = "";
+    });
+
+    // Also allow “Enter” to send
+    inputBox.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendBtn.click();
+      }
     });
   </script>
 
