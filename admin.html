@@ -16,7 +16,7 @@
     } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
     import { getDatabase, ref, onChildAdded, push } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-    // 1) YOUR FIREBASE CONFIG ─ copy exactly from the same project as chat.html
+    // 1) YOUR FIREBASE CONFIG ── copy exactly from the same project as chat.html
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -32,6 +32,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
+    console.log("admin.html: Firebase initialized");
 
     // 3) DOM ELEMENTS
     const loginDiv = document.getElementById("login-form");
@@ -44,8 +45,8 @@
     const replyInput = document.getElementById("reply-input");
     const replyBtn = document.getElementById("reply-btn");
 
-    // 4) ADMIN UID ─ replace with your actual Firebase Auth user’s UID
-    //    (Go to Firebase Console → Authentication → Users → copy UID exactly)
+    // 4) ADMIN UID ── replace with your actual Firebase user’s UID
+    //     (Go to Firebase Console → Authentication → Users → copy the UID exactly)
     const ADMIN_UID = "LtKEk3kvMQgMpLPfUISsS5067xc2";
 
     let currentThreadUid = null;
@@ -60,10 +61,11 @@
       }
       signInWithEmailAndPassword(auth, email, pwd)
         .then(() => {
+          console.log("admin.html: signInWithEmailAndPassword succeeded");
           // onAuthStateChanged will fire next
         })
         .catch(err => {
-          console.error("Login failed:", err);
+          console.error("admin.html: Login failed:", err);
           alert("Login failed: " + err.message);
         });
     });
@@ -71,6 +73,7 @@
     // 6) ON AUTH STATE CHANGE
     onAuthStateChanged(auth, user => {
       if (!user) {
+        console.log("admin.html: No user signed in");
         // Not signed in → show login form, hide admin UI
         loginDiv.style.display = "block";
         threadListDiv.style.display = "none";
@@ -80,11 +83,13 @@
         return;
       }
 
+      console.log("admin.html: Auth state changed, signed in user.uid =", user.uid);
       // A user is signed in: check if it’s the ADMIN
       if (user.uid !== ADMIN_UID) {
-        // Not the admin → force sign‐out and go back to login form
+        console.warn("admin.html: Signed in user is NOT admin, signing out...");
         signOut(auth)
           .then(() => {
+            console.log("admin.html: Unauthorized user signed out");
             alert("You are not authorized to access this page.");
             loginDiv.style.display = "block";
             threadListDiv.style.display = "none";
@@ -93,12 +98,13 @@
             replyBtn.style.display = "none";
           })
           .catch(err => {
-            console.error("Error signing out unauthorized user:", err);
+            console.error("admin.html: Error signing out unauthorized user:", err);
             loginDiv.style.display = "block";
           });
         return;
       }
 
+      console.log("admin.html: Admin is signed in, loading threads...");
       // Admin is correctly signed in → show admin UI
       loginDiv.style.display = "none";
       threadListDiv.style.display = "block";
@@ -115,14 +121,10 @@
       const threadsRef = ref(db, "threads");
       onChildAdded(threadsRef, snap => {
         const visitorUid = snap.key;
+        console.log("admin.html: New thread detected:", visitorUid);
         const div = document.createElement("div");
         div.textContent = visitorUid;
-        div.style.cursor = "pointer";
-        div.style.padding = "10px";
-        div.style.margin = "6px 0";
-        div.style.borderRadius = "6px";
-        div.style.background = "#333";
-        div.style.color = "#eee";
+        div.classList.add("thread-item");
         div.onclick = () => openThread(visitorUid);
         threadListDiv.append(div);
       });
@@ -131,11 +133,13 @@
     // 8) OPEN A SINGLE THREAD AND LISTEN FOR MESSAGES
     function openThread(uid) {
       currentThreadUid = uid;
+      console.log("admin.html: Opening thread:", uid);
       messagesDiv.innerHTML = ""; // clear previous messages
 
       const singleThreadRef = ref(db, `threads/${uid}`);
       onChildAdded(singleThreadRef, snap => {
         const m = snap.val();
+        console.log("admin.html: New message in this thread:", m);
         const p = document.createElement("div");
         p.textContent = (m.sender === "visitor" ? "Visitor: " : "You: ") + m.text;
         p.style.padding = "8px 12px";
@@ -149,7 +153,7 @@
           p.style.color = "#eee";
         } else {
           p.style.alignSelf = "flex-end";
-          p.style.background = "#555"; // lighter gray admin bubble
+          p.style.background = "#555"; // slightly lighter gray admin bubble
           p.style.color = "#fff";
         }
         messagesDiv.append(p);
@@ -165,13 +169,28 @@
       }
       const text = replyInput.value.trim();
       if (!text) return;
+      console.log("admin.html: Sending reply to", currentThreadUid, ":", text);
       const threadRef = ref(db, `threads/${currentThreadUid}`);
       push(threadRef, {
         sender: "admin",
         text,
         ts: Date.now()
-      });
+      })
+        .then(() => {
+          console.log("admin.html: Reply successfully pushed to Firebase");
+        })
+        .catch(err => {
+          console.error("admin.html: Error pushing reply:", err);
+        });
       replyInput.value = "";
+    });
+
+    // Allow “Enter” to send reply
+    replyInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        replyBtn.click();
+      }
     });
   </script>
 
@@ -180,13 +199,12 @@
     * {
       box-sizing: border-box;
     }
-    body {
+    html, body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
       background-color: #121212;
       color: #eee;
       font-family: Arial, sans-serif;
-      display: flex;
       height: 100vh;
     }
     /* LOGIN FORM */
@@ -231,7 +249,12 @@
       background: #444;
     }
 
-    /* ADMIN INTERFACE */
+    /* ADMIN INTERFACE LAYOUT */
+    .admin-container {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
     #thread-list {
       width: 28%;
       background: #1e1e1e;
@@ -245,15 +268,28 @@
       margin-top: 0;
       color: #fff;
     }
-    #thread-list div {
-      display: flex;
-      align-items: center;
+    .thread-item {
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      background: #333;
+      color: #eee;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .thread-item:hover {
+      background: #444;
     }
 
+    .chat-column {
+      width: 72%;
+      display: flex;
+      flex-direction: column;
+      margin-left: 16px;
+    }
     #messages {
       flex: 1;
       background: #1e1e1e;
-      margin-left: 16px;
       border: 1px solid #333;
       border-radius: 8px;
       padding: 16px;
@@ -266,7 +302,6 @@
       margin-top: 0;
       color: #fff;
     }
-
     #reply-input {
       width: 100%;
       margin-top: 12px;
@@ -281,7 +316,6 @@
     #reply-input::placeholder {
       color: #aaa;
     }
-
     #reply-btn {
       margin-top: 8px;
       padding: 10px 16px;
@@ -295,34 +329,6 @@
       transition: background 0.15s;
     }
     #reply-btn:hover {
-      background: #444;
-    }
-
-    /* LAYOUT CONTAINER */
-    .admin-container {
-      display: flex;
-      width: 100%;
-      height: 100%;
-    }
-    .threads-column {
-      width: 28%;
-    }
-    .chat-column {
-      width: 72%;
-      display: flex;
-      flex-direction: column;
-      margin-left: 16px;
-    }
-    .thread-item {
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      background: #333;
-      color: #eee;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .thread-item:hover {
       background: #444;
     }
   </style>
@@ -349,14 +355,14 @@
 
   <!-- ─── B) ADMIN INTERFACE (initially hidden) ─── -->
   <div class="admin-container">
-    <div id="thread-list" class="threads-column">
+    <div id="thread-list">
       <h3>Visitor Threads</h3>
-      <!-- Threads appear here -->
+      <!-- Threads will appear here -->
     </div>
 
     <div class="chat-column">
       <div id="messages">
-        <!-- Messages appear here -->
+        <!-- Messages will appear here -->
       </div>
       <input
         id="reply-input"
