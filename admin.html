@@ -8,11 +8,11 @@
   <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
   <script type="module">
     // ══ 1) IMPORT FIREBASE MODULES FROM CDN ══
-    import { initializeApp }                    from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword }
-                                              from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+      from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
     import { getDatabase, ref, onChildAdded, push }
-                                              from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+      from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
     // ══ 2) YOUR FIREBASE CONFIG (copy/paste exactly) ══
     const firebaseConfig = {
@@ -27,35 +27,34 @@
     };
 
     // ══ 3) INITIALIZE FIREBASE ══
-    const app  = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db   = getDatabase(app);
+    const db = getDatabase(app);
 
     // ══ 4) DOM ELEMENTS FOR LOGIN FORM & ADMIN UI ══
-    const loginDiv      = document.getElementById("login-form");
-    const emailInput    = document.getElementById("login-email");
-    const passInput     = document.getElementById("login-password");
-    const loginBtn      = document.getElementById("login-button");
+    const loginDiv = document.getElementById("login-form");
+    const emailInput = document.getElementById("login-email");
+    const passInput = document.getElementById("login-password");
+    const loginBtn = document.getElementById("login-button");
 
     const threadListDiv = document.getElementById("thread-list");
-    const messagesDiv   = document.getElementById("messages");
-    const replyInput    = document.getElementById("reply-input");
-    const replyBtn      = document.getElementById("reply-btn");
+    const messagesDiv = document.getElementById("messages");
+    const replyInput = document.getElementById("reply-input");
+    const replyBtn = document.getElementById("reply-btn");
 
     let currentThreadUid = null;
 
     // ══ 5) WHEN ADMIN CLICKS “Log In” ══
     loginBtn.addEventListener("click", () => {
       const email = emailInput.value.trim();
-      const pwd   = passInput.value;
+      const pwd = passInput.value;
       if (!email || !pwd) {
         alert("Please enter both email and password.");
         return;
       }
-      // Attempt Firebase sign-in
       signInWithEmailAndPassword(auth, email, pwd)
         .then(() => {
-          // success → onAuthStateChanged will run
+          // onAuthStateChanged will handle the rest
         })
         .catch(err => {
           console.error("Login failed:", err);
@@ -66,28 +65,29 @@
     // ══ 6) ON AUTH STATE CHANGE ══
     onAuthStateChanged(auth, user => {
       if (!user) {
-        // not signed in → show login form
-        loginDiv.style.display       = "block";
-        threadListDiv.style.display  = "none";
-        messagesDiv.style.display    = "none";
-        replyInput.style.display     = "none";
-        replyBtn.style.display       = "none";
+        // Not signed in → show login form, hide admin UI
+        loginDiv.style.display = "block";
+        threadListDiv.style.display = "none";
+        messagesDiv.style.display = "none";
+        replyInput.style.display = "none";
+        replyBtn.style.display = "none";
         return;
       }
 
-      // signed in: hide login form, show admin UI
-      loginDiv.style.display       = "none";
-      threadListDiv.style.display  = "block";
-      messagesDiv.style.display    = "block";
-      replyInput.style.display     = "inline-block";
-      replyBtn.style.display       = "inline-block";
+      // Signed in: hide login form, show admin UI
+      loginDiv.style.display = "none";
+      threadListDiv.style.display = "block";
+      messagesDiv.style.display = "block";
+      replyInput.style.display = "inline-block";
+      replyBtn.style.display = "inline-block";
 
       const adminUid = user.uid;
-      // ── QUOTE THE UID STRING HERE ──
+      // ←── QUOTE THE UID STRING ──→
       if (adminUid !== "LtKEk3kvMQgMpLPfUISsS5067xc2") {
         document.body.innerHTML = "<h2>Access Denied</h2>";
         return;
       }
+
       loadAllThreads();
     });
 
@@ -162,4 +162,75 @@
       width: 30%;
       border-right: 1px solid #ccc;
       max-height: 400px;
-      ov
+      overflow-y: auto;
+      padding-right: 10px;
+      display: none; /* hidden until login */
+    }
+    #messages {
+      width: 65%;
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #fafafa;
+      display: none; /* hidden until login */
+    }
+    #reply-input {
+      width: 75%;
+      padding: 8px;
+      margin-top: 10px;
+      display: none; /* hidden until login */
+    }
+    #reply-btn {
+      padding: 8px 12px;
+      margin-top: 10px;
+      display: none; /* hidden until login */
+    }
+    h3 {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ─── A) LOGIN FORM (initially visible) ─── -->
+  <div id="login-form">
+    <h3>Admin Login</h3>
+    <input
+      id="login-email"
+      type="email"
+      placeholder="Email"
+      style="width:100%; padding:8px; margin:5px 0;"
+    />
+    <input
+      id="login-password"
+      type="password"
+      placeholder="Password"
+      style="width:100%; padding:8px; margin:5px 0;"
+    />
+    <button id="login-button" style="padding:8px 12px; margin-top:8px;">
+      Log In
+    </button>
+  </div>
+
+  <!-- ─── B) ADMIN INTERFACE (initially hidden) ─── -->
+  <div id="thread-list">
+    <h3>Visitor Threads</h3>
+    <!-- visitor list items will appear here -->
+  </div>
+
+  <div style="width:65%; margin-left:5%;">
+    <h3>Messages</h3>
+    <div id="messages"></div>
+    <input
+      id="reply-input"
+      type="text"
+      placeholder="Type your reply…"
+      style="display:none; width:75%; padding:8px; margin-top:10px;"
+    />
+    <button id="reply-btn" style="display:none; padding:8px 12px; margin-top:10px;">
+      Reply
+    </button>
+  </div>
+</body>
+</html>
