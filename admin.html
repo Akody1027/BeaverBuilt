@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
-    <script type="module">
+  <script type="module">
     // ══ 1) IMPORT FIREBASE MODULES FROM CDN ══
     import { initializeApp }                    from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { getDatabase, ref, onChildAdded, push }                from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword }
+                                              from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { getDatabase, ref, onChildAdded, push }
+                                              from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
     // ══ 2) YOUR FIREBASE CONFIG (copy/paste exactly) ══
     const firebaseConfig = {
@@ -30,10 +32,10 @@
     const db   = getDatabase(app);
 
     // ══ 4) DOM ELEMENTS FOR LOGIN FORM & ADMIN UI ══
-    const loginDiv   = document.getElementById("login-form");
-    const emailInput = document.getElementById("login-email");
-    const passInput  = document.getElementById("login-password");
-    const loginBtn   = document.getElementById("login-button");
+    const loginDiv      = document.getElementById("login-form");
+    const emailInput    = document.getElementById("login-email");
+    const passInput     = document.getElementById("login-password");
+    const loginBtn      = document.getElementById("login-button");
 
     const threadListDiv = document.getElementById("thread-list");
     const messagesDiv   = document.getElementById("messages");
@@ -52,7 +54,9 @@
       }
       // Attempt Firebase sign-in
       signInWithEmailAndPassword(auth, email, pwd)
-        .then(() => { /* on success, onAuthStateChanged below will fire */ })
+        .then(() => {
+          // success → onAuthStateChanged will run
+        })
         .catch(err => {
           console.error("Login failed:", err);
           alert("Login failed: " + err.message);
@@ -79,8 +83,8 @@
       replyBtn.style.display       = "inline-block";
 
       const adminUid = user.uid;
-      if (adminUid !== "YOUR_ADMIN_UID") {
-        // Replace “YOUR_ADMIN_UID” below with the actual UID from your Firebase Auth user:
+      // ── REPLACE THE STRING BELOW WITH YOUR ACTUAL ADMIN UID ──
+      if (adminUid !== "LtKEk3kvMQgMpLPfUISsS5067xc2") {
         document.body.innerHTML = "<h2>Access Denied</h2>";
         return;
       }
@@ -106,7 +110,8 @@
     // ══ 8) OPEN A SINGLE THREAD (SHOW MESSAGES + REPLY) ══
     function openThread(uid) {
       currentThreadUid = uid;
-      messagesDiv.innerHTML = ""; // clear old messages
+      messagesDiv.innerHTML = ""; // clear previous messages
+
       const singleThreadRef = ref(db, `threads/${uid}`);
       onChildAdded(singleThreadRef, snap => {
         const m = snap.val();
@@ -138,55 +143,92 @@
     });
   </script>
 
-
+  <!-- ─── 10) BASIC STYLES FOR LAYOUT ─── -->
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; display: flex; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    #login-form {
+      width: 300px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin: 40px auto;
+      text-align: center;
+    }
     #thread-list {
-      width: 30%; border-right: 1px solid #ccc;
-      max-height: 400px; overflow-y: auto; margin-right: 20px;
+      width: 30%;
+      border-right: 1px solid #ccc;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 10px;
+      display: none; /* hidden until login */
     }
     #messages {
-      width: 65%; border: 1px solid #ccc;
-      height: 300px; overflow-y: auto; padding: 10px;
+      width: 65%;
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      padding: 10px;
       background: #fafafa;
+      display: none; /* hidden until login */
     }
-    #reply-input { width: 80%; padding: 8px; margin-top: 10px; }
-    #reply-btn   { padding: 8px 12px; margin-top: 10px; }
+    #reply-input {
+      width: 75%;
+      padding: 8px;
+      margin-top: 10px;
+      display: none; /* hidden until login */
+    }
+    #reply-btn {
+      padding: 8px 12px;
+      margin-top: 10px;
+      display: none; /* hidden until login */
+    }
+    h3 {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
-<body>
+
 <body>
   <!-- ─── A) LOGIN FORM (initially visible) ─── -->
-  <div id="login-form" style="padding:20px; border:1px solid #ccc; width:300px; margin: 40px auto;">
+  <div id="login-form">
     <h3>Admin Login</h3>
-    <input id="login-email"    type="email"    placeholder="Email"    style="width:100%; padding:8px; margin:5px 0;" />
-    <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:8px; margin:5px 0;" />
-    <button id="login-button" style="padding:8px 12px; margin-top:8px;">Log In</button>
+    <input
+      id="login-email"
+      type="email"
+      placeholder="Email"
+      style="width:100%; padding:8px; margin:5px 0;"
+    />
+    <input
+      id="login-password"
+      type="password"
+      placeholder="Password"
+      style="width:100%; padding:8px; margin:5px 0;"
+    />
+    <button id="login-button" style="padding:8px 12px; margin-top:8px;">
+      Log In
+    </button>
   </div>
 
   <!-- ─── B) ADMIN INTERFACE (initially hidden) ─── -->
-  <div id="thread-list" style="display:none; float:left; width:30%; max-height:400px; overflow-y:auto; border-right:1px solid #ddd; padding-right:10px;">
+  <div id="thread-list">
     <h3>Visitor Threads</h3>
     <!-- visitor list items will appear here -->
   </div>
-  <div style="display:none; float:left; width:65%; margin-left:5%;">
-    <h3>Messages</h3>
-    <div id="messages" style="border:1px solid #ccc; background:#fafafa; height:300px; overflow-y:auto; padding:10px;"></div>
-    <input id="reply-input"  type="text" placeholder="Type your reply…" style="width:75%; padding:8px; margin-top:10px;" />
-    <button id="reply-btn"    style="padding:8px 12px; margin-top:10px;">Reply</button>
-  </div>
 
-  <!-- (Your other page content or footer can follow here) -->
-
-  
-  <div id="thread-list">
-    <h3>Visitor Threads</h3>
-  </div>
-  <div>
+  <div style="width:65%; margin-left:5%;">
     <h3>Messages</h3>
     <div id="messages"></div>
-    <input id="reply-input" placeholder="Type your reply…"/>
-    <button id="reply-btn">Reply</button>
+    <input
+      id="reply-input"
+      type="text"
+      placeholder="Type your reply…"
+      style="display:none;"
+    />
+    <button id="reply-btn" style="display:none;">Reply</button>
   </div>
 </body>
 </html>
