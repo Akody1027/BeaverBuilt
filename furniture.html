@@ -619,6 +619,8 @@
   </footer>
 
   <script>
+
+    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
     // 1) Preloader fade-out
     window.addEventListener('load', function() {
       const pre = document.getElementById('preloader');
@@ -755,16 +757,19 @@
       }));
       try {
         const response = await fetch(
-          'https://your-username.your-project.repl.co/create-checkout-session',
+          'https://www.beaverbuiltfurniture.com/furniture.html/create-checkout-session',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lineItems: lineItems })
+            body: JSON.stringify({ items: lineItems })
           }
         );
-        const session = await response.json();
-        const result = await stripe.redirectToCheckout({ sessionId: session.id });
-        if (result.error) alert(result.error.message);
+           // Server returns { url: '<stripe-checkout-url>' }
+          const session = await response.json();
+          // Redirect browser directly to that URL:
+          window.location = session.url;
+        
+        
       } catch {
         alert('Checkout failed. Please try again.');
       }
