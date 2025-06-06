@@ -7,14 +7,12 @@
 
   <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
   <script type="module">
-    // ══ 1) IMPORT FIREBASE MODULES FROM CDN ══
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut }
       from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { getDatabase, ref, onChildAdded, push }
-      from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+    import { getDatabase, ref, onChildAdded, push } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-    // ══ 2) YOUR FIREBASE CONFIG (copy/paste exactly) ══
+    // 2) YOUR FIREBASE CONFIG ─ copy exactly from the same project
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -26,12 +24,12 @@
       measurementId: "G-XT02YCCFYM"
     };
 
-    // ══ 3) INITIALIZE FIREBASE ══
+    // 3) INITIALIZE FIREBASE
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // ══ 4) DOM ELEMENTS FOR LOGIN FORM & ADMIN UI ══
+    // 4) DOM ELEMENTS
     const loginDiv = document.getElementById("login-form");
     const emailInput = document.getElementById("login-email");
     const passInput = document.getElementById("login-password");
@@ -42,10 +40,12 @@
     const replyInput = document.getElementById("reply-input");
     const replyBtn = document.getElementById("reply-btn");
 
-    let currentThreadUid = null;
+    // 5) ADMIN UID (must match your Firebase Authentication user’s UID)
     const ADMIN_UID = "LtKEk3kvMQgMpLPfUISsS5067xc2";
 
-    // ══ 5) WHEN ADMIN CLICKS “Log In” ══
+    let currentThreadUid = null;
+
+    // 6) WHEN ADMIN CLICKS “Log In”
     loginBtn.addEventListener("click", () => {
       const email = emailInput.value.trim();
       const pwd = passInput.value;
@@ -55,7 +55,7 @@
       }
       signInWithEmailAndPassword(auth, email, pwd)
         .then(() => {
-          // Let onAuthStateChanged handle the rest
+          // onAuthStateChanged will fire next
         })
         .catch(err => {
           console.error("Login failed:", err);
@@ -63,10 +63,10 @@
         });
     });
 
-    // ══ 6) ON AUTH STATE CHANGE ══
+    // 7) ON AUTH STATE CHANGE
     onAuthStateChanged(auth, user => {
       if (!user) {
-        // No one is signed in → show login form, hide admin UI
+        // not signed in → show login form, hide admin UI
         loginDiv.style.display = "block";
         threadListDiv.style.display = "none";
         messagesDiv.style.display = "none";
@@ -75,9 +75,9 @@
         return;
       }
 
-      // A user is signed in; check if they are the admin
+      // A user is signed in; check if it’s the ADMIN
       if (user.uid !== ADMIN_UID) {
-        // Not the admin: immediately sign them out and show login again
+        // Not the admin → force logout and back to login form
         signOut(auth).then(() => {
           alert("You are not authorized to access this page.");
           loginDiv.style.display = "block";
@@ -92,7 +92,7 @@
         return;
       }
 
-      // Admin is correctly signed in: show admin UI
+      // Admin is signed in → show admin UI
       loginDiv.style.display = "none";
       threadListDiv.style.display = "block";
       messagesDiv.style.display = "block";
@@ -102,7 +102,7 @@
       loadAllThreads();
     });
 
-    // ══ 7) LOAD LIST OF VISITOR THREADS ══
+    // 8) LOAD ALL VISITOR THREADS
     function loadAllThreads() {
       threadListDiv.innerHTML = "<h3>Visitor Threads</h3>";
       const threadsRef = ref(db, "threads");
@@ -118,10 +118,10 @@
       });
     }
 
-    // ══ 8) OPEN A SINGLE THREAD (SHOW MESSAGES + REPLY) ══
+    // 9) OPEN A SINGLE THREAD AND LISTEN FOR MESSAGES
     function openThread(uid) {
       currentThreadUid = uid;
-      messagesDiv.innerHTML = ""; // clear previous messages
+      messagesDiv.innerHTML = ""; // clear previous
 
       const singleThreadRef = ref(db, `threads/${uid}`);
       onChildAdded(singleThreadRef, snap => {
@@ -136,7 +136,7 @@
       });
     }
 
-    // ══ 9) “Reply” BUTTON PUSHES A NEW MESSAGE AS ADMIN ══
+    // 10) “Reply” BUTTON PUSHES A NEW ADMIN MESSAGE
     replyBtn.addEventListener("click", () => {
       if (!currentThreadUid) {
         alert("Click a visitor UID on the left first.");
@@ -154,7 +154,7 @@
     });
   </script>
 
-  <!-- ─── 10) BASIC STYLES FOR LAYOUT ─── -->
+  <!-- ─── BASIC STYLES FOR ADMIN LAYOUT ─── -->
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -204,7 +204,7 @@
 </head>
 
 <body>
-  <!-- ─── A) LOGIN FORM (initially visible) ─── -->
+  <!-- ─── A) ADMIN LOGIN FORM (initially visible) ─── -->
   <div id="login-form">
     <h3>Admin Login</h3>
     <input
@@ -227,7 +227,7 @@
   <!-- ─── B) ADMIN INTERFACE (initially hidden) ─── -->
   <div id="thread-list">
     <h3>Visitor Threads</h3>
-    <!-- Visitor list items will appear here -->
+    <!-- Each visitor UID will appear here -->
   </div>
 
   <div style="width:65%; margin-left:5%;">
