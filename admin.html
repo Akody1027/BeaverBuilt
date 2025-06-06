@@ -6,12 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
-  <script type="module">
+    <script type="module">
+    // ══ 1) IMPORT FIREBASE MODULES FROM CDN ══
     import { initializeApp }                    from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
     import { getDatabase, ref, onChildAdded, push }                from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-    // ─── 2) PASTE YOUR FIREBASE CONFIG BELOW (Line A) ───
+    // ══ 2) YOUR FIREBASE CONFIG (copy/paste exactly) ══
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -23,51 +24,90 @@
       measurementId: "G-XT02YCCFYM"
     };
 
-    // Initialize Firebase
+    // ══ 3) INITIALIZE FIREBASE ══
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getDatabase(app);
 
-    // ─── 3) SIGN IN AS ADMIN (Line B): use the email/password of your admin user ───
-    signInWithEmailAndPassword(auth, "your.admin@example.com", "YourAdminPassword")
-      .catch(err => {
-        console.error("Admin login failed:", err);
-        alert("Unable to sign in as admin. Check your credentials.");
-      });
+    // ══ 4) DOM ELEMENTS FOR LOGIN FORM & ADMIN UI ══
+    const loginDiv   = document.getElementById("login-form");
+    const emailInput = document.getElementById("login-email");
+    const passInput  = document.getElementById("login-password");
+    const loginBtn   = document.getElementById("login-button");
 
+    const threadListDiv = document.getElementById("thread-list");
+    const messagesDiv   = document.getElementById("messages");
+    const replyInput    = document.getElementById("reply-input");
+    const replyBtn      = document.getElementById("reply-btn");
+
+    let currentThreadUid = null;
+
+    // ══ 5) WHEN ADMIN CLICKS “Log In” ══
+    loginBtn.addEventListener("click", () => {
+      const email = emailInput.value.trim();
+      const pwd   = passInput.value;
+      if (!email || !pwd) {
+        alert("Please enter both email and password.");
+        return;
+      }
+      // Attempt Firebase sign-in
+      signInWithEmailAndPassword(auth, email, pwd)
+        .then(() => { /* on success, onAuthStateChanged below will fire */ })
+        .catch(err => {
+          console.error("Login failed:", err);
+          alert("Login failed: " + err.message);
+        });
+    });
+
+    // ══ 6) ON AUTH STATE CHANGE ══
     onAuthStateChanged(auth, user => {
-      if (!user) return; // not signed in yet
+      if (!user) {
+        // not signed in → show login form
+        loginDiv.style.display       = "block";
+        threadListDiv.style.display  = "none";
+        messagesDiv.style.display    = "none";
+        replyInput.style.display     = "none";
+        replyBtn.style.display       = "none";
+        return;
+      }
+
+      // signed in: hide login form, show admin UI
+      loginDiv.style.display       = "none";
+      threadListDiv.style.display  = "block";
+      messagesDiv.style.display    = "block";
+      replyInput.style.display     = "inline-block";
+      replyBtn.style.display       = "inline-block";
+
       const adminUid = user.uid;
-      // If this UID is not the one you put in your DB rules, deny access
-      if (adminUid !== "LtKEk3kvMQgMpLPfUISsS5067xc2") {
+      if (adminUid !== "YOUR_ADMIN_UID") {
+        // Replace “YOUR_ADMIN_UID” below with the actual UID from your Firebase Auth user:
         document.body.innerHTML = "<h2>Access Denied</h2>";
         return;
       }
       loadAllThreads();
     });
 
-    // ─── 4) LOAD ALL VISITOR THREADS ───
+    // ══ 7) LOAD LIST OF VISITOR THREADS ══
     function loadAllThreads() {
+      threadListDiv.innerHTML = "<h3>Visitor Threads</h3>";
       const threadsRef = ref(db, "threads");
       onChildAdded(threadsRef, snap => {
         const visitorUid = snap.key;
         const div = document.createElement("div");
-        div.textContent = `Visitor UID: ${visitorUid}`;
+        div.textContent = "Visitor UID: " + visitorUid;
         div.style.cursor = "pointer";
         div.style.padding = "8px";
         div.style.borderBottom = "1px solid #ddd";
         div.onclick = () => openThread(visitorUid);
-        document.getElementById("thread-list").append(div);
+        threadListDiv.append(div);
       });
     }
 
-    let currentThreadUid = null;
+    // ══ 8) OPEN A SINGLE THREAD (SHOW MESSAGES + REPLY) ══
     function openThread(uid) {
       currentThreadUid = uid;
-      document.getElementById("messages").innerHTML = "";
+      messagesDiv.innerHTML = ""; // clear old messages
       const singleThreadRef = ref(db, `threads/${uid}`);
-
-      // Listen for any new message in that single thread
       onChildAdded(singleThreadRef, snap => {
         const m = snap.val();
         const p = document.createElement("div");
@@ -75,27 +115,29 @@
         p.style.padding = "4px";
         p.style.margin = "2px 0";
         p.style.background = m.sender === "visitor" ? "#e8f5e9" : "#ffecb3";
-        document.getElementById("messages").append(p);
-        document.getElementById("messages").scrollTop = 9999;
+        messagesDiv.append(p);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
-    document.getElementById("reply-btn").onclick = () => {
+    // ══ 9) “Reply” BUTTON PUSHES A NEW MESSAGE AS ADMIN ══
+    replyBtn.addEventListener("click", () => {
       if (!currentThreadUid) {
         alert("Click a visitor UID on the left first.");
         return;
       }
-      const text = document.getElementById("reply-input").value.trim();
+      const text = replyInput.value.trim();
       if (!text) return;
       const threadRef = ref(db, `threads/${currentThreadUid}`);
       push(threadRef, {
         sender: "admin",
-        text: text,
+        text,
         ts: Date.now()
       });
-      document.getElementById("reply-input").value = "";
-    };
+      replyInput.value = "";
+    });
   </script>
+
 
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; display: flex; }
