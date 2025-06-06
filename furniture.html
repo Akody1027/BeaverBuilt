@@ -5,9 +5,9 @@
   <title>Furniture | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Montserrat Font -->
+  <!-- Lily Script One Font -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap"
     rel="stylesheet"
   />
   <!-- Material Icons (for Home, Furniture, Decor) -->
@@ -88,9 +88,8 @@
       margin-right: 15px;
     }
     header .page-title {
-      font-family: 'Montserrat', sans-serif;
-      font-weight: 600;
-      font-size: 1.5rem;
+      font-family: 'Lily Script One', cursive;
+      font-size: 2rem;
       color: #ffffff;
     }
 
@@ -631,11 +630,25 @@
       }, 1000);
     });
 
-    // 2) Stripe & Cart Logic
-    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
+    // 2) Persist cart in localStorage
     let cart = [];
+    function loadCart() {
+      const saved = localStorage.getItem('bbf_cart');
+      if (saved) {
+        try {
+          cart = JSON.parse(saved);
+        } catch {
+          cart = [];
+        }
+      }
+      updateCart();
+      updateBadge();
+    }
+    function saveCart() {
+      localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    }
 
-    // Update badge visibility & count
+    // 3) Update badge visibility & count
     function updateBadge() {
       const badge = document.getElementById('cart-badge');
       const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -647,6 +660,7 @@
       }
     }
 
+    // 4) Add/remove items
     function addToCart(itemNum, price, imgSrc) {
       const existing = cart.find(i => i.itemNum === itemNum);
       if (existing) {
@@ -654,6 +668,7 @@
       } else {
         cart.push({ itemNum, price, img: imgSrc, qty: 1 });
       }
+      saveCart();
       updateCart();
       updateBadge();
     }
@@ -665,6 +680,7 @@
         if (cart[idx].qty <= 0) {
           cart.splice(idx, 1);
         }
+        saveCart();
         updateCart();
         updateBadge();
       }
@@ -708,7 +724,7 @@
       });
     }
 
-    // 3) Cart icon toggle from bottom nav
+    // 5) Cart icon toggle from bottom nav
     const cartIcon = document.getElementById('bottom-cart');
     const cartPopover = document.getElementById('cart-popover');
     cartIcon.addEventListener('click', e => {
@@ -723,7 +739,7 @@
       }
     });
 
-    // 4) Checkout button
+    // 6) Checkout button
     document.getElementById('checkout-btn').addEventListener('click', async () => {
       if (cart.length === 0) {
         alert('Your cart is empty!');
@@ -754,9 +770,10 @@
       }
     });
 
-    // 5) Modal, gallery & carousel setup
+    // 7) Modal, gallery & carousel setup
     document.addEventListener('DOMContentLoaded', () => {
-      // Modal elements
+      loadCart();
+
       const modal = document.getElementById('detail-modal');
       const imgEl = document.getElementById('modal-image');
       const descEl = document.getElementById('modal-description');
@@ -765,9 +782,15 @@
       const addBtn = document.getElementById('modal-add-btn');
       const closeBtn = document.getElementById('modal-close');
 
-      // Make entire .gallery-item clickable
-      document.querySelectorAll('.gallery-item').forEach(item => {
-        item.addEventListener('click', () => {
+      const galleryItems = document.querySelectorAll('.gallery-item');
+      galleryItems.forEach(item => {
+        item.addEventListener('click', e => {
+          // If cart popover is open, close it and do not open modal
+          if (cartPopover.style.display === 'block') {
+            cartPopover.style.display = 'none';
+            return;
+          }
+
           const imgPath = item.getAttribute('data-img');
           const match = imgPath.match(/furniture(\d+)\.jpg/);
           const itemNum = match ? parseInt(match[1]) : null;
@@ -785,7 +808,6 @@
         });
       });
 
-      // Close modal
       closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
       });
@@ -795,7 +817,6 @@
         }
       });
 
-      // Carousel initialization
       const galleryImgs = Array.from(document.querySelectorAll('.gallery-item img')).map(i => i.src);
       if (galleryImgs.length) {
         const carousel = document.getElementById('random-carousel');
