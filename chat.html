@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat with BeaverBuilt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
+  <script type="module">
+    // These URLs come from https://firebase.google.com/docs/web/setup#cdn
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-analytics.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
+
+    // ─── 2) PASTE YOUR FIREBASE CONFIG BELOW ───
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+
+    // ─── 3) INITIALIZE FIREBASE APPS ───
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db   = getDatabase(app);
+
+    // ─── 4) SIGN VISITOR IN ANONYMOUSLY ───
+    signInAnonymously(auth).catch(err => {
+      console.error("Auth error:", err);
+      alert("Unable to sign you in. Please reload.");
+    });
+
+    // ─── 5) ONCE SIGNED IN, START LISTENING & SENDING ───
+    onAuthStateChanged(auth, user => {
+      if (!user) return;        // not signed in yet
+      const uid = user.uid;      // visitor’s unique ID
+      const threadRef = ref(db, `threads/${uid}`);
+
+      // 5a) Listen for new messages under "/threads/{visitorUid}"
+      onChildAdded(threadRef, snap => {
+        const msg = snap.val();
+        const line = document.createElement("div");
+        line.textContent = (msg.sender === "visitor" ? "You: " : "Admin: ") + msg.text;
+        line.style.padding = "4px";
+        line.style.margin = "2px 0";
+        line.style.background = msg.sender === "visitor" ? "#e0f7fa" : "#fff9c4";
+        document.getElementById("chat-window").append(line);
+        document.getElementById("chat-window").scrollTop = 9999;
+      });
+
+      // 5b) Hook up “Send” button to push a visitor message
+      document.getElementById("send-btn").onclick = () => {
+        const input = document.getElementById("message-input");
+        const text = input.value.trim();
+        if (!text) return;
+        push(threadRef, {
+          sender: "visitor",
+          text: text,
+          ts: Date.now()
+        });
+        input.value = "";
+      };
+    });
+  </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #chat-window {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fafafa;
+    }
+    #message-input { width: 80%; padding: 8px; }
+    #send-btn      { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h2>Chat with BeaverBuilt</h2>
+  <div id="chat-window">
+    <!-- messages will appear here -->
+  </div>
+  <input id="message-input" placeholder="Type your message…" />
+  <button id="send-btn">Send</button>
+</body>
+</html>
