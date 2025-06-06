@@ -2,18 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat with BeaverBuilt</title>
+  <title>Visitor Chat – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ─── 1) LOAD FIREBASE VIA CDN ─── -->
+  <!-- ─── FIREBASE VIA CDN ─── -->
   <script type="module">
-    // These URLs come from https://firebase.google.com/docs/web/setup#cdn
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-analytics.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
 
-    // ─── 2) PASTE YOUR FIREBASE CONFIG BELOW ───
+    // 1) YOUR FIREBASE CONFIG ─ copy exactly from your console
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -25,71 +22,92 @@
       measurementId: "G-XT02YCCFYM"
     };
 
-    // ─── 3) INITIALIZE FIREBASE APPS ───
+    // 2) INITIALIZE FIREBASE
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const auth = getAuth(app);
-    const db   = getDatabase(app);
+    const db = getDatabase(app);
 
-    // ─── 4) SIGN VISITOR IN ANONYMOUSLY ───
-    signInAnonymously(auth).catch(err => {
-      console.error("Auth error:", err);
-      alert("Unable to sign you in. Please reload.");
+    // 3) GENERATE OR REUSE A VISITOR-UID
+    let visitorUid = localStorage.getItem("visitorUid");
+    if (!visitorUid) {
+      // push a new blank node under “threads” to get a unique key
+      const newThreadRef = push(ref(db, "threads"));
+      visitorUid = newThreadRef.key;
+      localStorage.setItem("visitorUid", visitorUid);
+      // (We don’t yet push a message—just reserve the key so admin sees this thread.)
+    }
+
+    // 4) UI ELEMENTS
+    const messagesDiv = document.getElementById("messages");
+    const inputBox = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+
+    // 5) DISPLAY ANY EXISTING MESSAGES FOR THIS VISITOR
+    const thisThreadRef = ref(db, `threads/${visitorUid}`);
+    onChildAdded(thisThreadRef, snapshot => {
+      const m = snapshot.val();
+      const p = document.createElement("div");
+      p.textContent = (m.sender === "visitor" ? "You: " : "Admin: ") + m.text;
+      p.style.padding = "4px";
+      p.style.margin = "2px 0";
+      p.style.background = m.sender === "visitor" ? "#e3f2fd" : "#ffebee";
+      messagesDiv.append(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
-    // ─── 5) ONCE SIGNED IN, START LISTENING & SENDING ───
-    onAuthStateChanged(auth, user => {
-      if (!user) return;        // not signed in yet
-      const uid = user.uid;      // visitor’s unique ID
-      const threadRef = ref(db, `threads/${uid}`);
-
-      // 5a) Listen for new messages under "/threads/{visitorUid}"
-      onChildAdded(threadRef, snap => {
-        const msg = snap.val();
-        const line = document.createElement("div");
-        line.textContent = (msg.sender === "visitor" ? "You: " : "Admin: ") + msg.text;
-        line.style.padding = "4px";
-        line.style.margin = "2px 0";
-        line.style.background = msg.sender === "visitor" ? "#e0f7fa" : "#fff9c4";
-        document.getElementById("chat-window").append(line);
-        document.getElementById("chat-window").scrollTop = 9999;
+    // 6) SEND A NEW VISITOR MESSAGE
+    sendBtn.addEventListener("click", () => {
+      const text = inputBox.value.trim();
+      if (!text) return;
+      push(thisThreadRef, {
+        sender: "visitor",
+        text,
+        ts: Date.now()
       });
-
-      // 5b) Hook up “Send” button to push a visitor message
-      document.getElementById("send-btn").onclick = () => {
-        const input = document.getElementById("message-input");
-        const text = input.value.trim();
-        if (!text) return;
-        push(threadRef, {
-          sender: "visitor",
-          text: text,
-          ts: Date.now()
-        });
-        input.value = "";
-      };
+      inputBox.value = "";
     });
   </script>
 
+  <!-- ─── BASIC STYLES ─── -->
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #chat-window {
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      display: flex;
+      flex-direction: column;
+    }
+    #messages {
       border: 1px solid #ccc;
       height: 300px;
       overflow-y: auto;
       padding: 10px;
-      margin-bottom: 10px;
       background: #fafafa;
+      margin-bottom: 10px;
     }
-    #message-input { width: 80%; padding: 8px; }
-    #send-btn      { padding: 8px 12px; }
+    #input-container {
+      display: flex;
+    }
+    #message-input {
+      flex: 1;
+      padding: 8px;
+      font-size: 1rem;
+    }
+    #send-button {
+      padding: 8px 16px;
+      margin-left: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
   </style>
 </head>
+
 <body>
-  <h2>Chat with BeaverBuilt</h2>
-  <div id="chat-window">
-    <!-- messages will appear here -->
+  <h2>Visitor Chat</h2>
+  <div id="messages"></div>
+
+  <div id="input-container">
+    <input id="message-input" type="text" placeholder="Type your message…" />
+    <button id="send-button">Send</button>
   </div>
-  <input id="message-input" placeholder="Type your message…" />
-  <button id="send-btn">Send</button>
 </body>
 </html>
