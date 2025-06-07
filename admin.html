@@ -186,7 +186,10 @@
       threadRow.classList.add("thread-item");
 
       const label = document.createElement("div");
-      label.textContent = uid;
+      db.ref("threads/" + uid).limitToFirst(1).once("value", snap => {
+      const firstMsg = Object.values(snap.val() || {})[0];
+      label.textContent = firstMsg?.sender || uid;
+      });      
       label.style.flex = "1";
       label.style.cursor = "pointer";
       label.style.paddingRight = "8px";
