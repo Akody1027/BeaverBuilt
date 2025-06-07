@@ -131,51 +131,52 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- Badge Logic: clear on load & listen ---
+    // --- Badge Logic: clear BEFORE listening ---
     const badge = document.getElementById('chat-badge');
+    badge.style.display = 'none';
+    badge.textContent = '';
+
     const visitorUid  = localStorage.getItem('visitorUid');
     const visitorName = localStorage.getItem('visitorName');
     if (visitorUid && visitorName) {
-      // Clear badge immediately on page load
-      badge.style.display = 'none';
-      badge.textContent = '';
-
       const threadRef = db.ref('threads/' + visitorUid);
       let initialLoad = true;
+
       threadRef.once('value', () => { initialLoad = false; });
       threadRef.on('child_added', snap => {
         const m = snap.val();
         if (initialLoad || m.system || m.sender === visitorName) return;
-        const n = parseInt(badge.textContent||'0',10) + 1;
+        const n = parseInt(badge.textContent || '0', 10) + 1;
         badge.textContent = n;
         badge.style.display = 'block';
       });
     }
 
     // --- Chat UI Logic ---
-    const messagesDiv = document.getElementById("messages");
-    const inputBox    = document.getElementById("message-input");
-    const sendBtn     = document.getElementById("send-button");
+    const messagesDiv   = document.getElementById("messages");
+    const inputBox      = document.getElementById("message-input");
+    const sendBtn       = document.getElementById("send-button");
     const usernameInput = document.getElementById("username-input");
     const startBtn      = document.getElementById("start-chat");
     const usernamePrompt= document.getElementById("username-prompt");
     const inputContainer= document.getElementById("input-container");
-
     let threadRef;
 
     function initChat(uid, name) {
-      document.getElementById('chat-badge').style.display = 'none';
-      document.getElementById('chat-badge').textContent = '';
-      usernamePrompt.style.display = "none";
-      messagesDiv.style.display = "flex";
-      inputContainer.style.display = "flex";
+      // Clear badge on entering chat
+      badge.style.display = 'none';
+      badge.textContent = '';
+
+      usernamePrompt.style.display   = "none";
+      messagesDiv.style.display      = "flex";
+      inputContainer.style.display   = "flex";
 
       threadRef = db.ref("threads/" + uid);
       threadRef.on("child_added", snapshot => {
         const m = snapshot.val();
         if (m.system) return;
         const p = document.createElement("div");
-        p.textContent = (m.sender || "User") + ": " + m.text;
+        p.textContent = `${m.sender}: ${m.text}`;
         p.style.cssText = `
           padding:8px 12px; margin:6px 0; border-radius:12px;
           max-width:80%; white-space:pre-wrap;
@@ -214,7 +215,7 @@
       inputBox.value = "";
     }
 
-    // On load, if already in localStorage, resume
+    // --- On load, resume if already in localStorage ---
     if (visitorUid && visitorName) {
       initChat(visitorUid, visitorName);
     }
