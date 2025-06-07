@@ -208,7 +208,28 @@
     threadRef.on("child_added", snap => {
       const m = snap.val();
       const p = document.createElement("div");
-      p.textContent = (m.sender === "visitor" ? "Visitor: " : "You: ") + m.text;
+      p.style.display = "flex";
+      p.style.justifyContent = "space-between";
+      p.style.alignItems = "center";
+      const textSpan = document.createElement("span");
+      textSpan.textContent = (m.sender === "visitor" ? "Visitor: " : "You: ") + m.text;
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "🗑️";
+      delBtn.style.marginLeft = "8px";
+      delBtn.style.background = "none";
+      delBtn.style.color = "#aaa";
+      delBtn.style.border = "none";
+      delBtn.style.cursor = "pointer";
+      delBtn.title = "Delete message";
+
+      delBtn.onclick = () => {
+       if (confirm("Delete this message?")) {
+       db.ref(`threads/${uid}/${snap.key}`).remove();
+       }
+      };
+
+      p.appendChild(textSpan);
+      p.appendChild(delBtn);
       p.style.padding = "8px 12px";
       p.style.margin = "6px 0";
       p.style.borderRadius = "12px";
