@@ -2,131 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat – BeaverBuilt</title>
+  <title>Visitor Chat – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding-top: 80px;    /* space for fixed header */
-      padding-bottom: 60px; /* space for bottom nav */
+      margin: 0; padding: 0;
       background-color: #121212;
       color: #eee;
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding-bottom: 60px; /* space for nav */
     }
-    header {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 80px;
-      background: rgba(17,17,17,0.9);
-      display: flex; align-items: center; padding: 0 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index:900;
-    }
-    header .logo {
-      height: 50px; margin-right: 15px;
-    }
-    header h2 {
-      color: #fff; font-size: 1.5rem; margin: 0;
-    }
-
+    h2 { margin-top: 20px; }
     #messages {
       width: 90%; max-width: 480px;
-      flex: 1;
-      margin: 20px 0;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 12px;
-      display: flex; flex-direction: column;
-      overflow-y: auto;
+      flex: 1; margin: 20px 0;
+      background: #1e1e1e; border: 1px solid #333; border-radius: 8px;
+      padding: 12px; display: flex; flex-direction: column; overflow-y: auto;
     }
     #input-container {
-      width: 90%; max-width: 480px;
-      display: flex; margin-bottom: 20px;
+      width: 90%; max-width: 480px; display: flex; margin-bottom: 20px;
     }
     #message-input {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #333;
-      border-radius: 8px 0 0 8px;
-      background: #242424;
-      color: #eee;
+      flex: 1; padding: 12px;
+      background: #242424; color: #eee;
+      border: 1px solid #333; border-radius: 8px 0 0 8px;
       font-size: 1rem;
     }
     #send-button {
-      background: #333;
-      border: 1px solid #333;
-      border-left: none;
-      border-radius: 0 8px 8px 0;
-      color: #eee;
-      padding: 12px 20px;
-      font-size: 1rem;
-      cursor: pointer;
+      padding: 12px 20px; font-size: 1rem;
+      background: #333; color: #eee;
+      border: 1px solid #333; border-left: none;
+      border-radius: 0 8px 8px 0; cursor: pointer;
     }
     #username-prompt {
-      margin-top: 40px;
+      margin-top: 40px; text-align: center;
     }
-    #username-prompt input {
-      padding: 10px;
-      border: 1px solid #555;
-      border-radius: 6px;
-      background: #242424;
-      color: #eee;
-      font-size: 1rem;
+    #username-input {
+      padding: 10px; background: #242424; color: #eee;
+      border: 1px solid #555; border-radius: 6px; font-size: 1rem;
     }
-    #username-prompt button {
-      padding: 10px 16px;
-      margin-left: 8px;
-      background: #3a3a3a;
-      border: 1px solid #555;
-      color: #eee;
-      border-radius: 6px;
+    #start-chat {
+      padding: 10px 16px; margin-left: 8px;
+      background: #3a3a3a; color: #eee;
+      border: 1px solid #555; border-radius: 6px;
       cursor: pointer;
     }
 
     /* Bottom Navigation */
     #bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
-      background: rgba(17,17,17,0.9);
-      display: flex; justify-content: space-around;
-      align-items: center; z-index:900;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 60px; background: rgba(17,17,17,0.9);
+      display: flex; justify-content: space-around; align-items: center;
+      z-index: 900;
     }
     #bottom-nav a {
-      position: relative;
-      display: flex; flex-direction: column; align-items: center;
-      color: #ffffff; font-size: 0.75rem; text-decoration: none;
+      position: relative; display: flex;
+      flex-direction: column; align-items: center;
+      color: #fff; font-size: 0.75rem; text-decoration: none;
       padding: 6px 8px; border-radius: 6px;
     }
-    #bottom-nav a.active {
-      background: rgba(255,255,255,0.1);
-    }
+    #bottom-nav a.active { background: rgba(255,255,255,0.1); }
     #bottom-nav .material-icons {
       font-size: 24px; margin-bottom: 2px; color: #fff;
     }
-    #bottom-nav #bottom-cart img {
-      width: 24px; height: 24px; margin-bottom: 2px;
-    }
     #cart-badge, #chat-badge {
-      position: absolute; top: 2px; right: 10px;
+      position: absolute; top: 2px; right: 8px;
       background: #ff3b30; color: #fff;
       font-size: 0.65rem; font-weight: bold;
-      border-radius: 50%; padding: 2px 5px; display: none;
+      border-radius: 50%; padding: 2px 5px;
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <img src="beaverlogo.jpg" alt="BeaverBuilt" class="logo" />
-    <h2>Visitor Chat</h2>
-  </header>
+  <h2>Visitor Chat</h2>
 
   <div id="username-prompt">
     <input id="username-input" type="text" placeholder="Enter your name..." />
@@ -142,41 +98,26 @@
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
     <a href="home.html">
-      <span class="material-icons">home</span>
-      <span>Home</span>
+      <span class="material-icons">home</span><span>Home</span>
     </a>
     <a href="furniture.html">
-      <span class="material-icons">chair</span>
-      <span>Furniture</span>
+      <span class="material-icons">chair</span><span>Furniture</span>
     </a>
     <a href="decor.html">
-      <span class="material-icons">wallpaper</span>
-      <span>Decor</span>
+      <span class="material-icons">wallpaper</span><span>Decor</span>
     </a>
-    <a href="chat.html" class="active" id="bottom-chat">
-      <span class="material-icons">chat</span>
-      <span>Chat</span>
+    <a href="chat.html" id="bottom-chat" class="active">
+      <span class="material-icons">chat</span><span>Chat</span>
       <span id="chat-badge"></span>
     </a>
     <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart" />
-      <span>Cart</span>
+      <img src="ecomassets/Cart.png" alt="Cart" /><span>Cart</span>
       <span id="cart-badge"></span>
     </a>
   </nav>
 
   <script>
-    // Desktop notifications
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-    function showNotification(title, message) {
-      if (Notification.permission === "granted") {
-        new Notification(title, { body: message, icon: "https://beaverbuiltfurniture.com/beaverlogo.png" });
-      }
-    }
-
-    // Firebase config and init
+    // --- Firebase Init ---
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -190,54 +131,59 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // DOM elements
-    const messagesDiv    = document.getElementById("messages");
-    const inputBox       = document.getElementById("message-input");
-    const sendBtn        = document.getElementById("send-button");
-    const usernameInput  = document.getElementById("username-input");
-    const startBtn       = document.getElementById("start-chat");
-    const usernamePrompt = document.getElementById("username-prompt");
-    const inputContainer = document.getElementById("input-container");
+    // --- Badge Logic: clear on load & listen ---
+    const badge = document.getElementById('chat-badge');
+    const visitorUid  = localStorage.getItem('visitorUid');
+    const visitorName = localStorage.getItem('visitorName');
+    if (visitorUid && visitorName) {
+      // Clear badge immediately on page load
+      badge.style.display = 'none';
+      badge.textContent = '';
 
-    let visitorUid  = localStorage.getItem("visitorUid");
-    let visitorName = localStorage.getItem("visitorName");
+      const threadRef = db.ref('threads/' + visitorUid);
+      let initialLoad = true;
+      threadRef.once('value', () => { initialLoad = false; });
+      threadRef.on('child_added', snap => {
+        const m = snap.val();
+        if (initialLoad || m.system || m.sender === visitorName) return;
+        const n = parseInt(badge.textContent||'0',10) + 1;
+        badge.textContent = n;
+        badge.style.display = 'block';
+      });
+    }
+
+    // --- Chat UI Logic ---
+    const messagesDiv = document.getElementById("messages");
+    const inputBox    = document.getElementById("message-input");
+    const sendBtn     = document.getElementById("send-button");
+    const usernameInput = document.getElementById("username-input");
+    const startBtn      = document.getElementById("start-chat");
+    const usernamePrompt= document.getElementById("username-prompt");
+    const inputContainer= document.getElementById("input-container");
+
     let threadRef;
 
     function initChat(uid, name) {
-      usernamePrompt.style.display  = "none";
-      messagesDiv.style.display     = "flex";
-      inputContainer.style.display  = "flex";
+      document.getElementById('chat-badge').style.display = 'none';
+      document.getElementById('chat-badge').textContent = '';
+      usernamePrompt.style.display = "none";
+      messagesDiv.style.display = "flex";
+      inputContainer.style.display = "flex";
 
       threadRef = db.ref("threads/" + uid);
-
-      threadRef.on("child_added", snap => {
-        const m = snap.val();
-        const isSystem  = !!m.system;
-        const isSelf    = m.sender === name;
-
-        const bubble = document.createElement("div");
-        bubble.textContent = isSystem
-          ? m.text
-          : `${m.sender}: ${m.text}`;
-        bubble.style.padding      = "8px 12px";
-        bubble.style.margin       = "6px 0";
-        bubble.style.borderRadius = "12px";
-        bubble.style.maxWidth     = "80%";
-        bubble.style.whiteSpace   = "pre-wrap";
-        bubble.style.alignSelf    = isSelf ? "flex-end" : "flex-start";
-        bubble.style.background   = isSelf ? "#444" : "#555";
-        bubble.style.color        = "#eee";
-        messagesDiv.appendChild(bubble);
+      threadRef.on("child_added", snapshot => {
+        const m = snapshot.val();
+        if (m.system) return;
+        const p = document.createElement("div");
+        p.textContent = (m.sender || "User") + ": " + m.text;
+        p.style.cssText = `
+          padding:8px 12px; margin:6px 0; border-radius:12px;
+          max-width:80%; white-space:pre-wrap;
+          align-self:${m.sender===name?'flex-end':'flex-start'};
+          background:${m.sender===name?"#444":"#555"}; color:#eee;
+        `;
+        messagesDiv.appendChild(p);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        if (!isSystem && !isSelf) {
-          showNotification(m.sender, m.text);
-          // increment chat badge
-          const badge = document.getElementById("chat-badge");
-          const count = parseInt(badge.textContent || "0") + 1;
-          badge.textContent = count;
-          badge.style.display = "block";
-        }
       });
 
       sendBtn.onclick = sendMessage;
@@ -246,52 +192,32 @@
       });
     }
 
-    if (visitorUid && visitorName) {
-      initChat(visitorUid, visitorName);
-    }
-
     startBtn.onclick = () => {
       const name = usernameInput.value.trim();
       if (!name) return alert("Please enter your name.");
-      visitorName = name;
       localStorage.setItem("visitorName", name);
-
-      const newThreadRef = db.ref("threads").push();
-      visitorUid = newThreadRef.key;
-      localStorage.setItem("visitorUid", visitorUid);
-
-      initChat(visitorUid, visitorName);
-
-      db.ref("threads/" + visitorUid).push({
+      const newRef = db.ref("threads").push();
+      localStorage.setItem("visitorUid", newRef.key);
+      newRef.push({
         system: true,
         sender: name,
         text: `${name} joined the chat`,
         ts: Date.now()
       });
+      initChat(newRef.key, name);
     };
 
     function sendMessage() {
       const text = inputBox.value.trim();
       if (!text) return;
-      threadRef.push({
-        sender: visitorName,
-        text,
-        ts: Date.now()
-      });
+      threadRef.push({ sender: localStorage.getItem("visitorName"), text, ts: Date.now() });
       inputBox.value = "";
     }
 
-    // Cart badge stub
-    document.addEventListener("DOMContentLoaded", () => {
-      const cartBadge = document.getElementById("cart-badge");
-      const total = 0; // your cart count logic
-      if (total > 0) {
-        cartBadge.textContent = total;
-        cartBadge.style.display = "block";
-      }
-    });
+    // On load, if already in localStorage, resume
+    if (visitorUid && visitorName) {
+      initChat(visitorUid, visitorName);
+    }
   </script>
-  <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 </body>
 </html>
