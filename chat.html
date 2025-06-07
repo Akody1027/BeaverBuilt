@@ -38,6 +38,10 @@
       border-radius: 8px;
       padding: 12px;
       overflow-y: auto;
+
+      /* restore stacking */
+      display: flex;
+      flex-direction: column;
     }
 
     /* Fixed input row */
@@ -71,7 +75,7 @@
       cursor: pointer;
     }
 
-    /* Username prompt (hidden once chat starts) */
+    /* Username prompt */
     #username-prompt {
       margin-top: 40px; text-align: center;
     }
@@ -96,16 +100,16 @@
     #bottom-nav a {
       display: flex; flex-direction: column; align-items: center;
       color: #fff; font-size: 0.75rem; text-decoration: none;
-      padding: 6px 8px; border-radius: 6px;
+      padding: 6px 8px; border-radius:6px;
     }
     #bottom-nav a.active {
       background: rgba(255,255,255,0.1);
     }
     #bottom-nav .material-icons {
-      font-size: 24px; margin-bottom: 2px; color: #fff;
+      font-size:24px; margin-bottom:2px; color:#fff;
     }
     #bottom-cart img {
-      width: 24px; height: 24px; margin-bottom: 2px;
+      width:24px; height:24px; margin-bottom:2px;
     }
   </style>
 </head>
@@ -159,7 +163,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Chat UI elements
+    // Chat UI Logic
     const messagesDiv    = document.getElementById("messages");
     const inputContainer = document.getElementById("input-container");
     const inputBox       = document.getElementById("message-input");
@@ -172,13 +176,10 @@
     function initChat(uid, name) {
       visitorUid  = uid;
       visitorName = name;
-
-      // hide prompt, show chat UI
       usernamePrompt.style.display    = "none";
       messagesDiv.style.display       = "flex";
       inputContainer.style.display    = "flex";
 
-      // hook Firebase
       threadRef = db.ref("threads/" + uid);
       threadRef.on("child_added", snap => {
         const m = snap.val();
@@ -195,13 +196,13 @@
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
 
-      // sending
       sendBtn.onclick = () => {
         const txt = inputBox.value.trim();
         if (!txt) return;
         threadRef.push({ sender: name, text: txt, ts: Date.now() });
         inputBox.value = "";
       };
+
       inputBox.addEventListener("keypress", e => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -210,7 +211,6 @@
       });
     }
 
-    // start button
     startBtn.onclick = () => {
       const name = usernameInput.value.trim();
       if (!name) return alert("Please enter your name.");
@@ -226,7 +226,7 @@
       initChat(newRef.key, name);
     };
 
-    // resume if exists
+    // Resume if already in localStorage
     visitorUid  = localStorage.getItem("visitorUid");
     visitorName = localStorage.getItem("visitorName");
     if (visitorUid && visitorName) {
