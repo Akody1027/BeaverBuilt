@@ -5,82 +5,85 @@
   <title>Visitor Chat – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
+
+  <!-- Google Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    /* Reset & Base */
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      margin: 0; padding: 0;
-      background-color: #121212;
-      color: #eee;
+      background: #121212; color: #eee;
       font-family: Arial, sans-serif;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh; padding-bottom: 60px; /* space for nav */
+      display: flex; flex-direction: column;
+      align-items: center; min-height: 100vh;
+      padding-bottom: 60px; /* nav space */
     }
     h2 { margin-top: 20px; }
+
+    /* Chat UI */
     #messages {
       width: 90%; max-width: 480px;
       flex: 1; margin: 20px 0;
-      background: #1e1e1e; border: 1px solid #333; border-radius: 8px;
-      padding: 12px; display: flex; flex-direction: column; overflow-y: auto;
+      background: #1e1e1e; border:1px solid #333; border-radius:8px;
+      padding:12px; display:flex; flex-direction:column; overflow-y:auto;
     }
     #input-container {
-      width: 90%; max-width: 480px; display: flex; margin-bottom: 20px;
+      width: 90%; max-width: 480px; display:flex; margin-bottom:20px;
     }
     #message-input {
-      flex: 1; padding: 12px;
-      background: #242424; color: #eee;
-      border: 1px solid #333; border-radius: 8px 0 0 8px;
-      font-size: 1rem;
+      flex:1; padding:12px;
+      background:#242424; color:#eee;
+      border:1px solid #333; border-radius:8px 0 0 8px;
+      font-size:1rem;
     }
     #send-button {
-      padding: 12px 20px; font-size: 1rem;
-      background: #333; color: #eee;
-      border: 1px solid #333; border-left: none;
-      border-radius: 0 8px 8px 0; cursor: pointer;
+      padding:12px 20px; font-size:1rem;
+      background:#333; color:#eee;
+      border:1px solid #333; border-left:none;
+      border-radius:0 8px 8px 0; cursor:pointer;
     }
     #username-prompt {
-      margin-top: 40px; text-align: center;
+      margin-top:40px; text-align:center;
     }
     #username-input {
-      padding: 10px; background: #242424; color: #eee;
-      border: 1px solid #555; border-radius: 6px; font-size: 1rem;
+      padding:10px; background:#242424; color:#eee;
+      border:1px solid #555; border-radius:6px; font-size:1rem;
     }
     #start-chat {
-      padding: 10px 16px; margin-left: 8px;
-      background: #3a3a3a; color: #eee;
-      border: 1px solid #555; border-radius: 6px;
-      cursor: pointer;
+      padding:10px 16px; margin-left:8px;
+      background:#3a3a3a; color:#eee;
+      border:1px solid #555; border-radius:6px; cursor:pointer;
     }
 
     /* Bottom Navigation */
     #bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 60px; background: rgba(17,17,17,0.9);
-      display: flex; justify-content: space-around; align-items: center;
-      z-index: 900;
+      position:fixed; bottom:0; left:0; right:0;
+      height:60px; background:rgba(17,17,17,0.9);
+      display:flex; justify-content:space-around;
+      align-items:center; z-index:900;
     }
     #bottom-nav a {
-      position: relative; display: flex;
-      flex-direction: column; align-items: center;
-      color: #fff; font-size: 0.75rem; text-decoration: none;
-      padding: 6px 8px; border-radius: 6px;
+      display:flex; flex-direction:column; align-items:center;
+      color:#fff; font-size:0.75rem; text-decoration:none;
+      padding:6px 8px; border-radius:6px;
     }
-    #bottom-nav a.active { background: rgba(255,255,255,0.1); }
+    #bottom-nav a.active {
+      background:rgba(255,255,255,0.1);
+    }
     #bottom-nav .material-icons {
-      font-size: 24px; margin-bottom: 2px; color: #fff;
+      font-size:24px; margin-bottom:2px; color:#fff;
     }
-    #cart-badge, #chat-badge {
-      position: absolute; top: 2px; right: 8px;
-      background: #ff3b30; color: #fff;
-      font-size: 0.65rem; font-weight: bold;
-      border-radius: 50%; padding: 2px 5px;
-      display: none;
+    #bottom-cart img {
+      width:24px; height:24px; margin-bottom:2px;
     }
   </style>
 </head>
+
 <body>
   <h2>Visitor Chat</h2>
 
@@ -98,26 +101,29 @@
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
     <a href="home.html">
-      <span class="material-icons">home</span><span>Home</span>
+      <span class="material-icons">home</span>
+      <span>Home</span>
     </a>
     <a href="furniture.html">
-      <span class="material-icons">chair</span><span>Furniture</span>
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
     </a>
     <a href="decor.html">
-      <span class="material-icons">wallpaper</span><span>Decor</span>
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
     </a>
-    <a href="chat.html" id="bottom-chat" class="active">
-      <span class="material-icons">chat</span><span>Chat</span>
-      <span id="chat-badge"></span>
+    <a href="chat.html" class="active">
+      <span class="material-icons">chat</span>
+      <span>Chat</span>
     </a>
     <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart" /><span>Cart</span>
-      <span id="cart-badge"></span>
+      <img src="ecomassets/Cart.png" alt="Cart" />
+      <span>Cart</span>
     </a>
   </nav>
 
   <script>
-    // --- Firebase Init ---
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -131,49 +137,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- Badge Logic: clear BEFORE listening ---
-    const badge = document.getElementById('chat-badge');
-    badge.style.display = 'none';
-    badge.textContent = '';
-
-    const visitorUid  = localStorage.getItem('visitorUid');
-    const visitorName = localStorage.getItem('visitorName');
-    if (visitorUid && visitorName) {
-      const threadRef = db.ref('threads/' + visitorUid);
-      let initialLoad = true;
-
-      threadRef.once('value', () => { initialLoad = false; });
-      threadRef.on('child_added', snap => {
-        const m = snap.val();
-        if (initialLoad || m.system || m.sender === visitorName) return;
-        const n = parseInt(badge.textContent || '0', 10) + 1;
-        badge.textContent = n;
-        badge.style.display = 'block';
-      });
-    }
-
-    // --- Chat UI Logic ---
-    const messagesDiv   = document.getElementById("messages");
-    const inputBox      = document.getElementById("message-input");
-    const sendBtn       = document.getElementById("send-button");
-    const usernameInput = document.getElementById("username-input");
-    const startBtn      = document.getElementById("start-chat");
-    const usernamePrompt= document.getElementById("username-prompt");
-    const inputContainer= document.getElementById("input-container");
-    let threadRef;
+    // Chat UI Logic
+    const messagesDiv    = document.getElementById("messages");
+    const inputContainer = document.getElementById("input-container");
+    const inputBox       = document.getElementById("message-input");
+    const sendBtn        = document.getElementById("send-button");
+    const usernamePrompt = document.getElementById("username-prompt");
+    const usernameInput  = document.getElementById("username-input");
+    const startBtn       = document.getElementById("start-chat");
+    let threadRef, visitorUid, visitorName;
 
     function initChat(uid, name) {
-      // Clear badge on entering chat
-      badge.style.display = 'none';
-      badge.textContent = '';
-
-      usernamePrompt.style.display   = "none";
-      messagesDiv.style.display      = "flex";
-      inputContainer.style.display   = "flex";
+      visitorUid  = uid;
+      visitorName = name;
+      usernamePrompt.style.display    = "none";
+      messagesDiv.style.display       = "flex";
+      inputContainer.style.display    = "flex";
 
       threadRef = db.ref("threads/" + uid);
-      threadRef.on("child_added", snapshot => {
-        const m = snapshot.val();
+      threadRef.on("child_added", snap => {
+        const m = snap.val();
         if (m.system) return;
         const p = document.createElement("div");
         p.textContent = `${m.sender}: ${m.text}`;
@@ -187,35 +170,41 @@
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
 
-      sendBtn.onclick = sendMessage;
+      sendBtn.onclick = () => {
+        const txt = inputBox.value.trim();
+        if (!txt) return;
+        threadRef.push({ sender: name, text: txt, ts: Date.now() });
+        inputBox.value = "";
+      };
+
       inputBox.addEventListener("keypress", e => {
-        if (e.key === "Enter") { e.preventDefault(); sendMessage(); }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendBtn.click();
+        }
       });
     }
 
     startBtn.onclick = () => {
       const name = usernameInput.value.trim();
       if (!name) return alert("Please enter your name.");
+      visitorName = name;
       localStorage.setItem("visitorName", name);
       const newRef = db.ref("threads").push();
-      localStorage.setItem("visitorUid", newRef.key);
+      visitorUid = newRef.key;
+      localStorage.setItem("visitorUid", visitorUid);
       newRef.push({
         system: true,
         sender: name,
         text: `${name} joined the chat`,
         ts: Date.now()
       });
-      initChat(newRef.key, name);
+      initChat(visitorUid, name);
     };
 
-    function sendMessage() {
-      const text = inputBox.value.trim();
-      if (!text) return;
-      threadRef.push({ sender: localStorage.getItem("visitorName"), text, ts: Date.now() });
-      inputBox.value = "";
-    }
-
-    // --- On load, resume if already in localStorage ---
+    // Resume if already joined
+    visitorUid  = localStorage.getItem("visitorUid");
+    visitorName = localStorage.getItem("visitorName");
     if (visitorUid && visitorName) {
       initChat(visitorUid, visitorName);
     }
