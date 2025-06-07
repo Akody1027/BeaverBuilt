@@ -4,103 +4,8 @@
   <meta charset="UTF-8" />
   <title>Visitor Chat – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- ─── FIREBASE VIA CDN ─── -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js";
-
-    // 1) YOUR FIREBASE CONFIG ── copy exactly from your console
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
-      authDomain: "beaverbuiltchat.firebaseapp.com",
-      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
-      projectId: "beaverbuiltchat",
-      storageBucket: "beaverbuiltchat.appspot.com",
-      messagingSenderId: "785578451247",
-      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
-      measurementId: "G-XT02YCCFYM"
-    };
-
-    // 2) INITIALIZE FIREBASE
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    console.log("chat.html: Firebase initialized");
-
-    // 3) GENERATE OR REUSE A visitorUid
-    let visitorUid = localStorage.getItem("visitorUid");
-    if (!visitorUid) {
-      const newThreadRef = push(ref(db, "threads"));
-      visitorUid = newThreadRef.key;
-      localStorage.setItem("visitorUid", visitorUid);
-      console.log("chat.html: New visitorUid generated:", visitorUid);
-    } else {
-      console.log("chat.html: Reusing visitorUid from localStorage:", visitorUid);
-    }
-
-    // 4) UI ELEMENTS
-    const messagesDiv = document.getElementById("messages");
-    const inputBox = document.getElementById("message-input");
-    const sendBtn = document.getElementById("send-button");
-
-    // 5) DISPLAY ANY EXISTING MESSAGES FOR THIS VISITOR
-    const thisThreadRef = ref(db, `threads/${visitorUid}`);
-    onChildAdded(thisThreadRef, snapshot => {
-      const m = snapshot.val();
-      console.log("chat.html: New message received:", m);
-      const p = document.createElement("div");
-      p.textContent = (m.sender === "visitor" ? "You: " : "Admin: ") + m.text;
-      p.style.padding = "8px 12px";
-      p.style.margin = "6px 0";
-      p.style.borderRadius = "12px";
-      p.style.maxWidth = "80%";
-      p.style.whiteSpace = "pre-wrap";
-      if (m.sender === "visitor") {
-        p.style.alignSelf = "flex-end";
-        p.style.background = "#444";  // dark gray for visitor
-        p.style.color = "#eee";
-      } else {
-        p.style.alignSelf = "flex-start";
-        p.style.background = "#555";  // slightly lighter gray for admin
-        p.style.color = "#fff";
-      }
-      messagesDiv.append(p);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    // 6) SEND A NEW VISITOR MESSAGE
-    sendBtn.addEventListener("click", () => {
-      const text = inputBox.value.trim();
-      if (!text) return;
-      console.log("chat.html: Sending message:", text);
-      push(thisThreadRef, {
-        sender: "visitor",
-        text,
-        ts: Date.now()
-      })
-        .then(() => {
-          console.log("chat.html: Message successfully pushed to Firebase");
-        })
-        .catch(err => {
-          console.error("chat.html: Error pushing message:", err);
-        });
-      inputBox.value = "";
-    });
-
-    // Also allow “Enter” to send
-    inputBox.addEventListener("keypress", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
-  </script>
-
-  <!-- ─── STYLES: BLACK & GRAY THEME ─── -->
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
@@ -112,11 +17,7 @@
       align-items: center;
       height: 100vh;
     }
-    h2 {
-      margin-top: 20px;
-      font-size: 1.5rem;
-      letter-spacing: 1px;
-    }
+    h2 { margin-top: 20px; }
     #messages {
       width: 90%;
       max-width: 480px;
@@ -145,9 +46,6 @@
       color: #eee;
       font-size: 1rem;
     }
-    #message-input::placeholder {
-      color: #aaa;
-    }
     #send-button {
       background: #333;
       border: 1px solid #333;
@@ -157,29 +55,83 @@
       padding: 12px 20px;
       font-size: 1rem;
       cursor: pointer;
-      transition: background 0.15s;
-    }
-    #send-button:hover {
-      background: #444;
     }
   </style>
 </head>
-
 <body>
   <h2>Visitor Chat</h2>
-
-  <div id="messages">
-    <!-- All incoming/outgoing messages will append here -->
-  </div>
-
+  <div id="messages"></div>
   <div id="input-container">
-    <input
-      id="message-input"
-      type="text"
-      placeholder="Type your message…"
-      autocomplete="off"
-    />
+    <input id="message-input" type="text" placeholder="Type your message…" autocomplete="off" />
     <button id="send-button">Send</button>
   </div>
+
+  <script type="module">
+    window.addEventListener("DOMContentLoaded", () => {
+      import("https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js").then(({ initializeApp }) => {
+        import("https://www.gstatic.com/firebasejs/11.9.0/firebase-database.js").then(({ getDatabase, ref, push, onChildAdded }) => {
+          const firebaseConfig = {
+            apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+            authDomain: "beaverbuiltchat.firebaseapp.com",
+            databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+            projectId: "beaverbuiltchat",
+            storageBucket: "beaverbuiltchat.appspot.com",
+            messagingSenderId: "785578451247",
+            appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+            measurementId: "G-XT02YCCFYM"
+          };
+
+          const app = initializeApp(firebaseConfig);
+          const db = getDatabase(app);
+
+          let visitorUid = localStorage.getItem("visitorUid");
+          if (!visitorUid) {
+            const newThreadRef = push(ref(db, "threads"));
+            visitorUid = newThreadRef.key;
+            localStorage.setItem("visitorUid", visitorUid);
+          }
+
+          const messagesDiv = document.getElementById("messages");
+          const inputBox = document.getElementById("message-input");
+          const sendBtn = document.getElementById("send-button");
+          const thisThreadRef = ref(db, `threads/${visitorUid}`);
+
+          onChildAdded(thisThreadRef, snapshot => {
+            const m = snapshot.val();
+            const p = document.createElement("div");
+            p.textContent = (m.sender === "visitor" ? "You: " : "Admin: ") + m.text;
+            p.style.padding = "8px 12px";
+            p.style.margin = "6px 0";
+            p.style.borderRadius = "12px";
+            p.style.maxWidth = "80%";
+            p.style.whiteSpace = "pre-wrap";
+            p.style.alignSelf = m.sender === "visitor" ? "flex-end" : "flex-start";
+            p.style.background = m.sender === "visitor" ? "#444" : "#555";
+            p.style.color = "#eee";
+            messagesDiv.append(p);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          });
+
+          sendBtn.addEventListener("click", () => {
+            const text = inputBox.value.trim();
+            if (!text) return;
+            push(thisThreadRef, {
+              sender: "visitor",
+              text,
+              ts: Date.now()
+            });
+            inputBox.value = "";
+          });
+
+          inputBox.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              sendBtn.click();
+            }
+          });
+        });
+      });
+    });
+  </script>
 </body>
 </html>
