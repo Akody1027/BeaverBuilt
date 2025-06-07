@@ -4,38 +4,53 @@
   <meta charset="UTF-8" />
   <title>Chat – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       margin: 0;
-      padding: 0;
+      padding-top: 80px;    /* space for fixed header */
+      padding-bottom: 60px; /* space for bottom nav */
       background-color: #121212;
       color: #eee;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
     }
-    h2 { margin-top: 20px; }
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 80px;
+      background: rgba(17,17,17,0.9);
+      display: flex; align-items: center; padding: 0 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index:900;
+    }
+    header .logo {
+      height: 50px; margin-right: 15px;
+    }
+    header h2 {
+      color: #fff; font-size: 1.5rem; margin: 0;
+    }
+
     #messages {
-      width: 90%;
-      max-width: 480px;
+      width: 90%; max-width: 480px;
       flex: 1;
       margin: 20px 0;
       background: #1e1e1e;
       border: 1px solid #333;
       border-radius: 8px;
       padding: 12px;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       overflow-y: auto;
     }
     #input-container {
-      width: 90%;
-      max-width: 480px;
-      display: flex;
-      margin-bottom: 20px;
+      width: 90%; max-width: 480px;
+      display: flex; margin-bottom: 20px;
     }
     #message-input {
       flex: 1;
@@ -76,10 +91,42 @@
       border-radius: 6px;
       cursor: pointer;
     }
+
+    /* Bottom Navigation */
+    #bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: rgba(17,17,17,0.9);
+      display: flex; justify-content: space-around;
+      align-items: center; z-index:900;
+    }
+    #bottom-nav a {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      color: #ffffff; font-size: 0.75rem; text-decoration: none;
+      padding: 6px 8px; border-radius: 6px;
+    }
+    #bottom-nav a.active {
+      background: rgba(255,255,255,0.1);
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px; margin-bottom: 2px; color: #fff;
+    }
+    #bottom-nav #bottom-cart img {
+      width: 24px; height: 24px; margin-bottom: 2px;
+    }
+    #cart-badge, #chat-badge {
+      position: absolute; top: 2px; right: 10px;
+      background: #ff3b30; color: #fff;
+      font-size: 0.65rem; font-weight: bold;
+      border-radius: 50%; padding: 2px 5px; display: none;
+    }
   </style>
 </head>
 <body>
-  <h2>Visitor Chat</h2>
+  <header>
+    <img src="beaverlogo.jpg" alt="BeaverBuilt" class="logo" />
+    <h2>Visitor Chat</h2>
+  </header>
 
   <div id="username-prompt">
     <input id="username-input" type="text" placeholder="Enter your name..." />
@@ -92,9 +139,31 @@
     <button id="send-button">Send</button>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+  <!-- Bottom Navigation -->
+  <nav id="bottom-nav">
+    <a href="home.html">
+      <span class="material-icons">home</span>
+      <span>Home</span>
+    </a>
+    <a href="furniture.html">
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
+    </a>
+    <a href="decor.html">
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
+    </a>
+    <a href="chat.html" class="active" id="bottom-chat">
+      <span class="material-icons">chat</span>
+      <span>Chat</span>
+      <span id="chat-badge"></span>
+    </a>
+    <a href="#" id="bottom-cart">
+      <img src="ecomassets/Cart.png" alt="Cart" />
+      <span>Cart</span>
+      <span id="cart-badge"></span>
+    </a>
+  </nav>
 
   <script>
     // Desktop notifications
@@ -107,7 +176,7 @@
       }
     }
 
-    // Firebase config
+    // Firebase config and init
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -121,6 +190,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // DOM elements
     const messagesDiv    = document.getElementById("messages");
     const inputBox       = document.getElementById("message-input");
     const sendBtn        = document.getElementById("send-button");
@@ -146,7 +216,9 @@
         const isSelf    = m.sender === name;
 
         const bubble = document.createElement("div");
-        bubble.textContent = (isSystem ? m.text : `${m.sender}: ${m.text}`);
+        bubble.textContent = isSystem
+          ? m.text
+          : `${m.sender}: ${m.text}`;
         bubble.style.padding      = "8px 12px";
         bubble.style.margin       = "6px 0";
         bubble.style.borderRadius = "12px";
@@ -158,9 +230,13 @@
         messagesDiv.appendChild(bubble);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-        // notify admin
         if (!isSystem && !isSelf) {
           showNotification(m.sender, m.text);
+          // increment chat badge
+          const badge = document.getElementById("chat-badge");
+          const count = parseInt(badge.textContent || "0") + 1;
+          badge.textContent = count;
+          badge.style.display = "block";
         }
       });
 
@@ -204,6 +280,18 @@
       });
       inputBox.value = "";
     }
+
+    // Cart badge stub
+    document.addEventListener("DOMContentLoaded", () => {
+      const cartBadge = document.getElementById("cart-badge");
+      const total = 0; // your cart count logic
+      if (total > 0) {
+        cartBadge.textContent = total;
+        cartBadge.style.display = "block";
+      }
+    });
   </script>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 </body>
 </html>
