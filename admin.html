@@ -23,7 +23,7 @@
       text-align: center;
       width: 320px;
     }
-    #login-form input {
+    #login-form input, #reply-input {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -32,7 +32,7 @@
       color: #eee;
       border: 1px solid #333;
     }
-    #login-form button {
+    #login-form button, #reply-btn {
       padding: 10px 16px;
       background: #333;
       color: #eee;
@@ -40,11 +40,7 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    .admin-container {
-      display: flex;
-      height: 100%;
-      width: 100%;
-    }
+    .admin-container { display: flex; height: 100%; width: 100%; }
     #thread-list {
       width: 30%;
       background: #1e1e1e;
@@ -59,12 +55,11 @@
       background: #333;
       border-radius: 6px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
     }
-    .thread-item:hover {
-      background: #444;
-    }
+    .thread-item:hover { background: #444; }
     .chat-column {
       width: 70%;
       padding: 16px;
@@ -81,217 +76,199 @@
       display: none;
       flex-direction: column;
     }
-    #reply-input {
-      display: none;
-      margin-top: 10px;
-      padding: 10px;
-      background: #242424;
-      border: 1px solid #333;
-      color: #eee;
-      border-radius: 4px;
-    }
-    #reply-btn {
-      display: none;
-      margin-top: 8px;
-      padding: 10px;
-      background: #333;
-      border: none;
-      border-radius: 4px;
-      color: #eee;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
 
-<div id="login-form">
-  <h3>Admin Login</h3>
-  <input id="login-email" type="email" placeholder="Email" />
-  <input id="login-password" type="password" placeholder="Password" />
-  <button id="login-button">Log In</button>
-</div>
-
-<div class="admin-container">
-  <div id="thread-list"></div>
-  <div class="chat-column">
-    <div id="messages"></div>
-    <input id="reply-input" type="text" placeholder="Type a reply…" />
-    <button id="reply-btn">Reply</button>
+  <div id="login-form">
+    <h3>Admin Login</h3>
+    <input id="login-email"    type="email"    placeholder="Email" />
+    <input id="login-password" type="password" placeholder="Password" />
+    <button id="login-button">Log In</button>
   </div>
-</div>
 
-<!-- ✅ Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+  <div class="admin-container">
+    <div id="thread-list"></div>
+    <div class="chat-column">
+      <div id="messages"></div>
+      <input id="reply-input" type="text" placeholder="Type a reply…" />
+      <button id="reply-btn">Reply</button>
+    </div>
+  </div>
 
-<script>
-// 🔔 Request permission on load
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission().then(permission => {
-    console.log("Notification permission:", permission);
-  });
-}
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
-// 🔔 Show a message
-function showNotification(title, message) {
-  if (Notification.permission === "granted") {
-    new Notification(title, {
-      body: message,
-      icon: "https://beaverbuiltfurniture.com/beaverlogo.png" // optional icon
-    });
-  }
-}
-
-
-
-
-  
-  const firebaseConfig = {
-    apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
-    authDomain: "beaverbuiltchat.firebaseapp.com",
-    databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
-    projectId: "beaverbuiltchat",
-    storageBucket: "beaverbuiltchat.appspot.com",
-    messagingSenderId: "785578451247",
-    appId: "1:785578451247:web:30d2422f3b318032c9c1da",
-    measurementId: "G-XT02YCCFYM"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
-
-  const ADMIN_UID = "LtKEk3kvMQgMpLPfUISsS5067xc2"; // ✅ Replace with your admin UID
-
-  const loginForm = document.getElementById("login-form");
-  const emailInput = document.getElementById("login-email");
-  const passInput = document.getElementById("login-password");
-  const loginBtn = document.getElementById("login-button");
-
-  const threadListDiv = document.getElementById("thread-list");
-  const messagesDiv = document.getElementById("messages");
-  const replyInput = document.getElementById("reply-input");
-  const replyBtn = document.getElementById("reply-btn");
-
-  let currentThreadUid = null;
-
-  loginBtn.addEventListener("click", () => {
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-    if (!email || !password) return alert("Enter email and password.");
-    auth.signInWithEmailAndPassword(email, password)
-      .catch(err => {
-        alert("Login failed: " + err.message);
-      });
-  });
-
-  auth.onAuthStateChanged(user => {
-    if (!user || user.uid !== ADMIN_UID) {
-      alert("Not authorized.");
-      auth.signOut();
-      return;
+  <script>
+    // 🔔 Notifications
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+    function showNotification(title, message) {
+      if (Notification.permission === "granted") {
+        new Notification(title, { body: message, icon: "https://beaverbuiltfurniture.com/beaverlogo.png" });
+      }
     }
 
-    loginForm.style.display = "none";
-    threadListDiv.style.display = "block";
-    messagesDiv.style.display = "flex";
-    replyInput.style.display = "block";
-    replyBtn.style.display = "block";
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.database();
 
-    const threadsRef = db.ref("threads");
-    threadsRef.on("child_added", snap => {
-      const uid = snap.key;
+    const ADMIN_UID  = "LtKEk3kvMQgMpLPfUISsS5067xc2";  // Your admin UID
+    const loginForm  = document.getElementById("login-form");
+    const emailInput = document.getElementById("login-email");
+    const passInput  = document.getElementById("login-password");
+    const loginBtn   = document.getElementById("login-button");
+    const threadList = document.getElementById("thread-list");
+    const messagesDiv= document.getElementById("messages");
+    const replyInput = document.getElementById("reply-input");
+    const replyBtn   = document.getElementById("reply-btn");
 
-      const threadRow = document.createElement("div");
-      threadRow.classList.add("thread-item");
+    let currentThreadUid = null;
+    const visitorNames = {};  // map threadUID → visitorName
 
-      const label = document.createElement("div");
-      db.ref("threads/" + uid).limitToFirst(1).once("value", snap => {
-      const firstMsg = Object.values(snap.val() || {})[0];
-      label.textContent = firstMsg?.sender || uid;
-      });      
-      label.style.flex = "1";
-      label.style.cursor = "pointer";
-      label.style.paddingRight = "8px";
+    // — Auth —
+    loginBtn.addEventListener("click", () => {
+      const email = emailInput.value.trim(), pw = passInput.value;
+      if (!email || !pw) return alert("Enter email & password");
+      auth.signInWithEmailAndPassword(email, pw)
+        .catch(e => alert("Login failed: " + e.message));
+    });
 
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "➖";
-      delBtn.title = "Delete this thread";
-      delBtn.style.color = "red";
-      delBtn.style.border = "none";
-      delBtn.style.background = "transparent";
-      delBtn.style.cursor = "pointer";
-
-      delBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm("Delete this entire thread?")) {
-          db.ref("threads/" + uid).remove().then(() => {
-            threadRow.remove();
-            if (currentThreadUid === uid) {
-              messagesDiv.innerHTML = "";
-              currentThreadUid = null;
-            }
-          });
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        if (user.uid !== ADMIN_UID) {
+          alert("Not authorized.");
+          auth.signOut();
+          return;
         }
-      };
+        // show inbox UI
+        loginForm.style.display   = "none";
+        threadList.style.display  = "block";
+        messagesDiv.style.display = "flex";
 
-      label.onclick = () => {
-        document.querySelectorAll(".thread-item").forEach(el => {
-          el.style.background = "#333";
+        // load threads
+        db.ref("threads").on("child_added", snap => {
+          const uid = snap.key;
+          // fetch their chosen name
+          db.ref("threads/" + uid).limitToFirst(1).once("value", firstSnap => {
+            const fm = Object.values(firstSnap.val()||{})[0] || {};
+            const name = fm.sender || uid;
+            visitorNames[uid] = name;
+
+            const row = document.createElement("div");
+            row.className = "thread-item";
+            row.style.background = "#333";
+
+            const label = document.createElement("div");
+            label.textContent = name;
+            label.style.flex = "1";
+            label.style.paddingRight = "8px";
+
+            const delBtn = document.createElement("button");
+            delBtn.textContent = "➖";
+            delBtn.title = "Delete this thread";
+            delBtn.style.color = "red";
+            delBtn.style.border = "none";  
+            delBtn.style.background = "transparent";
+            delBtn.onclick = e => {
+              e.stopPropagation();
+              if (confirm("Delete this entire thread?")) {
+                db.ref("threads/"+uid).remove();
+                row.remove();
+                if (currentThreadUid === uid) {
+                  messagesDiv.innerHTML = "";
+                  currentThreadUid = null;
+                }
+              }
+            };
+
+            row.append(label, delBtn);
+            threadList.appendChild(row);
+
+            label.onclick = () => {
+              // highlight selection
+              document.querySelectorAll(".thread-item").forEach(el=>el.style.background="#333");
+              row.style.background = "#666";
+              openThread(uid);
+            };
+          });
         });
-        threadRow.style.background = "#666"; // highlight selected
-        openThread(uid);
-      };
-
-      threadRow.appendChild(label);
-      threadRow.appendChild(delBtn);
-      threadListDiv.appendChild(threadRow);
+      }
     });
-  });
 
-  function openThread(uid) {
-    currentThreadUid = uid;
-    messagesDiv.innerHTML = "";
-    const threadRef = db.ref("threads/" + uid);
-    threadRef.off(); // Clear any old listeners
-    threadRef.on("child_added", snap => {
-      const m = snap.val();
-      const p = document.createElement("div");
-      p.textContent = (m.sender === "visitor" ? "Visitor: " : "You: ") + m.text;
-      p.style.padding = "8px 12px";
-      p.style.margin = "6px 0";
-      p.style.borderRadius = "12px";
-      p.style.maxWidth = "80%";
-      p.style.whiteSpace = "pre-wrap";
-      p.style.alignSelf = m.sender === "visitor" ? "flex-start" : "flex-end";
-      p.style.background = m.sender === "visitor" ? "#444" : "#555";
-      p.style.color = "#eee";
-      messagesDiv.appendChild(p);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  }
+    // — Open & render thread —
+    function openThread(uid) {
+      currentThreadUid = uid;
+      messagesDiv.innerHTML = "";
+      const threadRef = db.ref("threads/" + uid);
+      threadRef.off("child_added");
 
-  replyBtn.addEventListener("click", () => {
-    if (!currentThreadUid) return;
-    const text = replyInput.value.trim();
-    if (!text) return;
-    const threadRef = db.ref("threads/" + currentThreadUid);
-    threadRef.push({
-      sender: "admin",
-      text,
-      ts: Date.now()
-    });
-    replyInput.value = "";
-  });
+      const visitorName = visitorNames[uid];
 
-  replyInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      replyBtn.click();
+      threadRef.on("child_added", snap => {
+        const m = snap.val();
+        const isSystem  = !!m.system;
+        const isVisitor = m.sender === visitorName;
+        const isAdmin   = m.sender === "admin";
+
+        const p = document.createElement("div");
+        if (isSystem) {
+          p.textContent = `⚙️ ${m.text}`;
+        } else if (isVisitor) {
+          p.textContent = `${visitorName}: ${m.text}`;
+        } else if (isAdmin) {
+          p.textContent = `You: ${m.text}`;
+        } else {
+          p.textContent = `${m.sender}: ${m.text}`;
+        }
+
+        p.style.padding      = "8px 12px";
+        p.style.margin       = "6px 0";
+        p.style.borderRadius = "12px";
+        p.style.maxWidth     = "80%";
+        p.style.whiteSpace   = "pre-wrap";
+        p.style.alignSelf    = isVisitor ? "flex-start" : "flex-end";
+        p.style.background   = isVisitor ? "#444" : "#555";
+        p.style.color        = "#eee";
+
+        messagesDiv.appendChild(p);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        if (!isSystem && isVisitor) {
+          showNotification(visitorName, m.text);
+        }
+      });
     }
-  });
-</script>
 
+    // — Reply —
+    replyBtn.addEventListener("click", () => {
+      if (!currentThreadUid) return alert("Select a thread first");
+      const txt = replyInput.value.trim();
+      if (!txt) return;
+      db.ref("threads/" + currentThreadUid).push({
+        sender: "admin",
+        text: txt,
+        ts: Date.now()
+      });
+      replyInput.value = "";
+    });
+    replyInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") { e.preventDefault(); replyBtn.click(); }
+    });
+  </script>
 </body>
 </html>
