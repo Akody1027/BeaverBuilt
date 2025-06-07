@@ -513,12 +513,43 @@
           setTimeout(()=>{ carousel.src=srcs[idx]; carousel.style.opacity=1; },300);
         },4000);
       }
+    <!-- Live Chat Badge for Decor Page -->
+(function() {
+  const badge = document.getElementById('chat-badge');
+  // Pull the visitor’s thread ID & name from localStorage
+  const visitorUid  = localStorage.getItem('visitorUid');
+  const visitorName = localStorage.getItem('visitorName');
+  if (!visitorUid || !visitorName) return;  // no active chat
 
-      // Chat badge demo
-      const chatBadge=document.getElementById('chat-badge'),
-            unreadChats=3;
-      if(unreadChats>0){ chatBadge.textContent=unreadChats; chatBadge.style.display='block'; }
-    });
+  // Reference their Firebase thread
+  const threadRef = firebase.database().ref('threads/' + visitorUid);
+  let initialLoad = true;
+
+  // After the first bulk snapshot, switch off initialLoad
+  threadRef.once('value', () => {
+    initialLoad = false;
+  });
+
+  // On each new message
+  threadRef.on('child_added', snap => {
+    const m = snap.val();
+    // ignore the join/system message and user’s own messages
+    if (initialLoad || m.system || m.sender === visitorName) return;
+
+    // must be an admin reply—increment badge
+    const current = parseInt(badge.textContent || '0', 10) + 1;
+    badge.textContent = current;
+    badge.style.display = 'block';
+  });
+
+  // When user clicks Chat, clear the badge
+  document.getElementById('bottom-chat').addEventListener('click', () => {
+    badge.style.display = 'none';
+    badge.textContent = '';
+  });
+})();
+
+
   </script>
 </body>
 </html>
