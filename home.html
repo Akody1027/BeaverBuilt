@@ -15,14 +15,17 @@
 
   <!-- Stripe.js -->
   <script src="https://js.stripe.com/v3"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
     /* Reset & Base */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; }
     body {
-      padding-top: 80px;   /* space for fixed header */
-      padding-bottom: 60px; /* space for bottom nav */
+      padding-top: 80px;
+      padding-bottom: 60px;
       background: url('background.jpg') center/cover scroll;
       position: relative;
     }
@@ -37,10 +40,8 @@
 
     /* Preloader */
     #preloader {
-      position: fixed; inset: 0;
-      background-color: #fff;
-      transition: opacity 1s ease-out;
-      z-index: 2000;
+      position: fixed; inset: 0; background-color: #fff;
+      transition: opacity 1s ease-out; z-index: 2000;
     }
     #preloader::before {
       content: '';
@@ -48,9 +49,7 @@
       background: url('background.jpg') center/cover no-repeat;
       opacity: 0.2;
     }
-    #preloader.fade-out {
-      opacity: 0; pointer-events: none;
-    }
+    #preloader.fade-out { opacity: 0; pointer-events: none; }
     #preloader .prelogo {
       position: fixed; top: 20px; left: 20px; height: 50px; z-index: 2001;
     }
@@ -60,15 +59,14 @@
       width: 50px; height: 50px;
       border: 5px solid rgba(0,0,0,0.1);
       border-top-color: #111; border-radius: 50%;
-      animation: spin 1s linear infinite;
-      z-index: 2001;
+      animation: spin 1s linear infinite; z-index: 2001;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Header */
     header {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 80px; background: rgba(17,17,17,0.9);
+      position: fixed; top: 0; left: 0; right: 0; height: 80px;
+      background: rgba(17,17,17,0.9);
       box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 1000;
       display: flex; align-items: center; padding: 0 20px;
     }
@@ -80,8 +78,7 @@
     .accent-bar {
       height: 6px;
       background: url('wood-texture.jpg') center/cover;
-      flex: 1;
-      margin-left: 20px;
+      flex: 1; margin-left: 20px;
     }
 
     /* Animations */
@@ -89,9 +86,7 @@
     .fade-in { animation: fadeInUp 0.6s ease both; }
 
     /* Container */
-    .container {
-      width: 90%; max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;
-    }
+    .container { width: 90%; max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
     section + section { margin-top: 4rem; }
 
     /* Hero */
@@ -117,16 +112,13 @@
     .section-title {
       font-family: 'Lily Script One', cursive;
       font-size: 2rem; margin-bottom: 0.5rem;
-      position: relative;
-      display: inline-block;
+      position: relative; display: inline-block;
       animation: fadeInUp 0.6s ease both;
     }
     .section-title::after {
-      content: '';
-      position: absolute; left: 0; bottom: -6px;
+      content: ''; position: absolute; left: 0; bottom: -6px;
       width: 100%; height: 6px;
-      background: url('wood-texture.jpg') center/cover;
-      opacity: 0.4;
+      background: url('wood-texture.jpg') center/cover; opacity: 0.4;
     }
     #about p {
       max-width: 800px; margin: 0 auto; color: #ccc;
@@ -147,7 +139,7 @@
       transform: translateY(-5px); box-shadow: 0 6px 18px rgba(0,0,0,0.15);
     }
 
-    /* Masonry Gallery (12 images) */
+    /* Gallery */
     #gallery .masonry {
       column-count: 4; column-gap: 0.75rem;
     }
@@ -240,11 +232,9 @@
     #bottom-nav .material-icons {
       font-size:24px; margin-bottom:2px; color:#fff;
     }
-    #bottom-nav #bottom-cart img {
-      width:24px; height:24px; margin-bottom:2px;
-    }
+    #bottom-nav #bottom-cart img,
     #bottom-nav #bottom-chat .material-icons {
-      font-size:24px; margin-bottom:2px; color:#fff;
+      width:24px; height:24px; margin-bottom:2px;
     }
     #cart-badge, #chat-badge {
       position:absolute; top:2px; right:10px;
@@ -317,7 +307,6 @@
     <div class="container">
       <h2 class="section-title">Gallery</h2>
       <div class="masonry">
-        <!-- 12 masonry images -->
         <div class="gallery-item-masonry"><img src="ecomassets/mis2.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/furniture1.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis3.jpg" alt=""></div>
@@ -476,10 +465,44 @@
       }
     });
 
-    // Checkout handler (as before)...
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+    firebase.initializeApp(firebaseConfig);
 
-    // — Chat badge placeholder — 
-    // real-time logic lives in chat.html
+    // Live Chat Badge
+    (function() {
+      const badge       = document.getElementById('chat-badge');
+      const visitorUid  = localStorage.getItem('visitorUid');
+      const visitorName = localStorage.getItem('visitorName');
+      if (!visitorUid || !visitorName) return;
+
+      const threadRef = firebase.database().ref('threads/' + visitorUid);
+      let initialLoad = true;
+
+      threadRef.once('value', () => { initialLoad = false; });
+
+      threadRef.on('child_added', snap => {
+        const m = snap.val();
+        if (initialLoad || m.system || m.sender === visitorName) return;
+        const current = parseInt(badge.textContent || '0', 10) + 1;
+        badge.textContent = current;
+        badge.style.display = 'block';
+      });
+
+      document.getElementById('bottom-chat').addEventListener('click', () => {
+        badge.style.display = 'none';
+        badge.textContent = '';
+      });
+    })();
   </script>
 </body>
 </html>
