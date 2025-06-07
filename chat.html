@@ -17,9 +17,7 @@
       align-items: center;
       height: 100vh;
     }
-    h2 {
-      margin-top: 20px;
-    }
+    h2 { margin-top: 20px; }
     #messages {
       width: 90%;
       max-width: 480px;
@@ -58,91 +56,139 @@
       font-size: 1rem;
       cursor: pointer;
     }
+    #username-prompt {
+      margin-top: 40px;
+    }
+    #username-prompt input {
+      padding: 10px;
+      border: 1px solid #555;
+      border-radius: 6px;
+      background: #242424;
+      color: #eee;
+      font-size: 1rem;
+    }
+    #username-prompt button {
+      padding: 10px 16px;
+      margin-left: 8px;
+      background: #3a3a3a;
+      border: 1px solid #555;
+      color: #eee;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h2>Visitor Chat</h2>
-  <div id="messages"></div>
-  <div id="input-container">
+
+  <div id="username-prompt">
+    <input id="username-input" type="text" placeholder="Enter your name..." />
+    <button id="start-chat">Start Chat</button>
+  </div>
+
+  <div id="messages" style="display:none;"></div>
+  <div id="input-container" style="display:none;">
     <input id="message-input" type="text" placeholder="Type your message…" autocomplete="off" />
     <button id="send-button">Send</button>
   </div>
 
-  <!-- ✅ Firebase SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // ✅ Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
-        authDomain: "beaverbuiltchat.firebaseapp.com",
-        databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
-        projectId: "beaverbuiltchat",
-        storageBucket: "beaverbuiltchat.appspot.com",
-        messagingSenderId: "785578451247",
-        appId: "1:785578451247:web:30d2422f3b318032c9c1da",
-        measurementId: "G-XT02YCCFYM"
-      };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
 
-      // ✅ Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-      // ✅ Reuse or create a visitor UID
-      let visitorUid = localStorage.getItem("visitorUid");
-      if (!visitorUid) {
-        const refToNewThread = db.ref("threads").push();
-        visitorUid = refToNewThread.key;
-        localStorage.setItem("visitorUid", visitorUid);
-      }
+    const messagesDiv = document.getElementById("messages");
+    const inputBox = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-button");
+    const usernameInput = document.getElementById("username-input");
+    const startBtn = document.getElementById("start-chat");
+    const usernamePrompt = document.getElementById("username-prompt");
+    const inputContainer = document.getElementById("input-container");
 
-      const threadRef = db.ref("threads/" + visitorUid);
-      const messagesDiv = document.getElementById("messages");
-      const inputBox = document.getElementById("message-input");
-      const sendBtn = document.getElementById("send-button");
+    let visitorUid = localStorage.getItem("visitorUid");
+    let visitorName = localStorage.getItem("visitorName");
+    let threadRef;
 
-      // ✅ Show messages live
+    if (visitorUid && visitorName) {
+      initChat(visitorUid, visitorName);
+    }
+
+    startBtn.onclick = () => {
+      const name = usernameInput.value.trim();
+      if (!name) return alert("Please enter your name.");
+      visitorName = name;
+      localStorage.setItem("visitorName", name);
+
+      const newThreadRef = firebase.database().ref("threads").push();
+      visitorUid = newThreadRef.key;
+      localStorage.setItem("visitorUid", visitorUid);
+      firebase.database().ref("threads/" + visitorUid).push({
+        system: true,
+        sender: name,
+        text: `${name} joined the chat`,
+        ts: Date.now()
+      });
+      initChat(visitorUid, name);
+    };
+
+    function initChat(uid, name) {
+      usernamePrompt.style.display = "none";
+      messagesDiv.style.display = "flex";
+      inputContainer.style.display = "flex";
+
+      threadRef = db.ref("threads/" + uid);
+
       threadRef.on("child_added", snapshot => {
         const m = snapshot.val();
+        if (m.system) return; // skip system messages if needed
+
         const p = document.createElement("div");
-        p.textContent = (m.sender === "visitor" ? "You: " : "Admin: ") + m.text;
+        p.textContent = (m.sender || "User") + ": " + m.text;
         p.style.padding = "8px 12px";
         p.style.margin = "6px 0";
         p.style.borderRadius = "12px";
         p.style.maxWidth = "80%";
         p.style.whiteSpace = "pre-wrap";
-        p.style.alignSelf = m.sender === "visitor" ? "flex-end" : "flex-start";
-        p.style.background = m.sender === "visitor" ? "#444" : "#555";
+        p.style.alignSelf = m.sender === name ? "flex-end" : "flex-start";
+        p.style.background = m.sender === name ? "#444" : "#555";
         p.style.color = "#eee";
         messagesDiv.appendChild(p);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
 
-      // ✅ Send message function
-      function sendMessage() {
-        const text = inputBox.value.trim();
-        if (!text) return;
-
-        threadRef.push({
-          sender: "visitor",
-          text: text,
-          ts: Date.now()
-        });
-
-        inputBox.value = "";
-      }
-
-      // ✅ Event listeners
-      sendBtn.addEventListener("click", sendMessage);
+      sendBtn.onclick = sendMessage;
       inputBox.addEventListener("keypress", e => {
         if (e.key === "Enter") {
           e.preventDefault();
           sendMessage();
         }
       });
-    });
+    }
+
+    function sendMessage() {
+      const text = inputBox.value.trim();
+      if (!text) return;
+      threadRef.push({
+        sender: visitorName,
+        text: text,
+        ts: Date.now()
+      });
+      inputBox.value = "";
+    }
   </script>
 </body>
 </html>
