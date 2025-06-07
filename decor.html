@@ -6,133 +6,119 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Lily Script One Font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet" />
   <!-- Material Icons (for Home, Furniture, Decor, Chat) -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
   <!-- Stripe.js -->
   <script src="https://js.stripe.com/v3"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
     /* Reset & Base */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
+      background: #f0f0f0;
       color: #1f2937;
+      padding-top: 80px;
+      padding-bottom: 60px;
       line-height: 1.5;
-      padding-top: 80px;    /* space for fixed header */
-      padding-bottom: 60px; /* space for fixed bottom nav */
     }
     a { color: inherit; text-decoration: none; }
-    button { cursor: pointer; font: inherit; background: none; border: none; }
+    button { background:none; border:none; cursor:pointer; font: inherit; }
 
     /* Preloader */
     #preloader {
-      position: fixed;
-      inset: 0;
-      background-color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 1s ease-out;
-      z-index: 10000;
+      position: fixed; inset:0; background:#fff;
+      display:flex;align-items:center;justify-content:center;
+      transition:opacity 1s ease-out; z-index:10000;
     }
-    #preloader.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #preloader.fade-out { opacity:0; pointer-events:none; }
     #preloader .spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid rgba(0, 0, 0, 0.1);
-      border-top-color: #111;
-      border-radius: 50%;
+      width:50px;height:50px;
+      border:5px solid rgba(0,0,0,0.1);
+      border-top-color:#111; border-radius:50%;
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Header */
     header {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 80px;
-      background: rgba(17, 17, 17, 0.9);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      z-index: 900;
-      display: flex; align-items: center; padding: 0 20px;
+      position:fixed;top:0;left:0;right:0;height:80px;
+      background:rgba(17,17,17,0.9);
+      display:flex;align-items:center;padding:0 20px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3); z-index:900;
     }
-    header .logo { height: 50px; margin-right: 15px; }
+    header .logo { height:50px; margin-right:15px; }
     header .page-title {
-      font-family: 'Lily Script One', cursive;
-      font-size: 2rem; color: #ffffff;
+      font-family:'Lily Script One', cursive;
+      font-size:2rem; color:#fff;
     }
 
     /* Carousel */
     .carousel-viewport {
-      width: 95%; max-width: 1200px; height: 60vh;
-      margin: 30px auto 40px; overflow: hidden;
-      border-radius: 5px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-      background: #fff; display: flex;
-      align-items: center; justify-content: center;
+      width:95%;max-width:1200px; height:60vh;
+      margin:30px auto 40px; overflow:hidden;
+      background:#fff; display:flex;
+      align-items:center; justify-content:center;
+      border-radius:5px; box-shadow:0 4px 10px rgba(0,0,0,0.25);
     }
     .carousel-viewport img {
-      max-height: 100%; width: auto; object-fit: cover;
-      transition: opacity 0.3s ease-in-out;
+      max-height:100%; width:auto;
+      object-fit:cover; transition:opacity .3s ease;
     }
 
     /* Gallery */
     .gallery {
-      column-count: 4; column-gap: 15px;
-      max-width: 1200px; margin: 0 auto 60px;
-      padding: 0 20px;
+      column-count:4; column-gap:15px;
+      max-width:1200px; margin:0 auto 60px;
+      padding:0 20px;
     }
     .gallery-item {
-      position: relative; margin-bottom: 15px;
-      display: inline-block; width: 100%;
-      cursor: pointer;
+      position:relative; margin-bottom:15px;
+      width:100%; display:inline-block;
+      cursor:pointer;
     }
     .gallery-item img {
-      width: 100%; height: auto; border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      transition: transform 0.3s ease; display: block;
+      width:100%; height:auto; border-radius:8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
+      transition:transform .3s ease;
+      display:block;
     }
-    .gallery-item img:hover { transform: scale(1.05); }
+    .gallery-item img:hover { transform:scale(1.05); }
     .view-button {
-      position: absolute; bottom: 0; left: 0;
-      width: 100%; background: rgba(128,128,128,0.6);
-      color: #fff; text-align: center; padding: 8px 0;
-      font-weight: bold;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
-      user-select: none; pointer-events: none;
+      position:absolute; bottom:0; left:0; width:100%;
+      background:rgba(128,128,128,0.6); color:#fff;
+      text-align:center; padding:8px 0; font-weight:bold;
+      border-bottom-left-radius:8px;
+      border-bottom-right-radius:8px;
+      user-select:none; pointer-events:none;
     }
-    @media (max-width:1000px) { .gallery { column-count:3; } }
-    @media (max-width:600px)  { .gallery { column-count:2; } }
-    @media (max-width:400px)  { .gallery { column-count:1; } }
+    @media(max-width:1000px){.gallery{column-count:3;}}
+    @media(max-width:600px){.gallery{column-count:2;}}
+    @media(max-width:400px){.gallery{column-count:1;}}
 
     /* Modal */
     #detail-modal {
-      position: fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,0,0.6); display:none;
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.6); display:none;
       align-items:center; justify-content:center; z-index:920;
     }
     #modal-content {
-      background: #fff; width:90%; max-width:450px;
-      height:90vh; margin:5vh auto; padding:20px;
+      background:#fff; width:90%; max-width:450px; height:90vh;
+      margin:5vh auto; padding:20px;
       border-radius:8px; overflow-y:auto; position:relative;
     }
     #modal-close {
-      position:absolute; top:10px; right:10px;
-      background:none; border:none; font-size:24px;
-      color:#555;
+      position:absolute; top:10px; right:10px; font-size:24px;
+      background:none; border:none; color:#555;
     }
     #modal-image { width:100%; border-radius:4px; margin-bottom:15px; }
-    #modal-description { font-size:0.95rem; margin-bottom:0.5rem; }
-    #modal-itemnum { font-size:0.9rem; margin-bottom:0.5rem; color:#555; }
+    #modal-description { font-size:.95rem; margin-bottom:.5rem; }
+    #modal-itemnum { font-size:.9rem; margin-bottom:.5rem; color:#555; }
     #modal-price { font-weight:bold; font-size:1rem; margin-bottom:1rem; }
     #modal-add-btn {
       background:#1f2937; color:#fff; padding:10px 16px;
@@ -143,9 +129,8 @@
     /* Cart Popover */
     #cart-popover {
       position:fixed; bottom:70px; right:15px;
-      background:#fff; border:1px solid #ccc;
-      border-radius:8px; padding:15px;
-      width:60%; max-width:600px; max-height:70vh;
+      background:#fff; border:1px solid #ccc; border-radius:8px;
+      padding:15px; width:60%; max-width:600px; max-height:70vh;
       overflow-y:auto; display:none; z-index:905;
     }
     #cart-popover h3 {
@@ -158,35 +143,31 @@
       border-radius:4px; margin-right:10px;
       box-shadow:0 1px 4px rgba(0,0,0,0.1);
     }
-    .cart-item-name { flex:1; font-size:0.95rem; }
-    .cart-item-price {
-      font-weight:bold; font-size:0.95rem; margin-left:8px;
-    }
+    .cart-item-name { flex:1; font-size:.95rem; }
+    .cart-item-price { font-weight:bold; font-size:.95rem; margin-left:8px; }
     .quantity-controls { display:flex; align-items:center; margin-left:10px; }
     .quantity-button {
       background:#e5e7eb; border:none; border-radius:4px;
-      width:20px; height:20px; text-align:center;
-      line-height:18px; margin:0 4px; font-weight:bold;
-      color:#374151;
+      width:20px; height:20px; line-height:18px;
+      text-align:center; margin:0 4px; font-weight:bold; color:#374151;
     }
     .quantity-button:hover { background:#d1d5db; }
-    .quantity-display { min-width:20px; text-align:center; font-size:0.9rem; }
+    .quantity-display { min-width:20px; text-align:center; font-size:.9rem; }
     #checkout-btn {
-      background:#1f2937; color:#fff; padding:10px;
-      width:100%; border-radius:6px; margin-top:10px;
+      background:#1f2937; color:#fff; padding:10px; width:100%;
+      border-radius:6px; margin-top:10px;
     }
     #checkout-btn:hover { background:#374151; }
 
     /* Bottom Navigation */
     #bottom-nav {
       position:fixed; bottom:0; left:0; right:0; height:60px;
-      background:rgba(17,17,17,0.9);
-      display:flex; justify-content:space-around;
-      align-items:center; z-index:900;
+      background:rgba(17,17,17,0.9); display:flex;
+      justify-content:space-around; align-items:center; z-index:900;
     }
     #bottom-nav a {
       position:relative; display:flex; flex-direction:column;
-      align-items:center; color:#fff; font-size:0.75rem;
+      align-items:center; color:#fff; font-size:.75rem;
       text-decoration:none; padding:6px 8px; border-radius:6px;
     }
     #bottom-nav a.active { background:rgba(255,255,255,0.1); }
@@ -199,7 +180,7 @@
     }
     #cart-badge, #chat-badge {
       position:absolute; top:2px; right:10px;
-      background:#ff3b30; color:#fff; font-size:0.65rem;
+      background:#ff3b30; color:#fff; font-size:.65rem;
       font-weight:bold; border-radius:50%; padding:2px 5px;
       display:none;
     }
@@ -207,8 +188,7 @@
     /* Footer */
     footer {
       background:#fff; border-top:1px solid #e5e7eb;
-      padding:20px 0; text-align:center;
-      color:#6b7280; font-size:0.9rem;
+      padding:20px 0; text-align:center; color:#6b7280; font-size:.9rem;
     }
   </style>
 </head>
@@ -232,108 +212,40 @@
 
   <!-- Full Gallery -->
   <div class="gallery">
-    <div class="gallery-item" data-img="ecomassets/mis2.jpg" data-price="125.00" data-title="Decor 2" data-description="Stylish wall mirror with wooden frame.">
-      <img src="ecomassets/mis2.jpg" alt="Decor 2" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis3.jpg" data-price="125.00" data-title="Decor 3" data-description="Elegant ceramic vase with floral patterns.">
-      <img src="ecomassets/mis3.jpg" alt="Decor 3" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis4.jpg" data-price="125.00" data-title="Decor 4" data-description="Modern table lamp with fabric shade.">
-      <img src="ecomassets/mis4.jpg" alt="Decor 4" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis5.jpg" data-price="125.00" data-title="Decor 5" data-description="Decorative wall art panel in abstract design.">
-      <img src="ecomassets/mis5.jpg" alt="Decor 5" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis6.jpg" data-price="125.00" data-title="Decor 6" data-description="Set of three floating shelves in walnut finish.">
-      <img src="ecomassets/mis6.jpg" alt="Decor 6" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis7.jpg" data-price="125.00" data-title="Decor 7" data-description="Minimalist ceramic planter with stand.">
-      <img src="ecomassets/mis7.jpg" alt="Decor 7" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis8.jpg" data-price="125.00" data-title="Decor 8" data-description="Cozy throw blanket in neutral tones.">
-      <img src="ecomassets/mis8.jpg" alt="Decor 8" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis9.jpg" data-price="125.00" data-title="Decor 9" data-description="Decorative table clock with metal frame.">
-      <img src="ecomassets/mis9.jpg" alt="Decor 9" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis10.jpg" data-price="125.00" data-title="Decor 10" data-description="Set of two decorative throw pillows.">
-      <img src="ecomassets/mis10.jpg" alt="Decor 10" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis11.jpg" data-price="125.00" data-title="Decor 11" data-description="Ceramic decorative bowl with intricate glaze.">
-      <img src="ecomassets/mis11.jpg" alt="Decor 11" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis13.jpg" data-price="125.00" data-title="Decor 13" data-description="Rustic wooden picture frame set of three.">
-      <img src="ecomassets/mis13.jpg" alt="Decor 13" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis14.jpg" data-price="125.00" data-title="Decor 14" data-description="Decorative lantern with glass panels.">
-      <img src="ecomassets/mis14.jpg" alt="Decor 14" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis15.jpg" data-price="125.00" data-title="Decor 15" data-description="Set of three scented candles in jars.">
-      <img src="ecomassets/mis15.jpg" alt="Decor 15" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis16.jpg" data-price="125.00" data-title="Decor 16" data-description="Reclaimed wood decorative tray.">
-      <img src="ecomassets/mis16.jpg" alt="Decor 16" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis17.jpg" data-price="125.00" data-title="Decor 17" data-description="Woven wall hanging with macramé design.">
-      <img src="ecomassets/mis17.jpg" alt="Decor 17" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis18.jpg" data-price="125.00" data-title="Decor 18" data-description="Set of decorative glass vases in assorted sizes.">
-      <img src="ecomassets/mis18.jpg" alt="Decor 18" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis19.jpg" data-price="125.00" data-title="Decor 19" data-description="Vintage-style analog wall clock.">
-      <img src="ecomassets/mis19.jpg" alt="Decor 19" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis20.jpg" data-price="125.00" data-title="Decor 20" data-description="Decorative ceramic figurine set.">
-      <img src="ecomassets/mis20.jpg" alt="Decor 20" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis21.jpg" data-price="125.00" data-title="Decor 21" data-description="Framed botanical print set of two.">
-      <img src="ecomassets/mis21.jpg" alt="Decor 21" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis22.jpg" data-price="125.00" data-title="Decor 22" data-description="Set of two decorative rope baskets.">
-      <img src="ecomassets/mis22.jpg" alt="Decor 22" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis23.jpg" data-price="125.00" data-title="Decor 23" data-description="Decorative driftwood sculpture.">
-      <img src="ecomassets/mis23.jpg" alt="Decor 23" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis24.jpg" data-price="125.00" data-title="Decor 24" data-description="Ceramic incense burner with lid.">
-      <img src="ecomassets/mis24.jpg" alt="Decor 24" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis25.jpg" data-price="125.00" data-title="Decor 25" data-description="Rustic metal wall hook set.">
-      <img src="ecomassets/mis25.jpg" alt="Decor 25" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis26.jpg" data-price="125.00" data-title="Decor 26" data-description="Decorative LED string lights with clips.">
-      <img src="ecomassets/mis26.jpg" alt="Decor 26" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis27.jpg" data-price="125.00" data-title="Decor 27" data-description="Set of three decorative ceramic pots.">
-      <img src="ecomassets/mis27.jpg" alt="Decor 27" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis28.jpg" data-price="125.00" data-title="Decor 28" data-description="Decorative faux greenery in vase.">
-      <img src="ecomassets/mis28.jpg" alt="Decor 28" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis29.jpg" data-price="125.00" data-title="Decor 29" data-description="Geometric metal candle holders set.">
-      <img src="ecomassets/mis29.jpg" alt="Decor 29" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis30.jpg" data-price="125.00" data-title="Decor 30" data-description="Rustic reclaimed wood wall shelf.">
-      <img src="ecomassets/mis30.jpg" alt="Decor 30" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis31.jpg" data-price="125.00" data-title="Decor 31" data-description="Decorative metal tray with handles.">
-      <img src="ecomassets/mis31.jpg" alt="Decor 31" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis32.jpg" data-price="125.00" data-title="Decor 32" data-description="Set of two decorative wall shelves.">
-      <img src="ecomassets/mis32.jpg" alt="Decor 32" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis33.jpg" data-price="125.00" data-title="Decor 33" data-description="Decorative tabletop fountain in ceramic.">
-      <img src="ecomassets/mis33.jpg" alt="Decor 33" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis34.jpg" data-price="125.00" data-title="Decor 34" data-description="Rustic wood-framed wall clock.">
-      <img src="ecomassets/mis34.jpg" alt="Decor 34" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis35.jpg" data-price="125.00" data-title="Decor 35" data-description="Decorative ceramic tea light holder.">
-      <img src="ecomassets/mis35.jpg" alt="Decor 35" /><div class="view-button">View</div>
-    </div>
-    <div class="gallery-item" data-img="ecomassets/mis36.jpg" data-price="125.00" data-title="Decor 36" data-description="Woven rattan decorative basket.">
-      <img src="ecomassets/mis36.jpg" alt="Decor 36" /><div class="view-button">View</div>
-    </div>
+    <div class="gallery-item" data-img="ecomassets/mis2.jpg" data-price="125.00" data-title="Decor 2" data-description="Stylish wall mirror with wooden frame."><img src="ecomassets/mis2.jpg" alt="Decor 2"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis3.jpg" data-price="125.00" data-title="Decor 3" data-description="Elegant ceramic vase with floral patterns."><img src="ecomassets/mis3.jpg" alt="Decor 3"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis4.jpg" data-price="125.00" data-title="Decor 4" data-description="Modern table lamp with fabric shade."><img src="ecomassets/mis4.jpg" alt="Decor 4"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis5.jpg" data-price="125.00" data-title="Decor 5" data-description="Decorative wall art panel in abstract design."><img src="ecomassets/mis5.jpg" alt="Decor 5"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis6.jpg" data-price="125.00" data-title="Decor 6" data-description="Set of three floating shelves in walnut finish."><img src="ecomassets/mis6.jpg" alt="Decor 6"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis7.jpg" data-price="125.00" data-title="Decor 7" data-description="Minimalist ceramic planter with stand."><img src="ecomassets/mis7.jpg" alt="Decor 7"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis8.jpg" data-price="125.00" data-title="Decor 8" data-description="Cozy throw blanket in neutral tones."><img src="ecomassets/mis8.jpg" alt="Decor 8"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis9.jpg" data-price="125.00" data-title="Decor 9" data-description="Decorative table clock with metal frame."><img src="ecomassets/mis9.jpg" alt="Decor 9"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis10.jpg" data-price="125.00" data-title="Decor 10" data-description="Set of two decorative throw pillows."><img src="ecomassets/mis10.jpg" alt="Decor 10"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis11.jpg" data-price="125.00" data-title="Decor 11" data-description="Ceramic decorative bowl with intricate glaze."><img src="ecomassets/mis11.jpg" alt="Decor 11"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis13.jpg" data-price="125.00" data-title="Decor 13" data-description="Rustic wooden picture frame set of three."><img src="ecomassets/mis13.jpg" alt="Decor 13"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis14.jpg" data-price="125.00" data-title="Decor 14" data-description="Decorative lantern with glass panels."><img src="ecomassets/mis14.jpg" alt="Decor 14"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis15.jpg" data-price="125.00" data-title="Decor 15" data-description="Set of three scented candles in jars."><img src="ecomassets/mis15.jpg" alt="Decor 15"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis16.jpg" data-price="125.00" data-title="Decor 16" data-description="Reclaimed wood decorative tray."><img src="ecomassets/mis16.jpg" alt="Decor 16"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis17.jpg" data-price="125.00" data-title="Decor 17" data-description="Woven wall hanging with macramé design."><img src="ecomassets/mis17.jpg" alt="Decor 17"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis18.jpg" data-price="125.00" data-title="Decor 18" data-description="Set of decorative glass vases in assorted sizes."><img src="ecomassets/mis18.jpg" alt="Decor 18"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis19.jpg" data-price="125.00" data-title="Decor 19" data-description="Vintage-style analog wall clock."><img src="ecomassets/mis19.jpg" alt="Decor 19"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis20.jpg" data-price="125.00" data-title="Decor 20" data-description="Decorative ceramic figurine set."><img src="ecomassets/mis20.jpg" alt="Decor 20"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis21.jpg" data-price="125.00" data-title="Decor 21" data-description="Framed botanical print set of two."><img src="ecomassets/mis21.jpg" alt="Decor 21"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis22.jpg" data-price="125.00" data-title="Decor 22" data-description="Set of two decorative rope baskets."><img src="ecomassets/mis22.jpg" alt="Decor 22"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis23.jpg" data-price="125.00" data-title="Decor 23" data-description="Decorative driftwood sculpture."><img src="ecomassets/mis23.jpg" alt="Decor 23"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis24.jpg" data-price="125.00" data-title="Decor 24" data-description="Ceramic incense burner with lid."><img src="ecomassets/mis24.jpg" alt="Decor 24"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis25.jpg" data-price="125.00" data-title="Decor 25" data-description="Rustic metal wall hook set."><img src="ecomassets/mis25.jpg" alt="Decor 25"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis26.jpg" data-price="125.00" data-title="Decor 26" data-description="Decorative LED string lights with clips."><img src="ecomassets/mis26.jpg" alt="Decor 26"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis27.jpg" data-price="125.00" data-title="Decor 27" data-description="Set of three decorative ceramic pots."><img src="ecomassets/mis27.jpg" alt="Decor 27"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis28.jpg" data-price="125.00" data-title="Decor 28" data-description="Decorative faux greenery in vase."><img src="ecomassets/mis28.jpg" alt="Decor 28"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis29.jpg" data-price="125.00" data-title="Decor 29" data-description="Geometric metal candle holders set."><img src="ecomassets/mis29.jpg" alt="Decor 29"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis30.jpg" data-price="125.00" data-title="Decor 30" data-description="Rustic reclaimed wood wall shelf."><img src="ecomassets/mis30.jpg" alt="Decor 30"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis31.jpg" data-price="125.00" data-title="Decor 31" data-description="Decorative metal tray with handles."><img src="ecomassets/mis31.jpg" alt="Decor 31"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis32.jpg" data-price="125.00" data-title="Decor 32" data-description="Set of two decorative wall shelves."><img src="ecomassets/mis32.jpg" alt="Decor 32"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis33.jpg" data-price="125.00" data-title="Decor 33" data-description="Decorative tabletop fountain in ceramic."><img src="ecomassets/mis33.jpg" alt="Decor 33"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis34.jpg" data-price="125.00" data-title="Decor 34" data-description="Rustic wood-framed wall clock."><img src="ecomassets/mis34.jpg" alt="Decor 34"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis35.jpg" data-price="125.00" data-title="Decor 35" data-description="Decorative ceramic tea light holder."><img src="ecomassets/mis35.jpg" alt="Decor 35"/><div class="view-button">View</div></div>
+    <div class="gallery-item" data-img="ecomassets/mis36.jpg" data-price="125.00" data-title="Decor 36" data-description="Woven rattan decorative basket."><img src="ecomassets/mis36.jpg" alt="Decor 36"/><div class="view-button">View</div></div>
   </div>
 
   <!-- Detail Modal -->
@@ -359,124 +271,91 @@
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
     <a href="home.html">
-      <span class="material-icons">home</span>
-      <span>Home</span>
+      <span class="material-icons">home</span><span>Home</span>
     </a>
     <a href="furniture.html">
-      <span class="material-icons">chair</span>
-      <span>Furniture</span>
+      <span class="material-icons">chair</span><span>Furniture</span>
     </a>
     <a href="decor.html" class="active">
-      <span class="material-icons">wallpaper</span>
-      <span>Decor</span>
+      <span class="material-icons">wallpaper</span><span>Decor</span>
     </a>
     <a href="chat.html" id="bottom-chat">
-      <span class="material-icons">chat</span>
-      <span>Chat</span>
-      <span id="chat-badge"></span>
+      <span class="material-icons">chat</span><span>Chat</span><span id="chat-badge"></span>
     </a>
     <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart" />
-      <span>Cart</span>
-      <span id="cart-badge"></span>
+      <img src="ecomassets/Cart.png" alt="Cart" /><span>Cart</span><span id="cart-badge"></span>
     </a>
   </nav>
 
-  <!-- Footer -->
-  <footer>
-    © 2025 Beaver Built Furniture. All rights reserved.
-  </footer>
-
   <script>
-    // Preloader fade-out
+    // Init Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Preloader
     window.addEventListener('load', () => {
-      const pre = document.getElementById('preloader');
-      setTimeout(() => {
-        pre.classList.add('fade-out');
-        setTimeout(() => pre.style.display = 'none', 1000);
-      }, 1000);
+      const p = document.getElementById('preloader');
+      setTimeout(() => { p.classList.add('fade-out'); setTimeout(()=>p.style.display='none',1000); }, 1000);
     });
 
-    // Cart persistence & badge
+    // Cart
     let cart = [];
     function loadCart() {
-      const saved = localStorage.getItem('bbf_cart');
-      if (saved) {
-        try { cart = JSON.parse(saved); } catch { cart = []; }
-      }
+      const s = localStorage.getItem('bbf_cart');
+      if (s) { try{cart=JSON.parse(s)}catch{cart=[];} }
       updateCart(); updateBadge();
     }
-    function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
-    function updateBadge() {
-      const badge = document.getElementById('cart-badge'),
-            total = cart.reduce((s,i)=>s+i.qty,0);
-      if (total>0) { badge.textContent=total; badge.style.display='block'; }
-      else badge.style.display='none';
+    function saveCart(){ localStorage.setItem('bbf_cart',JSON.stringify(cart)); }
+    function updateBadge(){
+      const b = document.getElementById('cart-badge'),
+            t = cart.reduce((s,i)=>s+i.qty,0);
+      if(t>0){ b.textContent=t; b.style.display='block'; } else b.style.display='none';
     }
-    function updateCart() {
-      const div = document.getElementById('cart-items');
-      div.innerHTML=''; let total=0;
-      cart.forEach(i=>{
-        total+=i.price*i.qty;
-        div.innerHTML+=`
-          <div class="cart-item">
-            <img src="${i.img}" alt="Item ${i.itemNum}">
-            <div class="cart-item-name">Item #: ${i.itemNum}</div>
-            <div class="quantity-controls">
-              <button class="quantity-button minus-button" data-item="${i.itemNum}">−</button>
-              <div class="quantity-display">${i.qty}</div>
-              <button class="quantity-button plus-button" data-item="${i.itemNum}">+</button>
-            </div>
-            <div class="cart-item-price">$${(i.price*i.qty).toFixed(2)}</div>
-          </div>`;
-      });
+    function updateCart(){
+      const d = document.getElementById('cart-items');
+      d.innerHTML=''; let total=0;
+      cart.forEach(i=>{ total+=i.price*i.qty;
+        d.innerHTML+=`<div class="cart-item">
+          <img src="${i.img}" alt="">
+          <div class="cart-item-name">Item #: ${i.itemNum}</div>
+          <div class="quantity-controls">
+            <button class="quantity-button minus-button" data-item="${i.itemNum}">−</button>
+            <div class="quantity-display">${i.qty}</div>
+            <button class="quantity-button plus-button" data-item="${i.itemNum}">+</button>
+          </div>
+          <div class="cart-item-price">$${(i.price*i.qty).toFixed(2)}</div>
+        </div>`;});
       document.getElementById('cart-total').innerText=total.toFixed(2);
-      document.querySelectorAll('.plus-button').forEach(b=>b.onclick=()=>{
-        const num=+b.dataset.item, it=cart.find(x=>x.itemNum===num);
-        addToCart(num,it.price,it.img);
-      });
-      document.querySelectorAll('.minus-button').forEach(b=>b.onclick=()=>{
-        removeFromCart(+b.dataset.item);
-      });
+      document.querySelectorAll('.plus-button').forEach(b=>b.onclick=()=>{ const n=+b.dataset.item;const it=cart.find(x=>x.itemNum===n);addToCart(n,it.price,it.img);} );
+      document.querySelectorAll('.minus-button').forEach(b=>b.onclick=()=>{ removeFromCart(+b.dataset.item); } );
     }
-    function addToCart(itemNum,price,img){ const ex=cart.find(x=>x.itemNum===itemNum);
-      if(ex) ex.qty++; else cart.push({itemNum,price,img,qty:1});
-      saveCart(); updateCart(); updateBadge();
-    }
-    function removeFromCart(itemNum){
-      const idx=cart.findIndex(x=>x.itemNum===itemNum);
-      if(idx>-1){ cart[idx].qty--; if(cart[idx].qty<1) cart.splice(idx,1);
-        saveCart(); updateCart(); updateBadge(); }
-    }
+    function addToCart(i,p,img){ const ex=cart.find(x=>x.itemNum===i); if(ex)ex.qty++;else cart.push({itemNum:i,price:p,img,qty:1}); saveCart(); updateCart(); updateBadge(); }
+    function removeFromCart(i){ const idx=cart.findIndex(x=>x.itemNum===i); if(idx>-1){cart[idx].qty--; if(cart[idx].qty<1)cart.splice(idx,1); saveCart(); updateCart(); updateBadge();} }
 
-    // Cart popover toggle
-    const cartIcon=document.getElementById('bottom-cart'),
-          cartPop=document.getElementById('cart-popover');
-    cartIcon.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation();
-      cartPop.style.display=cartPop.style.display==='block'?'none':'block';
-    });
+    // Cart popover
+    const cartIcon=document.getElementById('bottom-cart'), cartPop=document.getElementById('cart-popover');
+    cartIcon.addEventListener('click',e=>{e.preventDefault();e.stopPropagation(); cartPop.style.display = cartPop.style.display==='block'?'none':'block';});
     cartPop.addEventListener('click',e=>e.stopPropagation());
-    document.addEventListener('click',e=>{
-      if(cartPop.style.display==='block' && !cartPop.contains(e.target)&& e.target!==cartIcon)
-        cartPop.style.display='none';
-    });
+    document.addEventListener('click',e=>{ if(cartPop.style.display==='block' && !cartPop.contains(e.target) && e.target!==cartIcon) cartPop.style.display='none'; });
 
     // Checkout
     document.getElementById('checkout-btn').addEventListener('click',async()=>{
       if(!cart.length){ alert('Your cart is empty!'); return; }
-      const lineItems=cart.map(i=>({
-        price_data:{currency:'usd',product_data:{name:'Item #: '+i.itemNum},unit_amount:i.price*100},
-        quantity:i.qty
-      }));
+      const lineItems=cart.map(i=>({price_data:{currency:'usd',product_data:{name:'Item #: '+i.itemNum},unit_amount:i.price*100},quantity:i.qty}));
       try{
-        const res=await fetch('https://your-username.your-project.repl.co/create-checkout-session',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({lineItems})
-        });
-        const session=await res.json();
-        const result=await stripe.redirectToCheckout({sessionId:session.id});
-        if(result.error) alert(result.error.message);
-      }catch{ alert('Checkout failed.'); }
+        const r=await fetch('https://your-username.your-project.repl.co/create-checkout-session',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({lineItems})});
+        const s=await r.json(), res=await stripe.redirectToCheckout({sessionId:s.id});
+        if(res.error) alert(res.error.message);
+      }catch{alert('Checkout failed.');}
     });
 
     // Modal, gallery, carousel
@@ -491,16 +370,18 @@
             closeBtn=document.getElementById('modal-close'),
             items=document.querySelectorAll('.gallery-item');
       items.forEach(item=>item.addEventListener('click',()=>{
-        if(cartPop.style.display==='block'){ cartPop.style.display='none'; return; }
-        const img=item.dataset.img, match=img.match(/mis(\d+)\.jpg/),
-              num=match?+match[1]:null, price=parseFloat(item.dataset.price)||0;
-        imgEl.src=img; descEl.textContent=item.dataset.description;
+        if(cartPop.style.display==='block'){cartPop.style.display='none';return;}
+        const img=item.getAttribute('data-img'),
+              match=img.match(/mis(\d+)\.jpg/),
+              num=match?+match[1]:null,
+              price=parseFloat(item.getAttribute('data-price'))||0;
+        imgEl.src=img; descEl.textContent=item.getAttribute('data-description');
         numEl.textContent='Item #: '+num; priceEl.textContent='Price: $'+price.toFixed(2);
         modal.style.display='flex';
-        addBtn.onclick=()=>{ addToCart(num,price,img); modal.style.display='none'; };
+        addBtn.onclick=()=>{addToCart(num,price,img);modal.style.display='none';};
       }));
       closeBtn.onclick=()=>modal.style.display='none';
-      modal.addEventListener('click',e=>{ if(e.target===modal) modal.style.display='none'; });
+      modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none';});
 
       const srcs=Array.from(items).map(i=>i.querySelector('img').src);
       if(srcs.length){
@@ -510,46 +391,29 @@
         setInterval(()=>{
           let n; do{n=Math.floor(Math.random()*srcs.length);}while(n===idx);
           idx=n; carousel.style.opacity=0;
-          setTimeout(()=>{ carousel.src=srcs[idx]; carousel.style.opacity=1; },300);
+          setTimeout(()=>{carousel.src=srcs[idx];carousel.style.opacity=1;},300);
         },4000);
       }
-    <!-- Live Chat Badge for Decor Page -->
-(function() {
-  const badge = document.getElementById('chat-badge');
-  // Pull the visitor’s thread ID & name from localStorage
-  const visitorUid  = localStorage.getItem('visitorUid');
-  const visitorName = localStorage.getItem('visitorName');
-  if (!visitorUid || !visitorName) return;  // no active chat
+    });
 
-  // Reference their Firebase thread
-  const threadRef = firebase.database().ref('threads/' + visitorUid);
-  let initialLoad = true;
-
-  // After the first bulk snapshot, switch off initialLoad
-  threadRef.once('value', () => {
-    initialLoad = false;
-  });
-
-  // On each new message
-  threadRef.on('child_added', snap => {
-    const m = snap.val();
-    // ignore the join/system message and user’s own messages
-    if (initialLoad || m.system || m.sender === visitorName) return;
-
-    // must be an admin reply—increment badge
-    const current = parseInt(badge.textContent || '0', 10) + 1;
-    badge.textContent = current;
-    badge.style.display = 'block';
-  });
-
-  // When user clicks Chat, clear the badge
-  document.getElementById('bottom-chat').addEventListener('click', () => {
-    badge.style.display = 'none';
-    badge.textContent = '';
-  });
-})();
-
-
+    // Live Chat Badge
+    ;(function(){
+      const badge=document.getElementById('chat-badge');
+      const visitorUid=localStorage.getItem('visitorUid'), visitorName=localStorage.getItem('visitorName');
+      if(!visitorUid||!visitorName) return;
+      const ref=firebase.database().ref('threads/'+visitorUid);
+      let init=true;
+      ref.once('value',()=>{init=false;});
+      ref.on('child_added',snap=>{
+        const m=snap.val();
+        if(init||m.system||m.sender===visitorName) return;
+        const c=parseInt(badge.textContent||'0',10)+1;
+        badge.textContent=c; badge.style.display='block';
+      });
+      document.getElementById('bottom-chat').addEventListener('click',()=>{
+        badge.style.display='none'; badge.textContent='';
+      });
+    })();
   </script>
 </body>
 </html>
