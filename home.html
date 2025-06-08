@@ -140,17 +140,20 @@
     @media (max-width:500px){#gallery .masonry{column-count:2;}}
     @media (max-width:300px){#gallery .masonry{column-count:1;}}
     .gallery-item-masonry {
+      loading="lazy"
       break-inside: avoid; margin-bottom: 0.75rem;
       position: relative; overflow: hidden;
       border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
       animation: fadeInUp 0.6s ease both;
     }
     .gallery-item-masonry img {
+      loading="lazy"
       width: 100%; display: block;
       filter: grayscale(50%); transition: filter 0.3s, transform 0.3s;
     }
     .gallery-item-masonry:hover img {
       filter: grayscale(0%); transform: scale(1.05);
+      
     }
 
     /* Testimonials */
