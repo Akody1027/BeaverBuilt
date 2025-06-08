@@ -26,23 +26,26 @@
       display: flex; flex-direction: column;
       font-family: Arial, sans-serif;
     }
-    /* iframe viewport takes all but nav height */
+    /* iframe viewport */
     #viewport {
       flex: 1;
     }
     #viewport iframe {
       width: 100%; height: 100%; border: none;
     }
-    /* Bottom Navigation (pre-popover styling) */
+
+    /* Bottom Navigation */
     #bottom-nav {
       height: 60px;
       background: rgba(17,17,17,0.9);
       display: flex; justify-content: space-around; align-items: center;
+      position: relative;
     }
     #bottom-nav a {
+      position: relative; /* for badge */
       display: flex; flex-direction: column; align-items: center;
       color: #fff; font-size: 0.75rem; text-decoration: none;
-      padding: 6px 8px; flex: 1;
+      padding: 6px 8px; flex: 1; cursor: pointer;
     }
     #bottom-nav a.active {
       background: rgba(255,255,255,0.1);
@@ -58,6 +61,53 @@
       border-radius: 50%; padding: 2px 5px;
       display: none;
     }
+
+    /* Cart Popover */
+    #cart-popover {
+      position: fixed;
+      bottom: 70px; /* above nav */
+      right: 15px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 15px;
+      width: 280px;
+      max-height: 60vh;
+      overflow-y: auto;
+      display: none;
+      z-index: 1000;
+    }
+    #cart-popover h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    .cart-item {
+      display: flex; align-items: center; margin-bottom: 10px;
+    }
+    .cart-item img {
+      width: 40px; height: 40px; object-fit: cover;
+      border-radius: 4px; margin-right: 10px;
+    }
+    .cart-item-name { flex: 1; font-size: 0.95rem; }
+    .cart-item-price { font-weight: bold; font-size: 0.95rem; }
+    .quantity-controls {
+      display: flex; align-items: center; margin-left: 10px;
+    }
+    .quantity-button {
+      width: 20px; height: 20px; border-radius: 4px;
+      border: none; background: #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; margin: 0 4px; font-weight: bold;
+    }
+    #checkout-btn {
+      width: 100%; padding: 8px;
+      background: #1f2937; color: #fff; border: none;
+      border-radius: 6px; margin-top: 10px; cursor: pointer;
+    }
+    #checkout-btn:hover { background: #374151; }
   </style>
 </head>
 <body>
@@ -66,26 +116,30 @@
     <iframe id="view-frame" src="home.html"></iframe>
   </div>
 
+  <!-- Cart Popover -->
+  <div id="cart-popover">
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p><strong>Total: $<span id="cart-total">0.00</span></strong></p>
+    <button id="checkout-btn">Checkout</button>
+  </div>
+
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
-    <a href="#" data-src="home.html" class="nav-btn active">
-      <span class="material-icons">home</span>
-      <span>Home</span>
+    <a data-src="home.html" class="nav-btn active">
+      <span class="material-icons">home</span><span>Home</span>
     </a>
-    <a href="#" data-src="furniture.html" class="nav-btn">
-      <span class="material-icons">chair</span>
-      <span>Furniture</span>
+    <a data-src="furniture.html" class="nav-btn">
+      <span class="material-icons">chair</span><span>Furniture</span>
     </a>
-    <a href="#" data-src="decor.html" class="nav-btn">
-      <span class="material-icons">wallpaper</span>
-      <span>Decor</span>
+    <a data-src="decor.html" class="nav-btn">
+      <span class="material-icons">wallpaper</span><span>Decor</span>
     </a>
-    <a href="#" data-src="chat.html" class="nav-btn">
-      <span class="material-icons">chat</span>
-      <span>Chat</span>
+    <a data-src="chat.html" class="nav-btn">
+      <span class="material-icons">chat</span><span>Chat</span>
       <span id="chat-badge" class="badge"></span>
     </a>
-    <a href="#" data-src="e-commerce.html" class="nav-btn">
+    <a id="bottom-cart" class="nav-btn">
       <img src="ecomassets/Cart.png" alt="Cart" style="width:24px;height:24px;margin-bottom:2px;">
       <span>Cart</span>
       <span id="cart-badge" class="badge"></span>
@@ -94,91 +148,149 @@
 
   <!-- Service Worker registration -->
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   </script>
 
   <script>
-    // ------- Section Switching & Badge Clearing -------
-    const navBtns  = document.querySelectorAll('.nav-btn');
-    const iframe   = document.getElementById('view-frame');
-    const chatBadge = document.getElementById('chat-badge');
+  // Section Switching & Chat Badge Clearing
+  const navBtns = document.querySelectorAll('.nav-btn'),
+        iframe  = document.getElementById('view-frame'),
+        chatBadge = document.getElementById('chat-badge');
 
-    navBtns.forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.preventDefault();
-        navBtns.forEach(x => x.classList.remove('active'));
-        btn.classList.add('active');
-        iframe.src = btn.dataset.src;
-
-        // Clear chat badge when Chat opens
-        if (btn.dataset.src === 'chat.html') {
-          chatBadge.style.display = 'none';
-          chatBadge.textContent = '';
-        }
-      });
-    });
-
-    // ------- Cart Badge from localStorage -------
-    function updateCartBadge() {
-      const cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
-      const total = cart.reduce((sum,i)=> sum + i.qty, 0);
-      const cb = document.getElementById('cart-badge');
-      if (total > 0) {
-        cb.textContent = total;
-        cb.style.display = 'block';
-      } else {
-        cb.style.display = 'none';
+  navBtns.forEach(btn => {
+    btn.onclick = e => {
+      e.preventDefault();
+      navBtns.forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      const src = btn.dataset.src;
+      if (src) iframe.src = src;
+      if (src === 'chat.html') {
+        chatBadge.style.display='none';
+        chatBadge.textContent='';
       }
-    }
-    updateCartBadge();
-    window.addEventListener('storage', updateCartBadge);
-
-    // ------- Firebase Chat Badge & Notifications -------
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
-      authDomain: "beaverbuiltchat.firebaseapp.com",
-      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
-      projectId: "beaverbuiltchat",
-      storageBucket: "beaverbuiltchat.appspot.com",
-      messagingSenderId: "785578451247",
-      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
-      measurementId: "G-XT02YCCFYM"
+      // hide cart popover if open
+      document.getElementById('cart-popover').style.display='none';
     };
-    firebase.initializeApp(firebaseConfig);
-    const db       = firebase.database(),
-          vUid     = localStorage.getItem('visitorUid'),
-          vName    = localStorage.getItem('visitorName');
+  });
 
-    // Request desktop notifications on first load
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+  // Cart Logic
+  let cart = [];
+  function loadCart() {
+    cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
+    updateCartBadge();
+  }
+  function saveCart() {
+    localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    updateCartBadge();
+  }
+  function updateCartBadge() {
+    const total = cart.reduce((s,i)=>s+i.qty,0),
+          cb    = document.getElementById('cart-badge');
+    if (total>0) {
+      cb.textContent = total;
+      cb.style.display = 'block';
+    } else cb.style.display = 'none';
+  }
+  function renderCartPopover() {
+    const container = document.getElementById('cart-items');
+    container.innerHTML = '';
+    let sum = 0;
+    cart.forEach(item=>{
+      sum += item.price * item.qty;
+      const div = document.createElement('div');
+      div.className = 'cart-item';
+      div.innerHTML = `
+        <img src="${item.img}" alt="">
+        <div class="cart-item-name">#${item.itemNum}</div>
+        <div class="quantity-controls">
+          <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
+          <span>${item.qty}</span>
+          <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
+        </div>
+        <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
+      `;
+      container.appendChild(div);
+    });
+    document.getElementById('cart-total').textContent = sum.toFixed(2);
+    // plus/minus handlers
+    container.querySelectorAll('.plus').forEach(b=>{
+      b.onclick = ()=>{ 
+        const id = b.dataset.id|0;
+        cart.find(x=>x.itemNum==id).qty++;
+        saveCart(); renderCartPopover();
+      };
+    });
+    container.querySelectorAll('.minus').forEach(b=>{
+      b.onclick = ()=>{ 
+        const id = b.dataset.id|0;
+        const itm = cart.find(x=>x.itemNum==id);
+        itm.qty--;
+        if (itm.qty<1) cart = cart.filter(x=>x.itemNum!=id);
+        saveCart(); renderCartPopover();
+      };
+    });
+  }
+  // popover toggle
+  const cartBtn = document.getElementById('bottom-cart'),
+        popover = document.getElementById('cart-popover');
+  cartBtn.onclick = e => {
+    e.preventDefault(); e.stopPropagation();
+    renderCartPopover();
+    popover.style.display = popover.style.display==='block'?'none':'block';
+  };
+  popover.onclick = e => e.stopPropagation();
+  document.addEventListener('click', ()=> popover.style.display='none');
 
-    if (vUid && vName) {
-      const threadRef = db.ref('threads/' + vUid);
-      let initialLoad = true;
+  // Checkout stub
+  document.getElementById('checkout-btn').onclick = ()=>{
+    if (!cart.length) return alert('Cart empty');
+    // ... your checkout logic
+  };
 
-      threadRef.once('value', () => { initialLoad = false; });
-      threadRef.on('child_added', snap => {
-        const m = snap.val();
-        if (initialLoad || m.system || m.sender === vName) return;
+  // Live update on storage
+  window.addEventListener('storage', loadCart);
 
-        // Show badge only if not on Chat tab
-        const activeSrc = document.querySelector('.nav-btn.active').dataset.src;
-        if (activeSrc !== 'chat.html') {
-          const current = parseInt(chatBadge.textContent || '0', 10) + 1;
-          chatBadge.textContent = current;
-          chatBadge.style.display = 'block';
-        }
+  // Initialize
+  loadCart();
 
-        // Fire native notification
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(`New message from ${m.sender}`, { body: m.text });
-        }
-      });
-    }
+  // Firebase Chat Badge & Notifications
+  const firebaseConfig = {
+    apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+    authDomain: "beaverbuiltchat.firebaseapp.com",
+    databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+    projectId: "beaverbuiltchat",
+    storageBucket: "beaverbuiltchat.appspot.com",
+    messagingSenderId: "785578451247",
+    appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+    measurementId: "G-XT02YCCFYM"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database(),
+        vUid  = localStorage.getItem('visitorUid'),
+        vName = localStorage.getItem('visitorName');
+
+  if ('Notification' in window && Notification.permission==='default') {
+    Notification.requestPermission();
+  }
+  if (vUid && vName) {
+    const threadRef = db.ref('threads/'+vUid);
+    let init=true;
+    threadRef.once('value',()=>{ init=false; });
+    threadRef.on('child_added',snap=>{
+      const m=snap.val();
+      if (init||m.system||m.sender===vName) return;
+      // badge
+      const active = document.querySelector('.nav-btn.active').dataset.src;
+      if (active!=='chat.html') {
+        const n = (parseInt(chatBadge.textContent||'0',10)+1);
+        chatBadge.textContent = n; chatBadge.style.display='block';
+      }
+      // native notify
+      if ('Notification' in window && Notification.permission==='granted') {
+        new Notification(`New message from ${m.sender}`,{ body:m.text });
+      }
+    });
+  }
   </script>
 </body>
 </html>
