@@ -4,189 +4,160 @@
   <meta charset="UTF-8" />
   <title>Your Cart | Beaver Built Furniture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Google Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-  <!-- Stripe.js -->
-  <script src="https://js.stripe.com/v3"></script>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
 
   <style>
-    * { box-sizing: border-box; margin:0; padding:0; }
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background: #f9fafb;
-      color: #1f2937;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-    }
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; padding: 20px; }
+    a { color: inherit; text-decoration: none; }
+
     header {
-      background: #111827; color: #fff;
-      padding: 1rem 2rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex; align-items: center; margin-bottom: 20px;
     }
-    header h1 { font-weight: 400; }
-    .container {
+    .icon-btn {
+      font-size: 1.5rem; margin-right: 10px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; color: #1f2937;
+    }
+    header h1 {
+      font-size: 1.5rem; font-weight: normal;
       flex: 1;
-      width: 90%; max-width: 800px;
-      margin: 2rem auto;
     }
+
     .cart-list {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
+      width: 100%; border-collapse: collapse; margin-bottom: 20px;
     }
-    @media(min-width:600px){
-      .cart-list { grid-template-columns: 1fr 1fr; }
+    .cart-list th, .cart-list td {
+      padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0;
     }
-    .cart-item-card {
-      background: #fff; border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column;
-      overflow: hidden;
+    .cart-list th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #555; }
+    .cart-list img {
+      width: 50px; height: 50px; object-fit: cover; border-radius: 4px;
     }
-    .cart-item-card img {
-      width: 100%; object-fit: cover; height: 180px;
-    }
-    .item-info {
-      padding: 1rem;
-      display: flex; flex-direction: column; flex: 1;
-    }
-    .item-info h2 {
-      font-size: 1.1rem; margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-    .item-info p { flex: 1; font-size: 0.9rem; color: #4b5563; }
-    .item-footer {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-    .item-footer .price { font-weight: 600; }
-    .item-footer .qty {
+
+    .quantity-controls {
       display: flex; align-items: center;
     }
-    .item-footer .qty span {
-      margin: 0 0.5rem;
+    .quantity-controls button {
+      width: 24px; height: 24px; background: #e0e0e0; border: none;
+      border-radius: 4px; font-size: 1rem; line-height: 0; cursor: pointer;
+      margin: 0 5px;
     }
-    .summary {
-      margin-top: 2rem; text-align: right;
-      font-size: 1.2rem; font-weight: 600;
+    .quantity-controls span {
+      min-width: 20px; text-align: center; display: inline-block;
     }
+
+    .totals {
+      display: flex; justify-content: flex-end; margin-bottom: 30px;
+      font-size: 1.1rem; font-weight: 600;
+    }
+    .totals span:last-child { margin-left: 10px; }
+
     .checkout-btn {
-      margin-top: 1rem;
-      display: block;
-      width: 100%;
-      max-width: 300px;
-      margin-left: auto;
-      background: #111827; color: #fff;
-      border: none; padding: 0.75rem;
-      font-size: 1rem; border-radius: 6px;
-      cursor: pointer;
+      display: block; width: 100%; max-width: 300px; margin: 0 auto;
+      padding: 12px; background: #1f2937; color: #fff;
+      text-align: center; border: none; border-radius: 6px;
+      font-size: 1rem; cursor: pointer;
     }
-    .checkout-btn:hover {
-      background: #374151;
-    }
-    footer {
-      text-align: center; padding: 1rem 0;
-      font-size: 0.85rem; color: #6b7280;
-    }
+    .checkout-btn:hover { background: #374151; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Your Shopping Cart</h1>
+    <!-- Home button -->
+    <a href="index.html" class="icon-btn" title="Home">
+      <span class="material-icons">home</span>
+    </a>
+    <!-- Back button -->
+    <span class="material-icons icon-btn" onclick="history.back()" title="Back">arrow_back</span>
+    <h1>Your Cart</h1>
   </header>
 
-  <main class="container">
-    <div id="cart-items" class="cart-list">
-      <!-- JS will inject cart item cards here -->
-    </div>
+  <table class="cart-list">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Price</th>
+        <th>Qty</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody id="cart-body">
+      <!-- JS injects rows here -->
+    </tbody>
+  </table>
 
-    <div id="cart-summary" class="summary">
-      Total: $<span id="cart-total">0.00</span>
-    </div>
+  <div class="totals">
+    <span>Total:</span><span id="cart-total">$0.00</span>
+  </div>
 
-    <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
-  </main>
-
-  <footer>
-    &copy; 2025 Beaver Built Furniture. All rights reserved.
-  </footer>
+  <button class="checkout-btn" id="to-checkout">Proceed to Checkout</button>
 
   <script>
-    // Initialize Stripe (replace with your own publishable key)
-    const stripe = Stripe('pk_live_…YOUR_KEY_HERE…');
-
     // Load cart from localStorage
-    let cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+    let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
 
-    // Render cart
-    const itemsContainer = document.getElementById('cart-items');
-    const totalEl        = document.getElementById('cart-total');
+    const cartBody = document.getElementById('cart-body');
+    const totalEl  = document.getElementById('cart-total');
 
     function renderCart() {
-      itemsContainer.innerHTML = '';
+      cartBody.innerHTML = '';
       let total = 0;
-
       cart.forEach(item => {
-        total += item.price * item.qty;
-        const card = document.createElement('div');
-        card.className = 'cart-item-card';
-        card.innerHTML = `
-          <img src="${item.img}" alt="Item ${item.itemNum}">
-          <div class="item-info">
-            <h2>Item #${item.itemNum}</h2>
-            ${ item.description ? `<p>${item.description}</p>` : '' }
-            <div class="item-footer">
-              <div class="price">$${(item.price * item.qty).toFixed(2)}</div>
-              <div class="qty">
-                Qty: <span>${item.qty}</span>
-              </div>
+        const sub = item.price * item.qty;
+        total += sub;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <img src="${item.img}" alt="" />
+            ${item.itemNum}
+          </td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td>
+            <div class="quantity-controls">
+              <button class="dec" data-id="${item.itemNum}">−</button>
+              <span>${item.qty}</span>
+              <button class="inc" data-id="${item.itemNum}">+</button>
             </div>
-          </div>
+          </td>
+          <td>$${sub.toFixed(2)}</td>
         `;
-        itemsContainer.appendChild(card);
+        cartBody.appendChild(tr);
       });
-
-      totalEl.textContent = total.toFixed(2);
+      totalEl.textContent = '$' + total.toFixed(2);
+      attachQtyHandlers();
     }
 
+    function attachQtyHandlers() {
+      document.querySelectorAll('.inc').forEach(btn => {
+        btn.onclick = () => adjustQty(btn.dataset.id, +1);
+      });
+      document.querySelectorAll('.dec').forEach(btn => {
+        btn.onclick = () => adjustQty(btn.dataset.id, -1);
+      });
+    }
+
+    function adjustQty(id, delta) {
+      const idx = cart.findIndex(i=>i.itemNum==id);
+      if (idx===-1) return;
+      cart[idx].qty += delta;
+      if (cart[idx].qty < 1) cart.splice(idx,1);
+      localStorage.setItem('bbf_cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    // initial render
     renderCart();
 
-    // Checkout handler
-    document.getElementById('checkout-btn').addEventListener('click', async () => {
-      if (cart.length === 0) {
-        alert('Your cart is empty!');
-        return;
-      }
-      // build Stripe line items
-      const lineItems = cart.map(i => ({
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Item #' + i.itemNum },
-          unit_amount: i.price * 100
-        },
-        quantity: i.qty
-      }));
-
-      try {
-        const res = await fetch('/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lineItems })
-        });
-        const { url } = await res.json();
-        window.location = url;
-      } catch (err) {
-        alert('Checkout failed. Please try again.');
-        console.error(err);
-      }
-    });
+    // proceed to checkout
+    document.getElementById('to-checkout').onclick = () => {
+      window.location.href = 'checkout.html';
+    };
   </script>
 
 </body>
 </html>
-
