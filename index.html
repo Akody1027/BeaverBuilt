@@ -26,6 +26,7 @@
       display: flex; flex-direction: column;
       font-family: Arial, sans-serif;
     }
+    /* iframe viewport takes all but nav height */
     #viewport {
       flex: 1;
     }
@@ -33,100 +34,113 @@
       width: 100%; height: 100%; border: none;
     }
 
-    /* Cart Pop-over */
+    /* Cart Popover */
     #cart-popover {
       position: fixed;
-      bottom: 60px;
-      right: 16px;
-      width: 280px;
-      max-height: 60vh;
-      overflow-y: auto;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 12px;
-      display: none;
-      z-index: 1001;
+      bottom: 70px; right: 15px;
+      background: #fff; border: 1px solid #ccc;
+      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 15px; width:60%; max-width:400px;
+      max-height:70vh; overflow-y:auto;
+      display: none; z-index: 1001;
     }
-    #cart-popover h4 {
-      margin: 0 0 8px;
-      font-size: 1rem;
-      color: #333;
+    #cart-popover h3 {
+      margin:0 0 10px; font-size:1.1rem;
+      border-bottom:1px solid #eee; padding-bottom:5px;
     }
-    #cart-popover .item-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
+    .cart-item {
+      display:flex; align-items:center; margin:8px 0;
     }
+    .cart-item img {
+      width:40px; height:40px; object-fit:cover;
+      border-radius:4px; margin-right:10px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.1);
+    }
+    .cart-item-name { flex:1; font-size:0.95rem; }
+    .quantity-controls { display:flex; align-items:center; margin:0 8px; }
+    .quantity-button {
+      background:#e5e7eb; border:none; border-radius:4px;
+      width:20px; height:20px; text-align:center;
+      line-height:18px; margin:0 4px; font-weight:bold;
+      color:#374151; cursor:pointer;
+    }
+    .quantity-button:hover { background:#d1d5db; }
+    .quantity-display { min-width:20px; text-align:center; }
+    .cart-item-price { font-weight:bold; margin-left:8px; }
+    #checkout-btn {
+      background:#1f2937; color:#fff;
+      width:100%; padding:10px; border:none;
+      border-radius:6px; margin-top:10px;
+      cursor:pointer;
+    }
+    #checkout-btn:hover { background:#374151; }
 
     /* Bottom Navigation */
     #bottom-nav {
       height: 60px;
       background: rgba(17,17,17,0.9);
       display: flex; justify-content: space-around; align-items: center;
-    }
-    #bottom-nav a {
       position: relative;
-      display: flex; flex-direction: column; align-items: center;
-      color: #fff; font-size: 0.75rem; text-decoration: none;
-      padding: 6px 8px; flex: 1;
     }
-    #bottom-nav a.active {
+    #bottom-nav .nav-btn {
+      position: relative; flex:1;
+      display:flex; flex-direction:column; align-items:center;
+      color:#fff; font-size:0.75rem; text-decoration:none;
+      padding:6px 0; cursor:pointer;
+    }
+    #bottom-nav .nav-btn.active {
       background: rgba(255,255,255,0.1);
     }
-    #bottom-nav .material-icons {
-      font-size: 24px; margin-bottom: 2px;
+    #bottom-nav .material-icons, #bottom-nav img {
+      font-size:24px; margin-bottom:2px;
     }
     .badge {
-      position: absolute; top: 4px; right: 16px;
-      background: #ff3b30; color: #fff;
-      font-size: 0.65rem; font-weight: bold;
-      border-radius: 50%; padding: 2px 5px;
-      display: none;
+      position:absolute; top:4px; right:16px;
+      background:#ff3b30; color:#fff;
+      font-size:0.65rem; font-weight:bold;
+      border-radius:50%; padding:2px 5px;
+      display:none;
     }
   </style>
 </head>
 <body>
-  <!-- iframe viewport -->
+  <!-- Viewport -->
   <div id="viewport">
     <iframe id="view-frame" src="home.html"></iframe>
   </div>
 
-  <!-- Cart pop-over -->
+  <!-- Cart Popover -->
   <div id="cart-popover">
-    <h4>Your Cart</h4>
-    <div id="index-cart-items"></div>
-    <p style="text-align:right; margin-top:8px; font-weight:bold;">
-      Total: $<span id="index-cart-total">0.00</span>
-    </p>
+    <h3>Your Cart</h3>
+    <div id="cart-items"></div>
+    <p><strong>Total: $<span id="cart-total">0</span></strong></p>
+    <button id="checkout-btn">Checkout</button>
   </div>
 
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
-    <a href="#" data-src="home.html" class="nav-btn active">
+    <div class="nav-btn active" data-src="home.html">
       <span class="material-icons">home</span>
       <span>Home</span>
-    </a>
-    <a href="#" data-src="furniture.html" class="nav-btn">
+    </div>
+    <div class="nav-btn" data-src="furniture.html">
       <span class="material-icons">chair</span>
       <span>Furniture</span>
-    </a>
-    <a href="#" data-src="decor.html" class="nav-btn">
+    </div>
+    <div class="nav-btn" data-src="decor.html">
       <span class="material-icons">wallpaper</span>
       <span>Decor</span>
-    </a>
-    <a href="#" data-src="chat.html" class="nav-btn">
+    </div>
+    <div class="nav-btn" data-src="chat.html">
       <span class="material-icons">chat</span>
       <span>Chat</span>
       <span id="chat-badge" class="badge"></span>
-    </a>
-    <a href="#" id="cart-btn" data-src="e-commerce.html" class="nav-btn">
-      <img src="ecomassets/Cart.png" alt="Cart" style="width:24px;height:24px;margin-bottom:2px;">
+    </div>
+    <div class="nav-btn" id="bottom-cart">
+      <img src="ecomassets/Cart.png" alt="Cart" />
       <span>Cart</span>
       <span id="cart-badge" class="badge"></span>
-    </a>
+    </div>
   </nav>
 
   <!-- Service Worker registration -->
@@ -137,110 +151,123 @@
   </script>
 
   <script>
-    // Switch iframe src & active class
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const iframe     = document.getElementById('view-frame');
-    navButtons.forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.preventDefault();
-        navButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+  // ——— Section Switching ———
+  const navBtns = document.querySelectorAll('#bottom-nav .nav-btn');
+  const iframe  = document.getElementById('view-frame');
+  navBtns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      navBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      if(btn.dataset.src){
         iframe.src = btn.dataset.src;
-        // clear chat badge when opening chat
-        if (btn.dataset.src === 'chat.html') {
-          document.getElementById('chat-badge').style.display = 'none';
-          document.getElementById('chat-badge').textContent  = '';
-        }
-      });
-    });
-
-    // -----------------------
-    // CART BADGE & POPOVER
-    // -----------------------
-    function refreshCartBadge() {
-      const cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-      const total = cart.reduce((sum,i)=>sum+i.qty,0);
-      const cb = document.getElementById('cart-badge');
-      if (total>0) {
-        cb.textContent = total;
-        cb.style.display = 'block';
-      } else {
-        cb.style.display = 'none';
       }
-    }
-
-    function refreshCartPopover() {
-      const pop = document.getElementById('cart-popover');
-      const list = document.getElementById('index-cart-items');
-      const totEl= document.getElementById('index-cart-total');
-      const cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-      list.innerHTML = '';
-      let total = 0;
-      if (!cart.length) {
-        list.innerHTML = '<p style="color:#666;text-align:center;">(empty)</p>';
-      } else {
-        cart.forEach(i=>{
-          total += i.price * i.qty;
-          const row = document.createElement('div');
-          row.className = 'item-row';
-          row.innerHTML = `
-            <span>${i.itemNum} × ${i.qty}</span>
-            <span>$${(i.price*i.qty).toFixed(2)}</span>
-          `;
-          list.appendChild(row);
-        });
+      if(btn.dataset.src==='chat.html'){
+        document.getElementById('chat-badge').style.display='none';
       }
-      totEl.textContent = total.toFixed(2);
-    }
-
-    // toggle on cart-btn click
-    const cartBtn = document.getElementById('cart-btn');
-    const cartPop = document.getElementById('cart-popover');
-    cartBtn.addEventListener('click', e=>{
-      e.preventDefault();
-      refreshCartPopover();
-      cartPop.style.display = cartPop.style.display==='block' ? 'none' : 'block';
     });
-    // auto-refresh badge & popover on storage events
-    window.addEventListener('storage', ()=>{
-      refreshCartBadge();
-      if (cartPop.style.display==='block') refreshCartPopover();
+  });
+
+  // ——— Cart Logic ———
+  let cart = [];
+  function loadCart(){
+    cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
+    renderCart();
+  }
+  function saveCart(){
+    localStorage.setItem('bbf_cart',JSON.stringify(cart));
+    window.dispatchEvent(new Event('storage'));
+  }
+  function renderCart(){
+    const itemsDiv = document.getElementById('cart-items');
+    itemsDiv.innerHTML = '';
+    let total=0;
+    cart.forEach(item=>{
+      total += item.price*item.qty;
+      itemsDiv.insertAdjacentHTML('beforeend',`
+        <div class="cart-item">
+          <img src="${item.img}" />
+          <div class="cart-item-name">Item #: ${item.itemNum}</div>
+          <div class="quantity-controls">
+            <button class="quantity-button minus" data-item="${item.itemNum}">−</button>
+            <div class="quantity-display">${item.qty}</div>
+            <button class="quantity-button plus" data-item="${item.itemNum}">+</button>
+          </div>
+          <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
+        </div>
+      `);
     });
-
-    // init
-    refreshCartBadge();
-
-    // -----------------------
-    // LIVE CHAT BADGE
-    // -----------------------
-    const firebaseConfig = {
-      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
-      authDomain: "beaverbuiltchat.firebaseapp.com",
-      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
-      projectId: "beaverbuiltchat",
-      storageBucket: "beaverbuiltchat.appspot.com",
-      messagingSenderId: "785578451247",
-      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
-      measurementId: "G-XT02YCCFYM"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const chatBadge = document.getElementById('chat-badge');
-    const visitorUid  = localStorage.getItem('visitorUid');
-    const visitorName = localStorage.getItem('visitorName');
-    if (visitorUid && visitorName) {
-      let initial = true;
-      const ref = db.ref('threads/' + visitorUid);
-      ref.once('value', () => initial = false);
-      ref.on('child_added', snap => {
-        const m = snap.val();
-        if (initial || m.system || m.sender === visitorName) return;
-        const n = parseInt(chatBadge.textContent||'0',10) + 1;
-        chatBadge.textContent = n;
-        chatBadge.style.display = 'block';
-      });
+    document.getElementById('cart-total').textContent = total.toFixed(2);
+    updateBadges();
+    // hooks
+    document.querySelectorAll('.quantity-button.plus').forEach(b=>{
+      b.onclick=()=>changeQty(+b.dataset.item,1);
+    });
+    document.querySelectorAll('.quantity-button.minus').forEach(b=>{
+      b.onclick=()=>changeQty(+b.dataset.item,-1);
+    });
+  }
+  function changeQty(itemNum,delta){
+    const idx = cart.findIndex(i=>i.itemNum===itemNum);
+    if(idx<0 && delta>0){
+      cart.push({itemNum,price:0,img:'',qty:1});
+    } else if(idx>=0){
+      cart[idx].qty += delta;
+      if(cart[idx].qty<1) cart.splice(idx,1);
     }
+    saveCart(); renderCart();
+  }
+  function updateBadges(){
+    const c = cart.reduce((s,i)=>s+i.qty,0);
+    const cb=document.getElementById('cart-badge');
+    if(c>0){ cb.textContent=c; cb.style.display='block'; }
+    else cb.style.display='none';
+  }
+
+  // toggle popover
+  const cartIcon    = document.getElementById('bottom-cart');
+  const cartPopover = document.getElementById('cart-popover');
+  cartIcon.addEventListener('click',e=>{
+    e.stopPropagation(); cartPopover.style.display = cartPopover.style.display==='block'?'none':'block';
+  });
+  cartPopover.addEventListener('click',e=>e.stopPropagation());
+  document.addEventListener('click',()=>{ cartPopover.style.display='none'; });
+
+  document.getElementById('checkout-btn').onclick = ()=>{
+    if(!cart.length) return alert('Cart is empty!');
+    // your checkout logic here
+    console.log('Checkout:',cart);
+  };
+
+  window.addEventListener('storage',loadCart);
+  document.addEventListener('DOMContentLoaded',loadCart);
+
+  // ——— Live Chat Badge ———
+  const fbConfig = {
+    apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+    authDomain: "beaverbuiltchat.firebaseapp.com",
+    databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+    projectId: "beaverbuiltchat",
+    storageBucket: "beaverbuiltchat.appspot.com",
+    messagingSenderId: "785578451247",
+    appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+    measurementId: "G-XT02YCCFYM"
+  };
+  firebase.initializeApp(fbConfig);
+  const chatBadge = document.getElementById('chat-badge');
+  const uid       = localStorage.getItem('visitorUid');
+  const name      = localStorage.getItem('visitorName');
+  if(uid && name){
+    const ref = firebase.database().ref('threads/'+uid);
+    let init=true;
+    ref.once('value',()=>init=false);
+    ref.on('child_added',snap=>{
+      const m=snap.val();
+      if(init||m.system||m.sender===name) return;
+      const n = +chatBadge.textContent||0;
+      chatBadge.textContent = n+1;
+      chatBadge.style.display='block';
+    });
+  }
   </script>
 </body>
 </html>
