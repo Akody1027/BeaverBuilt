@@ -1,1 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visitor Chat – BeaverBuilt</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/beaverlogo.ico" />
 
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h2 { margin-top: 20px; }
+
+    /* Messages pane */
+    #messages {
+      width: 90%; max-width: 480px;
+      flex: 1;
+      margin-top: 20px;
+      margin-bottom: 80px;    /* leave room for input */
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+
+      display: flex;
+      flex-direction: column;
+
+      /* ensure final message scrolls above input */
+      padding-bottom: 100px;
+
+      /* hide scrollbar */
+      scrollbar-width: none;    /* Firefox */
+      -ms-overflow-style: none; /* IE 10+ */
+    }
+    /* hide WebKit scrollbar */
+    #messages::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    /* Fixed input row */
+    #input-container {
+      position: fixed;
+      bottom: 60px;     /* above nav */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%; max-width: 480px;
+      display: flex;
+      background: #121212;
+      padding: 8px 0;
+    }
+    #message-input {
+      flex: 1;
+      padding: 12px;
+      background: #242424;
+      color: #eee;
+      border: 1px solid #333;
+      border-radius: 8px 0 0 8px;
+      font-size: 1rem;
+    }
+    #send-button {
+      padding: 12px 20px;
+      font-size: 1rem;
+      background: #333;
+      color: #eee;
+      border: 1px solid #333;
+      border-left: none;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+    }
+
+    /* Username prompt */
+    #username-prompt {
+      margin-top: 40px;
+      text-align: center;
+    }
+    #username-input {
+      padding: 10px;
+      background: #242424;
+      color: #eee;
+      border: 1px solid #555;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    #start-chat {
+      padding: 10px 16px;
+      margin-left: 8px;
+      background: #3a3a3a;
+      color: #eee;
+      border: 1px solid #555;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Bottom Navigation */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      height: 60px;
+      background: rgba(17,17,17,0.9);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+    }
+    #bottom-nav a {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #fff;
+      font-size: 0.75rem;
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+    }
+    #bottom-nav a.active {
+      background: rgba(255,255,255,0.1);
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px; margin-bottom: 2px; color: #fff;
+    }
+    #bottom-cart img {
+      width: 24px; height: 24px; margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Visitor Chat</h2>
+
+  <div id="username-prompt">
+    <input id="username-input" type="text" placeholder="Enter your name…" />
+    <button id="start-chat">Start Chat</button>
+  </div>
+
+  <div id="messages" style="display:none;"></div>
+
+  <div id="input-container" style="display:none;">
+    <input id="message-input" type="text" placeholder="Type your message…" autocomplete="off" />
+    <button id="send-button">Send</button>
+  </div>
+
+
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Chat UI Logic
+    const messagesDiv    = document.getElementById("messages");
+    const inputContainer = document.getElementById("input-container");
+    const inputBox       = document.getElementById("message-input");
+    const sendBtn        = document.getElementById("send-button");
+    const usernamePrompt = document.getElementById("username-prompt");
+    const usernameInput  = document.getElementById("username-input");
+    const startBtn       = document.getElementById("start-chat");
+    let threadRef, visitorUid, visitorName;
+
+    function initChat(uid, name) {
+      visitorUid  = uid;
+      visitorName = name;
+      usernamePrompt.style.display    = "none";
+      messagesDiv.style.display       = "flex";
+      inputContainer.style.display    = "flex";
+
+      threadRef = db.ref("threads/" + uid);
+      threadRef.on("child_added", snap => {
+        const m = snap.val();
+        if (m.system) return;
+        const p = document.createElement("div");
+        p.textContent = `${m.sender}: ${m.text}`;
+        p.style.cssText = `
+          padding:8px 12px; margin:6px 0; border-radius:12px;
+          max-width:80%; white-space:pre-wrap;
+          align-self:${m.sender===name?'flex-end':'flex-start'};
+          background:${m.sender===name?"#444":"#555"}; color:#eee;
+        `;
+        messagesDiv.appendChild(p);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+
+      sendBtn.onclick = () => {
+        const txt = inputBox.value.trim();
+        if (!txt) return;
+        threadRef.push({ sender: name, text: txt, ts: Date.now() });
+        inputBox.value = "";
+      };
+      inputBox.addEventListener("keypress", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+    }
+
+    startBtn.onclick = () => {
+      const name = usernameInput.value.trim();
+      if (!name) return alert("Please enter your name.");
+      localStorage.setItem("visitorName", name);
+      const newRef = db.ref("threads").push();
+      localStorage.setItem("visitorUid", newRef.key);
+      newRef.push({
+        system: true,
+        sender: name,
+        text: `${name} joined the chat`,
+        ts: Date.now()
+      });
+      initChat(newRef.key, name);
+    };
+
+    // Resume if exists
+    visitorUid  = localStorage.getItem("visitorUid");
+    visitorName = localStorage.getItem("visitorName");
+    if (visitorUid && visitorName) {
+      initChat(visitorUid, visitorName);
+    }
+  </script>
+</body>
+</html>
