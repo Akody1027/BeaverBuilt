@@ -25,15 +25,8 @@
     html, body { height: 100%; overflow-x: hidden; font-family: 'Montserrat', sans-serif; }
     body {
       padding-top: 80px;
-      padding-bottom: 60px;
       background: url('background.jpg') center/cover scroll;
       position: relative;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background: rgba(255,255,255,0.85);
-      pointer-events: none; z-index: -1;
     }
     a { color: inherit; text-decoration: none; }
     button { cursor: pointer; font: inherit; background: none; border: none; }
@@ -217,32 +210,6 @@
     }
     #checkout-btn:hover { background:#374151; }
 
-    /* Bottom Navigation */
-    #bottom-nav {
-      position:fixed; bottom:0; left:0; right:0; height:60px;
-      background:rgba(17,17,17,0.9); display:flex;
-      justify-content:space-around; align-items:center; z-index:900;
-    }
-    #bottom-nav a {
-      position:relative; display:flex; flex-direction:column; align-items:center;
-      color:#fff; font-size:0.75rem; text-decoration:none;
-      padding:6px 8px; border-radius:6px;
-    }
-    #bottom-nav a.active { background:rgba(255,255,255,0.1); }
-    #bottom-nav .material-icons {
-      font-size:24px; margin-bottom:2px; color:#fff;
-    }
-    #bottom-nav #bottom-cart img,
-    #bottom-nav #bottom-chat .material-icons {
-      width:24px; height:24px; margin-bottom:2px;
-    }
-    #cart-badge, #chat-badge {
-      position:absolute; top:2px; right:10px;
-      background:#ff3b30; color:#fff; font-size:0.65rem;
-      font-weight:bold; border-radius:50%; padding:2px 5px;
-      display:none;
-    }
-
     /* Footer */
     footer {
       background:rgba(17,17,17,0.9); color:#eee; text-align:center;
@@ -308,17 +275,39 @@
       <h2 class="section-title">Gallery</h2>
       <div class="masonry">
         <div class="gallery-item-masonry"><img src="ecomassets/mis2.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture1.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis3.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture2.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis4.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture3.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis5.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture4.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis6.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture5.jpg" alt=""></div>
         <div class="gallery-item-masonry"><img src="ecomassets/mis7.jpg" alt=""></div>
-        <div class="gallery-item-masonry"><img src="ecomassets/furniture6.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis8.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis9.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis10.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis11.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis13.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis14.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis15.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis16.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis17.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis18.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis19.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis20.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis21.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis22.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis23.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis24.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis25.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis26.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis27.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis28.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis29.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis30.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis31.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis32.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis33.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis34.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis35.jpg" alt=""></div>
+        <div class="gallery-item-masonry"><img src="ecomassets/mis36.jpg" alt=""></div>
       </div>
     </div>
   </section>
@@ -338,7 +327,7 @@
     </div>
   </section>
 
-  <!-- Contact -->
+  <!-- Contact -->  
   <section id="contact" class="fade-in">
     <div class="container">
       <h2 class="section-title">Get in Touch</h2>
@@ -361,25 +350,6 @@
     <p><strong>Total: $<span id="cart-total">0</span></strong></p>
     <button id="checkout-btn">Checkout</button>
   </div>
-
-  <!-- Bottom Navigation -->
-  <nav id="bottom-nav">
-    <a href="home.html" class="active">
-      <span class="material-icons">home</span><span>Home</span>
-    </a>
-    <a href="furniture.html">
-      <span class="material-icons">chair</span><span>Furniture</span>
-    </a>
-    <a href="decor.html">
-      <span class="material-icons">wallpaper</span><span>Decor</span>
-    </a>
-    <a href="chat.html" id="bottom-chat">
-      <span class="material-icons">chat</span><span>Chat</span><span id="chat-badge"></span>
-    </a>
-    <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart" /><span>Cart</span><span id="cart-badge"></span>
-    </a>
-  </nav>
 
   <!-- Footer -->
   <footer class="fade-in">
@@ -405,67 +375,94 @@
       if (saved) {
         try { cart = JSON.parse(saved); } catch { cart = []; }
       }
-      updateCart(); updateBadge();
+      updateCart();
+      updateBadge();
     }
-    function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
+    function saveCart() {
+      localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    }
     function updateBadge() {
-      const badge = document.getElementById('cart-badge'),
-            total = cart.reduce((s,i)=>s+i.qty,0);
-      if (total>0) { badge.textContent = total; badge.style.display = 'block'; }
-      else badge.style.display = 'none';
+      const badge = document.getElementById('cart-badge');
+      const total = cart.reduce((s,i) => s + i.qty, 0);
+      if (badge) {
+        if (total > 0) {
+          badge.textContent = total;
+          badge.style.display = 'block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
     }
     function updateCart() {
-      const div = document.getElementById('cart-items');
-      div.innerHTML = '';
+      const itemsDiv = document.getElementById('cart-items');
       let total = 0;
-      cart.forEach(i => {
-        total += i.price * i.qty;
-        div.innerHTML += `
+      itemsDiv.innerHTML = '';
+      cart.forEach(item => {
+        total += item.price * item.qty;
+        itemsDiv.innerHTML += `
           <div class="cart-item">
-            <img src="${i.img}" alt="">
-            <div class="cart-item-name">Item #: ${i.itemNum}</div>
+            <img src="${item.img}" alt="">
+            <div class="cart-item-name">Item #: ${item.itemNum}</div>
             <div class="quantity-controls">
-              <button class="quantity-button minus-button" data-item="${i.itemNum}">−</button>
-              <div class="quantity-display">${i.qty}</div>
-              <button class="quantity-button plus-button" data-item="${i.itemNum}">+</button>
+              <button class="quantity-button minus-button" data-item="${item.itemNum}">−</button>
+              <div class="quantity-display">${item.qty}</div>
+              <button class="quantity-button plus-button" data-item="${item.itemNum}">+</button>
             </div>
-            <div class="cart-item-price">$${(i.price*i.qty).toFixed(2)}</div>
-          </div>`;
+            <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
+          </div>
+        `;
       });
       document.getElementById('cart-total').innerText = total.toFixed(2);
-      document.querySelectorAll('.plus-button').forEach(b => {
-        b.onclick = () => { const n=+b.dataset.item, it=cart.find(x=>x.itemNum===n); addToCart(n,it.price,it.img); };
+
+      document.querySelectorAll('.plus-button').forEach(btn => {
+        btn.onclick = () => {
+          const num = +btn.dataset.item;
+          const it = cart.find(x => x.itemNum === num);
+          addToCart(num, it.price, it.img);
+        };
       });
-      document.querySelectorAll('.minus-button').forEach(b => {
-        b.onclick = () => removeFromCart(+b.dataset.item);
+      document.querySelectorAll('.minus-button').forEach(btn => {
+        btn.onclick = () => removeFromCart(+btn.dataset.item);
       });
     }
     function addToCart(itemNum, price, img) {
-      const ex = cart.find(x=>x.itemNum===itemNum);
-      if (ex) ex.qty++; else cart.push({itemNum,price,img,qty:1});
-      saveCart(); updateCart(); updateBadge();
+      const ex = cart.find(x => x.itemNum === itemNum);
+      if (ex) ex.qty++;
+      else cart.push({ itemNum, price, img, qty: 1 });
+      saveCart();
+      updateCart();
+      updateBadge();
     }
-    function removeFromCart(itemNum){
-      const idx = cart.findIndex(x=>x.itemNum===itemNum);
-      if (idx>-1) { cart[idx].qty--; if(cart[idx].qty<1) cart.splice(idx,1); saveCart(); updateCart(); updateBadge(); }
+    function removeFromCart(itemNum) {
+      const idx = cart.findIndex(x => x.itemNum === itemNum);
+      if (idx !== -1) {
+        cart[idx].qty--;
+        if (cart[idx].qty < 1) cart.splice(idx,1);
+        saveCart();
+        updateCart();
+        updateBadge();
+      }
     }
     document.addEventListener('DOMContentLoaded', loadCart);
 
     // Cart popover toggle
-    const cartIcon = document.getElementById('bottom-cart'),
-          cartPop  = document.getElementById('cart-popover');
-    cartIcon.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      cartPop.style.display = cartPop.style.display==='block'?'none':'block';
-    });
-    cartPop.addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('click', e => {
-      if (cartPop.style.display==='block' && !cartPop.contains(e.target) && e.target!==cartIcon) {
-        cartPop.style.display='none';
-      }
-    });
+    const cartIcon = document.getElementById('bottom-cart');
+    const cartPop = document.getElementById('cart-popover');
+    if (cartIcon && cartPop) {
+      cartIcon.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        cartPop.style.display = cartPop.style.display==='block'?'none':'block';
+      });
+      cartPop.addEventListener('click', e => e.stopPropagation());
+      document.addEventListener('click', e => {
+        if (cartPop.style.display==='block' && !cartPop.contains(e.target) && e.target !== cartIcon) {
+          cartPop.style.display = 'none';
+        }
+      });
+    }
 
-    // Initialize Firebase
+    // Firebase init (chat badge now in index.html)
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -478,31 +475,7 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // Live Chat Badge
-    (function() {
-      const badge       = document.getElementById('chat-badge');
-      const visitorUid  = localStorage.getItem('visitorUid');
-      const visitorName = localStorage.getItem('visitorName');
-      if (!visitorUid || !visitorName) return;
-
-      const threadRef = firebase.database().ref('threads/' + visitorUid);
-      let initialLoad = true;
-
-      threadRef.once('value', () => { initialLoad = false; });
-
-      threadRef.on('child_added', snap => {
-        const m = snap.val();
-        if (initialLoad || m.system || m.sender === visitorName) return;
-        const current = parseInt(badge.textContent || '0', 10) + 1;
-        badge.textContent = current;
-        badge.style.display = 'block';
-      });
-
-      document.getElementById('bottom-chat').addEventListener('click', () => {
-        badge.style.display = 'none';
-        badge.textContent = '';
-      });
-    })();
+    // Chat badge handling moved to index.html
   </script>
 </body>
 </html>
