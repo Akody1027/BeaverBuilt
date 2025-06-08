@@ -15,356 +15,152 @@
 
   <!-- Stripe.js -->
   <script src="https://js.stripe.com/v3"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
     /* Reset & Base */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, sans-serif;
       background-color: #f0f0f0;
       color: #1f2937;
       line-height: 1.5;
-      padding-top: 80px;    /* space for fixed header */
-      padding-bottom: 60px; /* space for fixed bottom nav */
+      padding-top: 80px; /* space for fixed header */
     }
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-    button {
-      cursor: pointer;
-      font: inherit;
-      background: none;
-      border: none;
-    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font: inherit; background: none; border: none; }
 
     /* Preloader */
     #preloader {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background-color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 1s ease-out;
-      z-index: 10000;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 1s ease-out; z-index: 10000;
     }
-    #preloader.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
+    #preloader.fade-out { opacity: 0; pointer-events: none; }
     #preloader .spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid rgba(0, 0, 0, 0.1);
+      width: 50px; height: 50px;
+      border: 5px solid rgba(0,0,0,0.1);
       border-top-color: #111;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Header */
     header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 80px;
-      background: rgba(17, 17, 17, 0.9);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      z-index: 900;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
+      position: fixed; top: 0; left: 0; right: 0; height: 80px;
+      background: rgba(17,17,17,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 900;
+      display: flex; align-items: center; padding: 0 20px;
     }
-    header .logo {
-      height: 50px;
-      margin-right: 15px;
-    }
+    header .logo { height: 50px; margin-right: 15px; }
     header .page-title {
       font-family: 'Lily Script One', cursive;
-      font-size: 2rem;
-      color: #ffffff;
+      font-size: 2rem; color: #ffffff;
     }
 
     /* Carousel */
     .carousel-viewport {
-      width: 95%;
-      max-width: 1200px;
-      height: 60vh;
-      margin: 30px auto 40px;
-      overflow: hidden;
-      border-radius: 5px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 95%; max-width: 1200px; height: 60vh;
+      margin: 30px auto 40px; overflow: hidden;
+      border-radius: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      background: #ffffff; display: flex; align-items: center; justify-content: center;
     }
     .carousel-viewport img {
-      max-height: 100%;
-      width: auto;
-      object-fit: cover;
+      max-height: 100%; width: auto; object-fit: cover;
       transition: opacity 0.3s ease-in-out;
     }
 
     /* Gallery */
     .gallery {
-      column-count: 4;
-      column-gap: 15px;
-      max-width: 1200px;
-      margin: 0 auto 60px;
-      padding: 0 20px;
+      column-count: 4; column-gap: 15px;
+      max-width: 1200px; margin: 0 auto 60px; padding: 0 20px;
     }
     .gallery-item {
-      position: relative;
-      margin-bottom: 15px;
-      display: inline-block;
-      width: 100%;
-      cursor: pointer; /* entire item clickable */
+      position: relative; margin-bottom: 15px;
+      display: inline-block; width: 100%; cursor: pointer;
     }
     .gallery-item img {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease;
-      display: block;
+      width: 100%; height: auto; border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease; display: block;
     }
-    .gallery-item img:hover {
-      transform: scale(1.05);
-    }
+    .gallery-item img:hover { transform: scale(1.05); }
     .view-button {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(128, 128, 128, 0.6);
-      color: #ffffff;
-      text-align: center;
-      padding: 8px 0;
-      font-weight: bold;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
-      user-select: none;
-      pointer-events: none; /* allow clicks through */
+      position: absolute; bottom: 0; left: 0; width: 100%;
+      background: rgba(128,128,128,0.6); color: #fff;
+      text-align: center; padding: 8px 0; font-weight: bold;
+      border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+      user-select: none; pointer-events: none;
     }
-    @media (max-width: 1000px) {
-      .gallery { column-count: 3; }
-    }
-    @media (max-width: 600px) {
-      .gallery { column-count: 2; }
-    }
-    @media (max-width: 400px) {
-      .gallery { column-count: 1; }
-    }
+    @media (max-width:1000px) { .gallery { column-count:3; } }
+    @media (max-width:600px)  { .gallery { column-count:2; } }
+    @media (max-width:400px)  { .gallery { column-count:1; } }
 
     /* Modal */
     #detail-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 920;
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.6); display:none;
+      align-items:center; justify-content:center; z-index:920;
     }
     #modal-content {
-      background: #ffffff;
-      width: 90%;
-      max-width: 450px;
-      height: 90vh;
-      margin: 5vh auto;
-      border-radius: 8px;
-      padding: 20px;
-      overflow-y: auto;
-      position: relative;
+      background: #fff; width:90%; max-width:450px;
+      height:90vh; margin:5vh auto; border-radius:8px;
+      padding:20px; overflow-y:auto; position:relative;
     }
     #modal-close {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #555555;
+      position:absolute; top:10px; right:10px;
+      background:none; border:none; font-size:24px; color:#555;
     }
-    #modal-image {
-      width: 100%;
-      height: auto;
-      border-radius: 4px;
-      margin-bottom: 15px;
-    }
-    #modal-description {
-      font-size: 0.95rem;
-      margin-bottom: 0.5rem;
-    }
-    #modal-itemnum {
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      color: #555555;
-    }
-    #modal-price {
-      font-weight: bold;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
+    #modal-image { width:100%; border-radius:4px; margin-bottom:15px; }
+    #modal-description { font-size:0.95rem; margin-bottom:0.5rem; }
+    #modal-itemnum { font-size:0.9rem; margin-bottom:0.5rem; color:#555; }
+    #modal-price { font-weight:bold; font-size:1rem; margin-bottom:1rem; }
     #modal-add-btn {
-      background: #1f2937;
-      color: #ffffff;
-      padding: 10px 16px;
-      border-radius: 6px;
-      width: 100%;
+      background:#1f2937; color:#fff; padding:10px 16px;
+      width:100%; border-radius:6px;
     }
-    #modal-add-btn:hover {
-      background: #374151;
-    }
+    #modal-add-btn:hover { background:#374151; }
 
     /* Cart Popover */
     #cart-popover {
-      position: fixed;
-      bottom: 70px;           /* above bottom nav (60px high + 10px margin) */
-      right: 15px;
-      background: #ffffff;
-      border: 1px solid #cccccc;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 15px;
-      width: 60%;             /* wider */
-      max-width: 600px;
-      max-height: 70vh;       /* taller */
-      overflow-y: auto;
-      display: none;
-      z-index: 905;
+      position: fixed; bottom:70px; right:15px;
+      background:#fff; border:1px solid #ccc; border-radius:8px;
+      padding:15px; width:60%; max-width:600px; max-height:70vh;
+      overflow-y:auto; display:none; z-index:905;
     }
     #cart-popover h3 {
-      margin-bottom: 10px;
-      font-size: 1.1rem;
-      border-bottom: 1px solid #eeeeee;
-      padding-bottom: 5px;
+      margin-bottom:10px; font-size:1.1rem;
+      border-bottom:1px solid #eee; padding-bottom:5px;
     }
-    .cart-item {
-      display: flex;
-      align-items: center;
-      margin: 8px 0;
-    }
+    .cart-item { display:flex; align-items:center; margin:8px 0; }
     .cart-item img {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 4px;
-      margin-right: 10px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      width:40px; height:40px; object-fit:cover; border-radius:4px;
+      margin-right:10px; box-shadow:0 1px 4px rgba(0,0,0,0.1);
     }
-    .cart-item-name {
-      flex: 1;
-      font-size: 0.95rem;
-    }
-    .cart-item-price {
-      font-weight: bold;
-      font-size: 0.95rem;
-      margin-left: 8px;
-    }
-    .quantity-controls {
-      display: flex;
-      align-items: center;
-      margin-left: 10px;
-    }
+    .cart-item-name { flex:1; font-size:0.95rem; }
+    .cart-item-price { font-weight:bold; font-size:0.95rem; margin-left:8px; }
+    .quantity-controls { display:flex; align-items:center; margin-left:10px; }
     .quantity-button {
-      background: #e5e7eb;
-      border: none;
-      border-radius: 4px;
-      width: 20px;
-      height: 20px;
-      text-align: center;
-      line-height: 18px;
-      margin: 0 4px;
-      font-weight: bold;
-      color: #374151;
+      background:#e5e7eb; border:none; border-radius:4px;
+      width:20px; height:20px; text-align:center; line-height:18px;
+      margin:0 4px; font-weight:bold; color:#374151;
     }
-    .quantity-button:hover {
-      background: #d1d5db;
-    }
-    .quantity-display {
-      min-width: 20px;
-      text-align: center;
-      font-size: 0.9rem;
-    }
+    .quantity-button:hover { background:#d1d5db; }
+    .quantity-display { min-width:20px; text-align:center; font-size:0.9rem; }
     #checkout-btn {
-      background: #1f2937;
-      color: #ffffff;
-      padding: 10px;
-      width: 100%;
-      border-radius: 6px;
-      margin-top: 10px;
+      background:#1f2937; color:#fff; padding:10px; width:100%;
+      border-radius:6px; margin-top:10px;
     }
-    #checkout-btn:hover {
-      background: #374151;
-    }
-
-    /* Bottom Navigation (Etsy-style) */
-    #bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: rgba(17, 17, 17, 0.9);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 900;
-    }
-    #bottom-nav a {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #ffffff;
-      font-size: 0.75rem;
-      text-decoration: none;
-    }
-    #bottom-nav .material-icons {
-      font-size: 24px;
-      margin-bottom: 2px;
-      color: #ffffff;
-    }
-    /* Cart Icon & Badge inside bottom nav */
-    #bottom-nav #bottom-cart img {
-      width: 24px;
-      height: 24px;
-      margin-bottom: 2px;
-    }
-    #cart-badge {
-      position: absolute;
-      top: 2px;
-      right: 10px;
-      background: #ff3b30;
-      color: #ffffff;
-      font-size: 0.65rem;
-      font-weight: bold;
-      border-radius: 50%;
-      padding: 2px 5px;
-      display: none;
-    }
+    #checkout-btn:hover { background:#374151; }
 
     /* Footer */
     footer {
-      background: #ffffff;
-      border-top: 1px solid #e5e7eb;
-      padding: 20px 0;
-      text-align: center;
-      color: #6b7280;
-      font-size: 0.9rem;
+      background:#ffffff; border-top:1px solid #e5e7eb;
+      padding:20px 0; text-align:center; color:#6b7280; font-size:0.9rem;
     }
   </style>
 </head>
@@ -390,187 +186,258 @@
 
   <!-- Image Gallery -->
   <div class="gallery">
+    <!-- 1 -->
     <div class="gallery-item" data-img="ecomassets/furniture1.jpg" data-price="125.00" data-title="Furniture 1" data-description="Handcrafted wooden bench featuring a thick top and sturdy A-frame legs, with a built-in lower shelf for storage.">
       <img src="ecomassets/furniture1.jpg" alt="Furniture 1" />
       <div class="view-button">View</div>
     </div>
+    <!-- 2 -->
     <div class="gallery-item" data-img="ecomassets/furniture2.jpg" data-price="225.00" data-title="Furniture 2" data-description="Handcrafted console table featuring a thick rectangular top supported by a sculptural, stacked-block wooden base.">
       <img src="ecomassets/furniture2.jpg" alt="Furniture 2" />
       <div class="view-button">View</div>
     </div>
+    <!-- 3 -->
     <div class="gallery-item" data-img="ecomassets/furniture3.jpg" data-price="425.00" data-title="Furniture 3" data-description="Handcrafted outdoor corner bench featuring a sturdy painted frame supporting wooden slats that form both the seat and backrest in an L-shaped design.">
       <img src="ecomassets/furniture3.jpg" alt="Furniture 3" />
       <div class="view-button">View</div>
     </div>
+    <!-- 4 -->
     <div class="gallery-item" data-img="ecomassets/furniture4.jpg" data-price="225.00" data-title="Furniture 4" data-description="Handcrafted XL outdoor chair featuring a sturdy frame supporting wooden slats that form the seat and backrest, with wide square arms and a simple block-style base.">
       <img src="ecomassets/furniture4.jpg" alt="Furniture 4" />
       <div class="view-button">View</div>
     </div>
+    <!-- 5 -->
     <div class="gallery-item" data-img="ecomassets/furniture5.jpg" data-price="225.00" data-title="Furniture 5" data-description="Handcrafted XL outdoor chair featuring a sturdy frame supporting wooden slats that form the seat and backrest, with wide square arms and a simple block-style base.">
       <img src="ecomassets/furniture5.jpg" alt="Furniture 5" />
       <div class="view-button">View</div>
     </div>
+    <!-- 6 -->
     <div class="gallery-item" data-img="ecomassets/furniture6.jpg" data-price="225.00 ea." data-title="Furniture 6" data-description="Handcrafted Adirondack-style chair with a slatted back, contoured seat, and wide armrests on a sturdy, slightly angled frame.">
       <img src="ecomassets/furniture6.jpg" alt="Furniture 6" />
       <div class="view-button">View</div>
     </div>
+    <!-- 7 -->
     <div class="gallery-item" data-img="ecomassets/furniture7.jpg" data-price="125.00" data-title="Furniture 7" data-description="Handcrafted wooden toy chest with a hinged top.">
       <img src="ecomassets/furniture7.jpg" alt="Furniture 7" />
       <div class="view-button">View</div>
     </div>
+    <!-- 8 -->
     <div class="gallery-item" data-img="ecomassets/furniture8.jpg" data-price="95.00" data-title="Furniture 8" data-description="Handcrafted wooden side table featuring three open shelves stacked between four sturdy legs">
       <img src="ecomassets/furniture8.jpg" alt="Furniture 8" />
       <div class="view-button">View</div>
     </div>
+    <!-- 9 -->
+    <div class="gallery-item" data-img="ecomassets/furniture9.jpg" data-price="125.00" data-title="Furniture 9" data-description="Handwoven seat lounge chair with oak legs.">
+      <img src="ecomassets/furniture9.jpg" alt="Furniture 9" />
+      <div class="view-button">View</div>
+    </div>
+    <!-- 10 -->
     <div class="gallery-item" data-img="ecomassets/furniture10.jpg" data-price="125.00" data-title="Furniture 10" data-description="Handcrafted slatted bench with a rectangular frame and solid block legs, featuring evenly spaced wooden planks across the top.">
       <img src="ecomassets/furniture10.jpg" alt="Furniture 10" />
       <div class="view-button">View</div>
     </div>
+    <!-- 11 -->
     <div class="gallery-item" data-img="ecomassets/furniture11.jpg" data-price="125.00" data-title="Furniture 11" data-description="Handcrafted shark-shaped shelving unit with four open compartments forming the “mouth,” complete with cutout fins and tooth-like edges.">
       <img src="ecomassets/furniture11.jpg" alt="Furniture 11" />
       <div class="view-button">View</div>
     </div>
+    <!-- 12 -->
+    <div class="gallery-item" data-img="ecomassets/furniture12.jpg" data-price="225.00" data-title="Furniture 12" data-description="Minimalist coffee table with metal frame and wooden top.">
+      <img src="ecomassets/furniture12.jpg" alt="Furniture 12" />
+      <div class="view-button">View</div>
+    </div>
+    <!-- 13 -->
     <div class="gallery-item" data-img="ecomassets/furniture13.jpg" data-price="225.00" data-title="Furniture 13" data-description="Handcrafted robot shaped bookshelf.">
       <img src="ecomassets/furniture13.jpg" alt="Furniture 13" />
       <div class="view-button">View</div>
     </div>
+    <!-- 14 -->
     <div class="gallery-item" data-img="ecomassets/furniture14.jpg" data-price="225.00" data-title="Furniture 14" data-description="Handmade dinosaur-shaped bookshelf.">
       <img src="ecomassets/furniture14.jpg" alt="Furniture 14" />
       <div class="view-button">View</div>
     </div>
+    <!-- 15 -->
     <div class="gallery-item" data-img="ecomassets/furniture15.jpg" data-price="225.00" data-title="Furniture 15" data-description="Handmade elephant-shaped bookshelf">
       <img src="ecomassets/furniture15.jpg" alt="Furniture 15" />
       <div class="view-button">View</div>
     </div>
+    <!-- 16 -->
     <div class="gallery-item" data-img="ecomassets/furniture16.jpg" data-price="225.00" data-title="Furniture 16" data-description="Handmade Cookie monster-shaped bookshelf">
       <img src="ecomassets/furniture16.jpg" alt="Furniture 16" />
       <div class="view-button">View</div>
     </div>
+    <!-- 17 -->
     <div class="gallery-item" data-img="ecomassets/furniture17.jpg" data-price="225.00" data-title="Furniture 17" data-description="Handmade dinosaur-shaped bookshelf">
       <img src="ecomassets/furniture17.jpg" alt="Furniture 17" />
       <div class="view-button">View</div>
     </div>
+    <!-- 18 -->
     <div class="gallery-item" data-img="ecomassets/furniture18.jpg" data-price="225.00" data-title="Furniture 18" data-description="Handmade dinosaur-shaped bookshelf.">
       <img src="ecomassets/furniture18.jpg" alt="Furniture 18" />
       <div class="view-button">View</div>
     </div>
+    <!-- 19 -->
     <div class="gallery-item" data-img="ecomassets/furniture19.jpg" data-price="225.00" data-title="Furniture 19" data-description="Handmade tractor-shaped bookshelf.">
       <img src="ecomassets/furniture19.jpg" alt="Furniture 19" />
       <div class="view-button">View</div>
     </div>
+    <!-- 20 -->
     <div class="gallery-item" data-img="ecomassets/furniture20.jpg" data-price="225.00" data-title="Furniture 20" data-description="Handmade low-profile Adirondack-style chair.">
       <img src="ecomassets/furniture20.jpg" alt="Furniture 20" />
       <div class="view-button">View</div>
     </div>
+    <!-- 21 -->
     <div class="gallery-item" data-img="ecomassets/furniture21.jpg" data-price="225.00" data-title="Furniture 21" data-description="Handmade double-seater bench with slatted wood seats and armrests, featuring an integrated center table.">
       <img src="ecomassets/furniture21.jpg" alt="Furniture 21" />
       <div class="view-button">View</div>
     </div>
+    <!-- 22 -->
     <div class="gallery-item" data-img="ecomassets/furniture22.jpg" data-price="425.00" data-title="Furniture 22" data-description="King-size bed frame with headboard.">
       <img src="ecomassets/furniture22.jpg" alt="Furniture 22" />
       <div class="view-button">View</div>
     </div>
+    <!-- 23 -->
     <div class="gallery-item" data-img="ecomassets/furniture23.jpg" data-price="225.00" data-title="Furniture 23" data-description="Handmade kitchen table with a mixed-wood top and sturdy black base.">
       <img src="ecomassets/furniture23.jpg" alt="Furniture 23" />
       <div class="view-button">View</div>
     </div>
+    <!-- 24 -->
     <div class="gallery-item" data-img="ecomassets/furniture24.jpg" data-price="225.00" data-title="Furniture 24" data-description="Handmade double-seater bench with slatted wood seats and armrests, featuring an integrated center table and rustic natural finish.">
       <img src="ecomassets/furniture24.jpg" alt="Furniture 24" />
       <div class="view-button">View</div>
     </div>
+    <!-- 25 -->
+    <div class="gallery-item" data-img="ecomassets/furniture25.jpg" data-price="325.00" data-title="Furniture 25" data-description="Handmade picnic-style table and bench set with stained wood tops and light blue painted legs.">
+      <img src="ecomassets/furniture25.jpg" alt="Furniture 25" />
+      <div class="view-button">View</div>
+    </div>
+    <!-- 26 -->
     <div class="gallery-item" data-img="ecomassets/furniture26.jpg" data-price="325.00" data-title="Furniture 26" data-description="Handmade picnic-style table and bench set with stained wood tops and light blue painted legs.">
       <img src="ecomassets/furniture26.jpg" alt="Furniture 26" />
       <div class="view-button">View</div>
     </div>
+    <!-- 27 -->
     <div class="gallery-item" data-img="ecomassets/furniture27.jpg" data-price="225.00" data-title="Furniture 27" data-description="Handmade chairs joined by a triangular center table, featuring white-painted frames and stained wood slats.">
       <img src="ecomassets/furniture27.jpg" alt="Furniture 27" />
       <div class="view-button">View</div>
     </div>
+    <!-- 28 -->
     <div class="gallery-item" data-img="ecomassets/furniture28.jpg" data-price="125.00 ea." data-title="Furniture 28" data-description="Handmade bench with wood top and bold black rectangular legs.">
       <img src="ecomassets/furniture28.jpg" alt="Furniture 28" />
       <div class="view-button">View</div>
     </div>
+    <!-- 29 -->
     <div class="gallery-item" data-img="ecomassets/furniture29.jpg" data-price="225.00" data-title="Furniture 29" data-description="Handmade chairs with white-painted frames and stained wood slats.">
       <img src="ecomassets/furniture29.jpg" alt="Furniture 29" />
       <div class="view-button">View</div>
     </div>
+    <!-- 30 -->
     <div class="gallery-item" data-img="ecomassets/furniture30.jpg" data-price="425.00" data-title="Furniture 30" data-description="Handmade lounge set with black frames and natural wood slats, featuring two chairs, and a matching center side table.">
       <img src="ecomassets/furniture30.jpg" alt="Furniture 30" />
       <div class="view-button">View</div>
     </div>
+    <!-- 31 -->
     <div class="gallery-item" data-img="ecomassets/furniture31.jpg" data-price="225.00" data-title="Furniture 31" data-description="Handmade offset-bench picnic table with natural wood slats and dark angled supports.">
       <img src="ecomassets/furniture31.jpg" alt="Furniture 31" />
       <div class="view-button">View</div>
     </div>
+    <!-- 32 -->
     <div class="gallery-item" data-img="ecomassets/furniture32.jpg" data-price="225.00 ea." data-title="Furniture 32" data-description="Handmade slatted lounge chairs with gray-painted frames and natural wood seats and backs.">
       <img src="ecomassets/furniture32.jpg" alt="Furniture 32" />
       <div class="view-button">View</div>
     </div>
+    <!-- 33 -->
     <div class="gallery-item" data-img="ecomassets/furniture33.jpg" data-price="125.00" data-title="Furniture 33" data-description="Handmade bench with a stained wood top and black cross-accented legs.">
       <img src="ecomassets/furniture33.jpg" alt="Furniture 33" />
       <div class="view-button">View</div>
     </div>
+    <!-- 34 -->
     <div class="gallery-item" data-img="ecomassets/furniture34.jpg" data-price="225.00" data-title="Furniture 34" data-description="Handmade square coffee table with a white-painted frame and stained wood slat top.">
       <img src="ecomassets/furniture34.jpg" alt="Furniture 34" />
       <div class="view-button">View</div>
     </div>
+    <!-- 35 -->
     <div class="gallery-item" data-img="ecomassets/furniture35.jpg" data-price="125.00" data-title="Furniture 35" data-description="Handmade rectangular planter box with natural wood paneling and bold black frame legs.">
       <img src="ecomassets/furniture35.jpg" alt="Furniture 35" />
       <div class="view-button">View</div>
     </div>
+    <!-- 36 -->
     <div class="gallery-item" data-img="ecomassets/furniture36.jpg" data-price="225.00" data-title="Furniture 36" data-description="Handmade slatted wood lounge bench with a bold black frame and angled seat and back.">
       <img src="ecomassets/furniture36.jpg" alt="Furniture 36" />
       <div class="view-button">View</div>
     </div>
+    <!-- 37 -->
     <div class="gallery-item" data-img="ecomassets/furniture37.jpg" data-price="95.00" data-title="Furniture 37" data-description="Handmade modern dog crate with a white-painted house-shaped frame and natural wood slat gate.">
       <img src="ecomassets/furniture37.jpg" alt="Furniture 37" />
       <div class="view-button">View</div>
     </div>
+    <!-- 38 -->
+    <div class="gallery-item" data-img="ecomassets/furniture38.jpg" data-price="145.00" data-title="Furniture 38" data-description="Handcrafted magazine rack with walnut finish.">
+      <img src="ecomassets/furniture38.jpg" alt="Furniture 38" />
+      <div class="view-button">View</div>
+    </div>
+    <!-- 39 -->
     <div class="gallery-item" data-img="ecomassets/furniture39.jpg" data-price="125.00" data-title="Furniture 39" data-description="Handmade slatted bench with a black-painted frame and rich stained wood top.">
       <img src="ecomassets/furniture39.jpg" alt="Furniture 39" />
       <div class="view-button">View</div>
     </div>
+    <!-- 40 -->
+    <div class="gallery-item" data-img="ecomassets/furniture40.jpg" data-price="275.00" data-title="Furniture 40" data-description="Handcrafted folding table with teak veneer top.">
+      <img src="ecomassets/furniture40.jpg" alt="Furniture 40" />
+      <div class="view-button">View</div>
+    </div>
+    <!-- 41 -->
     <div class="gallery-item" data-img="ecomassets/furniture41.jpg" data-price="225.00" data-title="Furniture 41" data-description="Handmade double bench with white-painted frame and charcoal-stained slats, featuring a built-in center table.">
       <img src="ecomassets/furniture41.jpg" alt="Furniture 41" />
       <div class="view-button">View</div>
     </div>
+    <!-- 42 -->
     <div class="gallery-item" data-img="ecomassets/furniture42.jpg" data-price="225.00" data-title="Furniture 42" data-description="Handmade slatted bench featuring natural pine frames and contrasting black-painted seat slats.">
       <img src="ecomassets/furniture42.jpg" alt="Furniture 42" />
       <div class="view-button">View</div>
     </div>
+    <!-- 43 -->
     <div class="gallery-item" data-img="ecomassets/furniture43.jpg" data-price="225.00" data-title="Furniture 43" data-description="Handmade double bench in raw pine with an integrated center table.">
       <img src="ecomassets/furniture43.jpg" alt="Furniture 43" />
       <div class="view-button">View</div>
     </div>
+    <!-- 44 -->
     <div class="gallery-item" data-img="ecomassets/furniture44.jpg" data-price="225.00" data-title="Furniture 44" data-description="Handmade double bench in natural stained wood with a darker stained frame and built-in center table.">
       <img src="ecomassets/furniture44.jpg" alt="Furniture 44" />
       <div class="view-button">View</div>
     </div>
-    <div class="gallery-item" data-img="ecomassets/furniture45.jpg" data-price="225.00 ea." data-title="Furniture 45" data-description="Handmade timber-frame lounge chairs with thick wood beams.. cushion not included ">
+    <!-- 45 -->
+    <div class="gallery-item" data-img="ecomassets/furniture45.jpg" data-price="225.00 ea." data-title="Furniture 45" data-description="Handmade timber-frame lounge chairs with thick wood beams. Cushion not included.">
       <img src="ecomassets/furniture45.jpg" alt="Furniture 45" />
       <div class="view-button">View</div>
     </div>
+    <!-- 46 -->
     <div class="gallery-item" data-img="ecomassets/furniture46.jpg" data-price="325.00" data-title="Furniture 46" data-description="Handmade wooden sandbox styled like a boat.">
       <img src="ecomassets/furniture46.jpg" alt="Furniture 46" />
       <div class="view-button">View</div>
     </div>
+    <!-- 47 -->
     <div class="gallery-item" data-img="ecomassets/furniture47.jpg" data-price="225.00" data-title="Furniture 47" data-description="Handmade double bench with a white-painted frame and bold red slats, featuring a built-in center table.">
       <img src="ecomassets/furniture47.jpg" alt="Furniture 47" />
       <div class="view-button">View</div>
     </div>
+    <!-- 48 -->
     <div class="gallery-item" data-img="ecomassets/furniture48.jpg" data-price="225.00" data-title="Furniture 48" data-description="Handmade double bench with raw pine slats and a black-painted frame, complete with a built-in center table.">
       <img src="ecomassets/furniture48.jpg" alt="Furniture 48" />
       <div class="view-button">View</div>
     </div>
+    <!-- 49 -->
     <div class="gallery-item" data-img="ecomassets/furniture49.jpg" data-price="125.00" data-title="Furniture 49" data-description="Handmade children’s table and chairs set with white frames and rainbow-striped slat tops in green, yellow, blue, and red.">
       <img src="ecomassets/furniture49.jpg" alt="Furniture 49" />
       <div class="view-button">View</div>
     </div>
+    <!-- 50 -->
     <div class="gallery-item" data-img="ecomassets/furniture50.jpg" data-price="225.00" data-title="Furniture 50" data-description="Handmade double bench with a crisp white frame, stained wood slats, and a built-in center table.">
       <img src="ecomassets/furniture50.jpg" alt="Furniture 50" />
       <div class="view-button">View</div>
     </div>
   </div>
+  <!-- end .gallery -->
 
   <!-- Detail Modal -->
   <div id="detail-modal">
@@ -592,253 +459,134 @@
     <button id="checkout-btn">Checkout</button>
   </div>
 
-  <!-- Bottom Navigation -->
-  <nav id="bottom-nav">
-    <a href="home.html">
-      <span class="material-icons">home</span>
-      <span>Home</span>
-    </a>
-    <a href="furniture.html">
-      <span class="material-icons">chair</span>
-      <span>Furniture</span>
-    </a>
-    <a href="decor.html">
-      <span class="material-icons">wallpaper</span>
-      <span>Decor</span>
-    </a>
-    <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart" />
-      <span>Cart</span>
-      <span id="cart-badge"></span>
-    </a>
-  </nav>
-
   <!-- Footer -->
   <footer>
     © 2025 Beaver Built Furniture. All rights reserved.
   </footer>
 
   <script>
+    // Stripe initialization
+    const stripe = Stripe('pk_live_…');
 
-    const stripe = Stripe('pk_live_51RVvRt02cjd265jFZ8yqTJnTji5GU43pXxs4RuXmevLng2dxNQUO7fHQJCQ1D1qYe31I2mlnlP3TdzAIMOwVCLXj00CVdG7QBV');
     // 1) Preloader fade-out
-    window.addEventListener('load', function() {
+    window.addEventListener('load', () => {
       const pre = document.getElementById('preloader');
       setTimeout(() => {
         pre.classList.add('fade-out');
-        setTimeout(() => {
-          pre.style.display = 'none';
-        }, 1000);
+        setTimeout(() => pre.style.display = 'none', 1000);
       }, 1000);
     });
 
-    // 2) Persist cart in localStorage
+    // 2) Cart persistence & update
     let cart = [];
     function loadCart() {
       const saved = localStorage.getItem('bbf_cart');
       if (saved) {
-        try {
-          cart = JSON.parse(saved);
-        } catch {
-          cart = [];
-        }
+        try { cart = JSON.parse(saved); } catch { cart = []; }
       }
       updateCart();
-      updateBadge();
     }
-    function saveCart() {
-      localStorage.setItem('bbf_cart', JSON.stringify(cart));
-    }
+    function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
 
-    // 3) Update badge visibility & count
-    function updateBadge() {
-      const badge = document.getElementById('cart-badge');
-      const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-      if (totalQty > 0) {
-        badge.textContent = totalQty;
-        badge.style.display = 'block';
-      } else {
-        badge.style.display = 'none';
-      }
+    function addToCart(itemNum, price, img) {
+      const ex = cart.find(x=>x.itemNum===itemNum);
+      if (ex) ex.qty++; else cart.push({itemNum,price,img,qty:1});
+      saveCart(); updateCart();
     }
-
-    // 4) Add/remove items
-    function addToCart(itemNum, price, imgSrc) {
-      const existing = cart.find(i => i.itemNum === itemNum);
-      if (existing) {
-        existing.qty++;
-      } else {
-        cart.push({ itemNum, price, img: imgSrc, qty: 1 });
-      }
-      saveCart();
-      updateCart();
-      updateBadge();
-    }
-
     function removeFromCart(itemNum) {
-      const idx = cart.findIndex(i => i.itemNum === itemNum);
-      if (idx !== -1) {
+      const idx = cart.findIndex(x=>x.itemNum===itemNum);
+      if (idx>-1) {
         cart[idx].qty--;
-        if (cart[idx].qty <= 0) {
-          cart.splice(idx, 1);
-        }
-        saveCart();
-        updateCart();
-        updateBadge();
+        if (cart[idx].qty<1) cart.splice(idx,1);
+        saveCart(); updateCart();
       }
     }
-
     function updateCart() {
       const itemsDiv = document.getElementById('cart-items');
       itemsDiv.innerHTML = '';
       let total = 0;
-
-      cart.forEach(item => {
-        total += item.price * item.qty;
+      cart.forEach(i => {
+        total += i.price * i.qty;
         itemsDiv.innerHTML += `
           <div class="cart-item">
-            <img src="${item.img}" alt="Item ${item.itemNum}">
-            <div class="cart-item-name">Item #: ${item.itemNum}</div>
+            <img src="${i.img}" alt="">
+            <div class="cart-item-name">Item #: ${i.itemNum}</div>
             <div class="quantity-controls">
-              <button class="quantity-button minus-button" data-item="${item.itemNum}">−</button>
-              <div class="quantity-display">${item.qty}</div>
-              <button class="quantity-button plus-button" data-item="${item.itemNum}">+</button>
+              <button class="quantity-button minus-button" data-item="${i.itemNum}">−</button>
+              <div class="quantity-display">${i.qty}</div>
+              <button class="quantity-button plus-button" data-item="${i.itemNum}">+</button>
             </div>
-            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
-          </div>
-        `;
+            <div class="cart-item-price">$${(i.price*i.qty).toFixed(2)}</div>
+          </div>`;
       });
-
       document.getElementById('cart-total').innerText = total.toFixed(2);
-
-      document.querySelectorAll('.plus-button').forEach(btn => {
-        btn.onclick = () => {
-          const num = parseInt(btn.getAttribute('data-item'));
-          const itm = cart.find(i => i.itemNum === num);
-          addToCart(num, itm.price, itm.img);
+      document.querySelectorAll('.plus-button').forEach(b => {
+        b.onclick = () => {
+          const n=+b.dataset.item, it=cart.find(x=>x.itemNum===n);
+          addToCart(n,it.price,it.img);
         };
       });
-      document.querySelectorAll('.minus-button').forEach(btn => {
-        btn.onclick = () => {
-          const num = parseInt(btn.getAttribute('data-item'));
-          removeFromCart(num);
-        };
+      document.querySelectorAll('.minus-button').forEach(b => {
+        b.onclick = () => removeFromCart(+b.dataset.item);
       });
     }
 
-    // 5) Cart icon toggle from bottom nav
-    const cartIcon = document.getElementById('bottom-cart');
-    const cartPopover = document.getElementById('cart-popover');
-    cartIcon.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      cartPopover.style.display = cartPopover.style.display === 'block' ? 'none' : 'block';
-    });
-    cartPopover.addEventListener('click', e => e.stopPropagation());
-    document.addEventListener('click', e => {
-      if (cartPopover.style.display === 'block' && !cartPopover.contains(e.target) && e.target !== cartIcon) {
-        cartPopover.style.display = 'none';
-      }
-    });
-
-    // 6) Checkout button
-    document.getElementById('checkout-btn').addEventListener('click', async () => {
-      if (cart.length === 0) {
-        alert('Your cart is empty!');
-        return;
-      }
-      const lineItems = cart.map(i => ({
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Item #: ' + i.itemNum },
-          unit_amount: i.price * 100
-        },
-        quantity: i.qty
+    // 3) Checkout
+    document.getElementById('checkout-btn').addEventListener('click', async() => {
+      if (!cart.length) return alert('Your cart is empty!');
+      const lineItems = cart.map(i=>({
+        price_data:{currency:'usd',product_data:{name:'Item #'+i.itemNum},unit_amount:i.price*100},
+        quantity:i.qty
       }));
       try {
-        const response = await fetch(
-          'https://www.beaverbuiltfurniture.com/create-checkout-session',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: lineItems })
-          }
-        );
-           // Server returns { url: '<stripe-checkout-url>' }
-          const session = await response.json();
-          // Redirect browser directly to that URL:
-          window.location = session.url;
-        
-        
+        const res = await fetch('https://www.beaverbuiltfurniture.com/create-checkout-session', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ items: lineItems })
+        });
+        const { url } = await res.json();
+        window.location = url;
       } catch {
         alert('Checkout failed. Please try again.');
       }
     });
 
-    // 7) Modal, gallery & carousel setup
+    // 4) Modal, gallery & carousel
     document.addEventListener('DOMContentLoaded', () => {
       loadCart();
+      const modal = document.getElementById('detail-modal'),
+            imgEl = document.getElementById('modal-image'),
+            descEl = document.getElementById('modal-description'),
+            numEl = document.getElementById('modal-itemnum'),
+            priceEl = document.getElementById('modal-price'),
+            addBtn = document.getElementById('modal-add-btn'),
+            closeBtn = document.getElementById('modal-close'),
+            gallery = document.querySelectorAll('.gallery-item');
 
-      const modal = document.getElementById('detail-modal');
-      const imgEl = document.getElementById('modal-image');
-      const descEl = document.getElementById('modal-description');
-      const itemNumEl = document.getElementById('modal-itemnum');
-      const priceEl = document.getElementById('modal-price');
-      const addBtn = document.getElementById('modal-add-btn');
-      const closeBtn = document.getElementById('modal-close');
+      gallery.forEach(item => item.addEventListener('click', () => {
+        const img = item.dataset.img,
+              match = img.match(/furniture(\d+)\.jpg/),
+              num = match?+match[1]:null,
+              price = parseFloat(item.dataset.price)||0;
+        imgEl.src = img;
+        descEl.textContent = item.dataset.description;
+        numEl.textContent = 'Item #: '+num;
+        priceEl.textContent = 'Price: $'+price.toFixed(2);
+        modal.style.display = 'flex';
+        addBtn.onclick = () => { addToCart(num,price,img); modal.style.display='none'; };
+      }));
+      closeBtn.onclick = () => modal.style.display = 'none';
+      modal.addEventListener('click', e=>{ if(e.target===modal) modal.style.display='none'; });
 
-      const galleryItems = document.querySelectorAll('.gallery-item');
-      galleryItems.forEach(item => {
-        item.addEventListener('click', e => {
-          // If cart popover is open, close it and do not open modal
-          if (cartPopover.style.display === 'block') {
-            cartPopover.style.display = 'none';
-            return;
-          }
-
-          const imgPath = item.getAttribute('data-img');
-          const match = imgPath.match(/furniture(\d+)\.jpg/);
-          const itemNum = match ? parseInt(match[1]) : null;
-          imgEl.src = imgPath;
-          descEl.textContent = item.getAttribute('data-description');
-          itemNumEl.textContent = 'Item #: ' + itemNum;
-          const price = parseFloat(item.getAttribute('data-price')) || 0;
-          priceEl.textContent = 'Price: $' + price.toFixed(2);
-
-          modal.style.display = 'flex';
-          addBtn.onclick = () => {
-            addToCart(itemNum, price, imgPath);
-            modal.style.display = 'none';
-          };
-        });
-      });
-
-      closeBtn.addEventListener('click', () => {
-        modal.style.display = 'none';
-      });
-      modal.addEventListener('click', e => {
-        if (e.target === modal) {
-          modal.style.display = 'none';
-        }
-      });
-
-      const galleryImgs = Array.from(document.querySelectorAll('.gallery-item img')).map(i => i.src);
-      if (galleryImgs.length) {
-        const carousel = document.getElementById('random-carousel');
-        let idx = Math.floor(Math.random() * galleryImgs.length);
-        carousel.src = galleryImgs[idx];
-        setInterval(() => {
-          let newIdx;
-          do {
-            newIdx = Math.floor(Math.random() * galleryImgs.length);
-          } while (newIdx === idx);
-          idx = newIdx;
-          carousel.style.opacity = 0;
-          setTimeout(() => {
-            carousel.src = galleryImgs[idx];
-            carousel.style.opacity = 1;
-          }, 300);
-        }, 4000);
+      const imgs = Array.from(gallery).map(i=>i.querySelector('img').src),
+            carousel = document.getElementById('random-carousel');
+      if(imgs.length){
+        let idx = Math.floor(Math.random()*imgs.length);
+        carousel.src = imgs[idx];
+        setInterval(()=>{
+          let n; do{ n=Math.floor(Math.random()*imgs.length);}while(n===idx);
+          idx=n; carousel.style.opacity=0;
+          setTimeout(()=>{ carousel.src=imgs[idx]; carousel.style.opacity=1; },300);
+        },4000);
       }
     });
   </script>
