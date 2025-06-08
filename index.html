@@ -20,53 +20,43 @@
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <style>
-    /* Layout & Reset */
-    html, body { margin:0; padding:0; height:100%; display:flex; flex-direction:column; font-family:Arial,sans-serif; }
-    #viewport { flex:1; }
-    #viewport iframe { width:100%; height:100%; border:none; }
-
-    /* Cart Popover */
-    #cart-popover {
-      position: fixed; bottom: 70px; right: 15px;
-      background: #fff; border: 1px solid #ccc; border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 15px;
-      width: 60%; max-width: 400px; max-height: 60vh; overflow-y: auto;
-      display: none; z-index: 1001;
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; overflow: hidden;
+      display: flex; flex-direction: column;
+      font-family: Arial, sans-serif;
     }
-    #cart-popover h3 { margin:0 0 10px; font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:5px; }
-    .cart-item { display:flex; align-items:center; margin:8px 0; }
-    .cart-item img { width:40px; height:40px; object-fit:cover; border-radius:4px; margin-right:10px; }
-    .cart-item-name { flex:1; font-size:.95rem; }
-    .quantity-controls { display:flex; align-items:center; margin:0 10px; }
-    .quantity-button { background:#e5e7eb; border:none; border-radius:4px; width:20px; height:20px; line-height:18px; text-align:center; margin:0 4px; font-weight:bold; }
-    .quantity-button:hover { background:#d1d5db; }
-    .quantity-display { min-width:20px; text-align:center; }
-    .cart-item-price { font-weight:bold; }
-    #checkout-btn { width:100%; padding:10px; background:#1f2937; color:#fff; border:none; border-radius:6px; margin-top:10px; }
-    #checkout-btn:hover { background:#374151; }
-
-    /* Bottom Navigation */
+    /* iframe viewport takes all but nav height */
+    #viewport {
+      flex: 1;
+    }
+    #viewport iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    /* Bottom Navigation (pre-popover styling) */
     #bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 60px; background: rgba(17,17,17,0.9);
-      display: flex; z-index: 1000;
+      height: 60px;
+      background: rgba(17,17,17,0.9);
+      display: flex; justify-content: space-around; align-items: center;
     }
     #bottom-nav a {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 6px 0;
-      color: #fff; font-size: .75rem; text-decoration: none;
-      transition: background .2s;
-      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      color: #fff; font-size: 0.75rem; text-decoration: none;
+      padding: 6px 8px; flex: 1;
     }
-    #bottom-nav a.active { background: rgba(255,255,255,0.1); }
-    #bottom-nav .material-icons,
-    #bottom-nav img { width:24px; height:24px; margin-bottom:2px; }
-    #bottom-cart img { object-fit:contain; }
+    #bottom-nav a.active {
+      background: rgba(255,255,255,0.1);
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px; margin-bottom: 2px;
+    }
+    /* Badges */
     .badge {
-      position:absolute; top:4px; right:16px;
-      background:#ff3b30; color:#fff; font-size:.65rem; font-weight:bold;
-      border-radius:50%; padding:2px 5px; display:none;
+      position: absolute; top: 4px; right: 16px;
+      background: #ff3b30; color: #fff;
+      font-size: 0.65rem; font-weight: bold;
+      border-radius: 50%; padding: 2px 5px;
+      display: none;
     }
   </style>
 </head>
@@ -76,107 +66,76 @@
     <iframe id="view-frame" src="home.html"></iframe>
   </div>
 
-  <!-- Cart Popover -->
-  <div id="cart-popover">
-    <h3>Your Cart</h3>
-    <div id="cart-items"></div>
-    <p><strong>Total: $<span id="cart-total">0.00</span></strong></p>
-    <button id="checkout-btn">Checkout</button>
-  </div>
-
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
     <a href="#" data-src="home.html" class="nav-btn active">
-      <span class="material-icons">home</span><span>Home</span>
+      <span class="material-icons">home</span>
+      <span>Home</span>
     </a>
     <a href="#" data-src="furniture.html" class="nav-btn">
-      <span class="material-icons">chair</span><span>Furniture</span>
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
     </a>
     <a href="#" data-src="decor.html" class="nav-btn">
-      <span class="material-icons">wallpaper</span><span>Decor</span>
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
     </a>
-    <a href="#" data-src="chat.html" id="bottom-chat" class="nav-btn">
-      <span class="material-icons">chat</span><span>Chat</span>
+    <a href="#" data-src="chat.html" class="nav-btn">
+      <span class="material-icons">chat</span>
+      <span>Chat</span>
       <span id="chat-badge" class="badge"></span>
     </a>
-    <a href="#" id="bottom-cart">
-      <img src="ecomassets/Cart.png" alt="Cart"/><span>Cart</span>
+    <a href="#" data-src="e-commerce.html" class="nav-btn">
+      <img src="ecomassets/Cart.png" alt="Cart" style="width:24px;height:24px;margin-bottom:2px;">
+      <span>Cart</span>
       <span id="cart-badge" class="badge"></span>
     </a>
   </nav>
 
+  <!-- Service Worker registration -->
   <script>
-    // --- Section Switching ---
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const iframe     = document.getElementById('view-frame');
-    navButtons.forEach(btn => btn.addEventListener('click', e => {
-      e.preventDefault();
-      navButtons.forEach(x=>x.classList.remove('active'));
-      btn.classList.add('active');
-      iframe.src = btn.dataset.src;
-      if (btn.dataset.src==='chat.html') {
-        document.getElementById('chat-badge').style.display='none';
-        document.getElementById('chat-badge').textContent='';
-      }
-    }));
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
 
-    // --- Cart Logic ---
-    let cart = [];
-    function loadCart(){
-      cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-      updateCartBadge(); renderCart();
-    }
-    function saveCart(){
-      localStorage.setItem('bbf_cart', JSON.stringify(cart));
-      updateCartBadge();
-    }
-    function updateCartBadge(){
-      const total = cart.reduce((s,i)=>s+i.qty,0),
-            cb    = document.getElementById('cart-badge');
-      if(total>0){ cb.textContent=total; cb.style.display='block'; }
-      else cb.style.display='none';
-    }
-    function renderCart(){
-      const container = document.getElementById('cart-items');
-      let sum=0; container.innerHTML='';
-      cart.forEach(item=>{
-        sum+=item.price*item.qty;
-        container.innerHTML+=`
-          <div class="cart-item">
-            <img src="${item.img}"/>
-            <div class="cart-item-name">#${item.itemNum}</div>
-            <div class="quantity-controls">
-              <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
-              <div class="quantity-display">${item.qty}</div>
-              <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
-            </div>
-            <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
-          </div>`;
+  <script>
+    // ------- Section Switching & Badge Clearing -------
+    const navBtns  = document.querySelectorAll('.nav-btn');
+    const iframe   = document.getElementById('view-frame');
+    const chatBadge = document.getElementById('chat-badge');
+
+    navBtns.forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        navBtns.forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        iframe.src = btn.dataset.src;
+
+        // Clear chat badge when Chat opens
+        if (btn.dataset.src === 'chat.html') {
+          chatBadge.style.display = 'none';
+          chatBadge.textContent = '';
+        }
       });
-      document.getElementById('cart-total').textContent = sum.toFixed(2);
-      document.querySelectorAll('.quantity-button.plus').forEach(b=>
-        b.onclick=()=>{ let it=cart.find(x=>x.itemNum==b.dataset.id); it.qty++; saveCart(); renderCart(); });
-      document.querySelectorAll('.quantity-button.minus').forEach(b=>
-        b.onclick=()=>{ let idx=cart.findIndex(x=>x.itemNum==b.dataset.id);
-                       if(idx>-1){ cart[idx].qty--; if(cart[idx].qty<1) cart.splice(idx,1);
-                       saveCart(); renderCart(); }});
+    });
+
+    // ------- Cart Badge from localStorage -------
+    function updateCartBadge() {
+      const cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+      const total = cart.reduce((sum,i)=> sum + i.qty, 0);
+      const cb = document.getElementById('cart-badge');
+      if (total > 0) {
+        cb.textContent = total;
+        cb.style.display = 'block';
+      } else {
+        cb.style.display = 'none';
+      }
     }
+    updateCartBadge();
+    window.addEventListener('storage', updateCartBadge);
 
-    document.getElementById('bottom-cart').addEventListener('click',e=>{
-      e.preventDefault(); e.stopPropagation();
-      const pop = document.getElementById('cart-popover');
-      pop.style.display = pop.style.display==='block'?'none':'block';
-    });
-    document.getElementById('cart-popover').addEventListener('click',e=>e.stopPropagation());
-    document.addEventListener('click',()=>{ 
-      const pop = document.getElementById('cart-popover');
-      if(pop.style.display==='block') pop.style.display='none';
-    });
-    document.getElementById('checkout-btn').onclick = ()=> alert('Proceed to checkout');
-    window.addEventListener('storage', loadCart);
-    loadCart();
-
-    // --- Firebase Chat Badge ---
+    // ------- Firebase Chat Badge & Notifications -------
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -189,25 +148,35 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db       = firebase.database(),
-          cbadge   = document.getElementById('chat-badge'),
           vUid     = localStorage.getItem('visitorUid'),
           vName    = localStorage.getItem('visitorName');
 
-    if(vUid && vName){
-      let initial=true;
-      const tref = db.ref('threads/'+vUid);
-      tref.once('value',()=>initial=false);
-      tref.on('child_added',snap=>{
-        const m=snap.val();
-        if(initial||m.system||m.sender===vName) return;
-        const cur = parseInt(cbadge.textContent||'0',10)+1;
-        cbadge.textContent = cur;
-        cbadge.style.display = 'block';
-      });
+    // Request desktop notifications on first load
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
 
-      document.getElementById('bottom-chat').addEventListener('click',()=>{
-        cbadge.style.display='none';
-        cbadge.textContent='';
+    if (vUid && vName) {
+      const threadRef = db.ref('threads/' + vUid);
+      let initialLoad = true;
+
+      threadRef.once('value', () => { initialLoad = false; });
+      threadRef.on('child_added', snap => {
+        const m = snap.val();
+        if (initialLoad || m.system || m.sender === vName) return;
+
+        // Show badge only if not on Chat tab
+        const activeSrc = document.querySelector('.nav-btn.active').dataset.src;
+        if (activeSrc !== 'chat.html') {
+          const current = parseInt(chatBadge.textContent || '0', 10) + 1;
+          chatBadge.textContent = current;
+          chatBadge.style.display = 'block';
+        }
+
+        // Fire native notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(`New message from ${m.sender}`, { body: m.text });
+        }
       });
     }
   </script>
