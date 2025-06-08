@@ -2,41 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <!-- iOS home screen icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" width="80%" href="beaverlogo.png">
-  <link rel="apple-touch-icon" width="80%" href="beaverlogo.png">
-
-  <!-- Android/Chrome home screen icon & favicon fallbacks -->
-  <link rel="icon" type="image/png" width="80%" href="beaverlogo.png">
-  <link rel="icon" type="image/png" width="80%" href="beaverlogo.png">
-
-  <!-- Manifest for Android “Add to Home Screen” -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <link rel="icon" type="image/x-icon" href="/beaverlogo.ico">
   <title>Beaver Built Furniture</title>
-  <!-- theme color for Android status bar -->
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
   <meta name="theme-color" content="black"/>
-  <!-- iOS standalone mode -->
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <!-- link to the manifest -->
-  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="beaverlogo.png">
+  <link rel="icon" href="beaverlogo.ico" type="image/x-icon">
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+
   <style>
-    html, body { margin:0; padding:0; height:100%; overflow:hidden; }
-    iframe { border:none; width:100%; height:100%; }
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; overflow: hidden;
+      display: flex; flex-direction: column;
+      font-family: Arial, sans-serif;
+    }
+    /* iframe viewport takes all but nav height */
+    #viewport {
+      flex: 1;
+    }
+    #viewport iframe {
+      width: 100%; height: 100%; border: none;
+    }
+    /* Bottom Navigation */
+    #bottom-nav {
+      height: 60px;
+      background: rgba(17,17,17,0.9);
+      display: flex; justify-content: space-around; align-items: center;
+    }
+    #bottom-nav a {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      color: #fff; font-size: 0.75rem; text-decoration: none;
+      padding: 6px 8px; flex: 1;
+    }
+    #bottom-nav a.active {
+      background: rgba(255,255,255,0.1);
+    }
+    #bottom-nav .material-icons {
+      font-size: 24px; margin-bottom: 2px;
+    }
+    /* Badges */
+    .badge {
+      position: absolute; top: 4px; right: 16px;
+      background: #ff3b30; color: #fff;
+      font-size: 0.65rem; font-weight: bold;
+      border-radius: 50%; padding: 2px 5px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <!-- ← REPLACE this URL: -->
-  <iframe src="https://www.beaverbuiltfurniture.com/home.html"></iframe>
+  <!-- Viewport -->
+  <div id="viewport">
+    <iframe id="view-frame" src="https://www.beaverbuiltfurniture.com/home.html"></iframe>
+  </div>
 
-  <!-- register the service worker -->
+  <!-- Bottom Navigation -->
+  <nav id="bottom-nav">
+    <a href="#" data-src="home.html" class="nav-btn active">
+      <span class="material-icons">home</span>
+      <span>Home</span>
+    </a>
+    <a href="#" data-src="furniture.html" class="nav-btn">
+      <span class="material-icons">chair</span>
+      <span>Furniture</span>
+    </a>
+    <a href="#" data-src="decor.html" class="nav-btn">
+      <span class="material-icons">wallpaper</span>
+      <span>Decor</span>
+    </a>
+    <a href="#" data-src="chat.html" class="nav-btn">
+      <span class="material-icons">chat</span>
+      <span>Chat</span>
+      <span id="chat-badge" class="badge"></span>
+    </a>
+    <a href="#" data-src="cart.html" class="nav-btn">
+      <img src="ecomassets/Cart.png" alt="Cart" style="width:24px;height:24px;margin-bottom:2px;">
+      <span>Cart</span>
+      <span id="cart-badge" class="badge"></span>
+    </a>
+  </nav>
+
+  <!-- Service Worker registration -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+
+  <script>
+    // ------- Section Switching -------
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const iframe = document.getElementById('view-frame');
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        // deactivate all
+        navButtons.forEach(b => b.classList.remove('active'));
+        // activate clicked
+        btn.classList.add('active');
+        // load iframe
+        iframe.src = 'https://www.beaverbuiltfurniture.com/' + btn.dataset.src;
+        // clear chat badge if chat selected
+        if (btn.dataset.src === 'chat.html') {
+          const cb = document.getElementById('chat-badge');
+          cb.style.display = 'none';
+          cb.textContent = '';
+        }
+      });
+    });
+
+    // ------- Cart Badge (from localStorage) -------
+    function updateCartBadge() {
+      const cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+      const total = cart.reduce((sum, i) => sum + i.qty, 0);
+      const cb = document.getElementById('cart-badge');
+      if (total > 0) {
+        cb.textContent = total;
+        cb.style.display = 'block';
+      } else {
+        cb.style.display = 'none';
+      }
+    }
+    // update initially and whenever cart changes
+    updateCartBadge();
+    window.addEventListener('storage', updateCartBadge);
+
+    // ------- Firebase Chat Badge -------
+    const firebaseConfig = {
+      apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
+      authDomain: "beaverbuiltchat.firebaseapp.com",
+      databaseURL: "https://beaverbuiltchat-default-rtdb.firebaseio.com",
+      projectId: "beaverbuiltchat",
+      storageBucket: "beaverbuiltchat.appspot.com",
+      messagingSenderId: "785578451247",
+      appId: "1:785578451247:web:30d2422f3b318032c9c1da",
+      measurementId: "G-XT02YCCFYM"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const chatBadge = document.getElementById('chat-badge');
+    chatBadge.style.display = 'none';
+    chatBadge.textContent = '';
+
+    const visitorUid  = localStorage.getItem('visitorUid');
+    const visitorName = localStorage.getItem('visitorName');
+    if (visitorUid && visitorName) {
+      const threadRef = db.ref('threads/' + visitorUid);
+      let initial = true;
+      threadRef.once('value', () => { initial = false; });
+      threadRef.on('child_added', snap => {
+        const m = snap.val();
+        if (initial || m.system || m.sender === visitorName) return;
+        const n = parseInt(chatBadge.textContent || '0', 10) + 1;
+        chatBadge.textContent = n;
+        chatBadge.style.display = 'block';
+      });
     }
   </script>
 </body>
