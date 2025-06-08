@@ -1,1 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your Cart | Beaver Built Furniture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3"></script>
+
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #f9fafb;
+      color: #1f2937;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    header {
+      background: #111827; color: #fff;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    header h1 { font-weight: 400; }
+    .container {
+      flex: 1;
+      width: 90%; max-width: 800px;
+      margin: 2rem auto;
+    }
+    .cart-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    @media(min-width:600px){
+      .cart-list { grid-template-columns: 1fr 1fr; }
+    }
+    .cart-item-card {
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .cart-item-card img {
+      width: 100%; object-fit: cover; height: 180px;
+    }
+    .item-info {
+      padding: 1rem;
+      display: flex; flex-direction: column; flex: 1;
+    }
+    .item-info h2 {
+      font-size: 1.1rem; margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    .item-info p { flex: 1; font-size: 0.9rem; color: #4b5563; }
+    .item-footer {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+    .item-footer .price { font-weight: 600; }
+    .item-footer .qty {
+      display: flex; align-items: center;
+    }
+    .item-footer .qty span {
+      margin: 0 0.5rem;
+    }
+    .summary {
+      margin-top: 2rem; text-align: right;
+      font-size: 1.2rem; font-weight: 600;
+    }
+    .checkout-btn {
+      margin-top: 1rem;
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      background: #111827; color: #fff;
+      border: none; padding: 0.75rem;
+      font-size: 1rem; border-radius: 6px;
+      cursor: pointer;
+    }
+    .checkout-btn:hover {
+      background: #374151;
+    }
+    footer {
+      text-align: center; padding: 1rem 0;
+      font-size: 0.85rem; color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Your Shopping Cart</h1>
+  </header>
+
+  <main class="container">
+    <div id="cart-items" class="cart-list">
+      <!-- JS will inject cart item cards here -->
+    </div>
+
+    <div id="cart-summary" class="summary">
+      Total: $<span id="cart-total">0.00</span>
+    </div>
+
+    <button id="checkout-btn" class="checkout-btn">Proceed to Checkout</button>
+  </main>
+
+  <footer>
+    &copy; 2025 Beaver Built Furniture. All rights reserved.
+  </footer>
+
+  <script>
+    // Initialize Stripe (replace with your own publishable key)
+    const stripe = Stripe('pk_live_…YOUR_KEY_HERE…');
+
+    // Load cart from localStorage
+    let cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+
+    // Render cart
+    const itemsContainer = document.getElementById('cart-items');
+    const totalEl        = document.getElementById('cart-total');
+
+    function renderCart() {
+      itemsContainer.innerHTML = '';
+      let total = 0;
+
+      cart.forEach(item => {
+        total += item.price * item.qty;
+        const card = document.createElement('div');
+        card.className = 'cart-item-card';
+        card.innerHTML = `
+          <img src="${item.img}" alt="Item ${item.itemNum}">
+          <div class="item-info">
+            <h2>Item #${item.itemNum}</h2>
+            ${ item.description ? `<p>${item.description}</p>` : '' }
+            <div class="item-footer">
+              <div class="price">$${(item.price * item.qty).toFixed(2)}</div>
+              <div class="qty">
+                Qty: <span>${item.qty}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        itemsContainer.appendChild(card);
+      });
+
+      totalEl.textContent = total.toFixed(2);
+    }
+
+    renderCart();
+
+    // Checkout handler
+    document.getElementById('checkout-btn').addEventListener('click', async () => {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+      // build Stripe line items
+      const lineItems = cart.map(i => ({
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Item #' + i.itemNum },
+          unit_amount: i.price * 100
+        },
+        quantity: i.qty
+      }));
+
+      try {
+        const res = await fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lineItems })
+        });
+        const { url } = await res.json();
+        window.location = url;
+      } catch (err) {
+        alert('Checkout failed. Please try again.');
+        console.error(err);
+      }
+    });
+  </script>
+
+</body>
+</html>
 
