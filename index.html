@@ -23,44 +23,33 @@
     /* Layout & Reset */
     html, body { margin:0; padding:0; height:100%; display:flex; flex-direction:column; font-family:Arial,sans-serif; }
     #viewport { flex:1; }
-    #viewport iframe { width:100%; height:95%; border:none; }
+    #viewport iframe { width:100%; height:100%; border:none; }
 
     /* Cart Popover */
     #cart-popover {
-      position: fixed;
-      bottom: 70px; right: 15px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 15px;
-      width: 60%;
-      max-width: 400px;
-      max-height: 60vh;
-      overflow-y: auto;
-      display: none;
-      z-index: 1001;
+      position: fixed; bottom: 70px; right: 15px;
+      background: #fff; border: 1px solid #ccc; border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 15px;
+      width: 60%; max-width: 400px; max-height: 60vh; overflow-y: auto;
+      display: none; z-index: 1001;
     }
     #cart-popover h3 { margin:0 0 10px; font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:5px; }
     .cart-item { display:flex; align-items:center; margin:8px 0; }
-    .cart-item img { width:40px;height:40px;object-fit:cover;border-radius:4px;margin-right:10px; }
+    .cart-item img { width:40px; height:40px; object-fit:cover; border-radius:4px; margin-right:10px; }
     .cart-item-name { flex:1; font-size:.95rem; }
     .quantity-controls { display:flex; align-items:center; margin:0 10px; }
-    .quantity-button { background:#e5e7eb;border:none;border-radius:4px;width:20px;height:20px;line-height:18px;text-align:center;margin:0 4px;font-weight:bold; }
+    .quantity-button { background:#e5e7eb; border:none; border-radius:4px; width:20px; height:20px; line-height:18px; text-align:center; margin:0 4px; font-weight:bold; }
     .quantity-button:hover { background:#d1d5db; }
     .quantity-display { min-width:20px; text-align:center; }
     .cart-item-price { font-weight:bold; }
     #checkout-btn { width:100%; padding:10px; background:#1f2937; color:#fff; border:none; border-radius:6px; margin-top:10px; }
     #checkout-btn:hover { background:#374151; }
 
-    /* Bottom Navigation (restored) */
+    /* Bottom Navigation */
     #bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0;
-      height: 60px;
-      background: black;
-      display: flex;
-      z-index: 1000;
-      opacity:100%;
+      height: 60px; background: rgba(17,17,17,0.9);
+      display: flex; z-index: 1000;
     }
     #bottom-nav a {
       flex: 1;
@@ -68,6 +57,7 @@
       padding: 6px 0;
       color: #fff; font-size: .75rem; text-decoration: none;
       transition: background .2s;
+      position: relative;
     }
     #bottom-nav a.active { background: rgba(255,255,255,0.1); }
     #bottom-nav .material-icons,
@@ -105,7 +95,7 @@
     <a href="#" data-src="decor.html" class="nav-btn">
       <span class="material-icons">wallpaper</span><span>Decor</span>
     </a>
-    <a href="#" data-src="chat.html" class="nav-btn">
+    <a href="#" data-src="chat.html" id="bottom-chat" class="nav-btn">
       <span class="material-icons">chat</span><span>Chat</span>
       <span id="chat-badge" class="badge"></span>
     </a>
@@ -130,7 +120,7 @@
       }
     }));
 
-    // --- Cart Badge & Popover ---
+    // --- Cart Logic ---
     let cart = [];
     function loadCart(){
       cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
@@ -178,12 +168,11 @@
       pop.style.display = pop.style.display==='block'?'none':'block';
     });
     document.getElementById('cart-popover').addEventListener('click',e=>e.stopPropagation());
-    document.addEventListener('click',()=>{
+    document.addEventListener('click',()=>{ 
       const pop = document.getElementById('cart-popover');
       if(pop.style.display==='block') pop.style.display='none';
     });
-    document.getElementById('checkout-btn').onclick = ()=> alert('Redirect to checkout');
-
+    document.getElementById('checkout-btn').onclick = ()=> alert('Proceed to checkout');
     window.addEventListener('storage', loadCart);
     loadCart();
 
@@ -205,15 +194,20 @@
           vName    = localStorage.getItem('visitorName');
 
     if(vUid && vName){
-      let first=true;
+      let initial=true;
       const tref = db.ref('threads/'+vUid);
-      tref.once('value',()=>first=false);
+      tref.once('value',()=>initial=false);
       tref.on('child_added',snap=>{
         const m=snap.val();
-        if(first||m.system||m.sender===vName) return;
+        if(initial||m.system||m.sender===vName) return;
         const cur = parseInt(cbadge.textContent||'0',10)+1;
         cbadge.textContent = cur;
         cbadge.style.display = 'block';
+      });
+
+      document.getElementById('bottom-chat').addEventListener('click',()=>{
+        cbadge.style.display='none';
+        cbadge.textContent='';
       });
     }
   </script>
