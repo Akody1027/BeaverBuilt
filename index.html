@@ -129,6 +129,19 @@
     <p><strong>Total: $<span id="cart-total">0.00</span></strong></p>
     <button id="checkout-btn">Checkout</button>
   </div>
+<script>
+  // ... your existing popover toggle & cart code ...
+
+  // When user clicks "Checkout" in the popover, go to cart.html
+  document.getElementById('checkout-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    // hide the popover (optional)
+    document.getElementById('cart-popover').style.display = 'none';
+    // navigate to your standalone cart page
+    window.location.href = 'cart.html';
+  });
+</script>
+  
 
   <!-- Bottom Navigation -->
   <nav id="bottom-nav">
