@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Admin Inbox – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -78,14 +79,16 @@
     }
   </style>
 
-  <!-- Notification setup -->
   <script>
-    // Request permission up front
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
+    // 1) Request notification permission up front
+    document.addEventListener('DOMContentLoaded', () => {
+      if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+    });
 
-    function showNotification(title, message) {
+    // 2) Helper to fire an OS notification
+    function showChatNotification(title, message) {
       if (Notification.permission !== "granted") return;
       new Notification(title, {
         body:  message,
@@ -131,28 +134,30 @@
       measurementId: "G-XT02YCCFYM"
     };
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.database();
 
-    const ADMIN_UID  = "LtKEk3kvMQgMpLPfUISsS5067xc2";  // Your admin UID
-    const loginForm  = document.getElementById("login-form");
-    const emailInput = document.getElementById("login-email");
-    const passInput  = document.getElementById("login-password");
-    const loginBtn   = document.getElementById("login-button");
-    const threadList = document.getElementById("thread-list");
-    const messagesDiv= document.getElementById("messages");
-    const replyInput = document.getElementById("reply-input");
-    const replyBtn   = document.getElementById("reply-btn");
+    const auth       = firebase.auth();
+    const db         = firebase.database();
+    const ADMIN_UID  = "LtKEk3kvMQgMpLPfUISsS5067xc2";
+
+    const loginForm   = document.getElementById("login-form");
+    const emailInput  = document.getElementById("login-email");
+    const passInput   = document.getElementById("login-password");
+    const loginBtn    = document.getElementById("login-button");
+    const threadList  = document.getElementById("thread-list");
+    const messagesDiv = document.getElementById("messages");
+    const replyInput  = document.getElementById("reply-input");
+    const replyBtn    = document.getElementById("reply-btn");
 
     let currentThreadUid = null;
-    const visitorNames = {};  // map threadUID → visitorName
+    const visitorNames = {};
 
     // — Auth —
     loginBtn.addEventListener("click", () => {
-      const email = emailInput.value.trim(), pw = passInput.value;
+      const email = emailInput.value.trim(),
+            pw    = passInput.value;
       if (!email || !pw) return alert("Enter email & password");
       auth.signInWithEmailAndPassword(email, pw)
-        .catch(e => alert("Login failed: " + e.message));
+          .catch(e => alert("Login failed: " + e.message));
     });
 
     auth.onAuthStateChanged(user => {
@@ -162,56 +167,55 @@
           auth.signOut();
           return;
         }
-        // show inbox UI
         loginForm.style.display   = "none";
         threadList.style.display  = "block";
         messagesDiv.style.display = "flex";
 
-        // load threads
+        // Listen for new threads
         db.ref("threads").on("child_added", snap => {
           const uid = snap.key;
-          // fetch their chosen name
-          db.ref("threads/" + uid).limitToFirst(1).once("value", firstSnap => {
-            const fm = Object.values(firstSnap.val()||{})[0] || {};
-            const name = fm.sender || uid;
-            visitorNames[uid] = name;
+          db.ref("threads/" + uid).limitToFirst(1)
+            .once("value", firstSnap => {
+              const first = Object.values(firstSnap.val()||{})[0] || {};
+              const name  = first.sender || uid;
+              visitorNames[uid] = name;
 
-            const row = document.createElement("div");
-            row.className = "thread-item";
-            row.style.background = "#333";
+              const row = document.createElement("div");
+              row.className = "thread-item";
+              row.style.background = "#333";
 
-            const label = document.createElement("div");
-            label.textContent = name;
-            label.style.flex = "1";
-            label.style.paddingRight = "8px";
+              const label = document.createElement("div");
+              label.textContent = name;
+              label.style.flex = "1";
+              label.style.paddingRight = "8px";
 
-            const delBtn = document.createElement("button");
-            delBtn.textContent = "➖";
-            delBtn.title = "Delete this thread";
-            delBtn.style.color = "red";
-            delBtn.style.border = "none";  
-            delBtn.style.background = "transparent";
-            delBtn.onclick = e => {
-              e.stopPropagation();
-              if (confirm("Delete this entire thread?")) {
-                db.ref("threads/"+uid).remove();
-                row.remove();
-                if (currentThreadUid === uid) {
-                  messagesDiv.innerHTML = "";
-                  currentThreadUid = null;
+              const delBtn = document.createElement("button");
+              delBtn.textContent = "➖";
+              delBtn.title = "Delete this thread";
+              delBtn.style.color = "red";
+              delBtn.style.border = "none";
+              delBtn.style.background = "transparent";
+              delBtn.onclick = e => {
+                e.stopPropagation();
+                if (confirm("Delete this entire thread?")) {
+                  db.ref("threads/"+uid).remove();
+                  row.remove();
+                  if (currentThreadUid === uid) {
+                    messagesDiv.innerHTML = "";
+                    currentThreadUid = null;
+                  }
                 }
-              }
-            };
+              };
 
-            row.append(label, delBtn);
-            threadList.appendChild(row);
+              row.append(label, delBtn);
+              threadList.appendChild(row);
 
-            label.onclick = () => {
-              // highlight selection
-              document.querySelectorAll(".thread-item").forEach(el=>el.style.background="#333");
-              row.style.background = "#666";
-              openThread(uid);
-            };
+              label.onclick = () => {
+                document.querySelectorAll(".thread-item")
+                        .forEach(el=>el.style.background="#333");
+                row.style.background = "#666";
+                openThread(uid);
+              };
           });
         });
       }
@@ -232,16 +236,15 @@
         const isVisitor = m.sender === visitorName;
         const isAdmin   = m.sender === "admin";
 
+        // Render message bubble
         const p = document.createElement("div");
-        if (isSystem) {
-          p.textContent = `⚙️ ${m.text}`;
-        } else if (isVisitor) {
-          p.textContent = `${visitorName}: ${m.text}`;
-        } else if (isAdmin) {
-          p.textContent = `You: ${m.text}`;
-        } else {
-          p.textContent = `${m.sender}: ${m.text}`;
-        }
+        p.textContent = isSystem
+          ? `⚙️ ${m.text}`
+          : isVisitor
+            ? `${visitorName}: ${m.text}`
+            : isAdmin
+              ? `You: ${m.text}`
+              : `${m.sender}: ${m.text}`;
 
         p.style.padding      = "8px 12px";
         p.style.margin       = "6px 0";
@@ -255,21 +258,22 @@
         messagesDiv.appendChild(p);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
+        // 🚨 Fire native notification for visitor messages
         if (!isSystem && isVisitor) {
-          showNotification(visitorName, m.text);
+          showChatNotification("New Chat Message", `${visitorName}: ${m.text}`);
         }
       });
     }
 
-    // — Reply —
+    // — Reply handler —
     replyBtn.addEventListener("click", () => {
       if (!currentThreadUid) return alert("Select a thread first");
       const txt = replyInput.value.trim();
       if (!txt) return;
       db.ref("threads/" + currentThreadUid).push({
         sender: "admin",
-        text: txt,
-        ts: Date.now()
+        text:   txt,
+        ts:     Date.now()
       });
       replyInput.value = "";
     });
