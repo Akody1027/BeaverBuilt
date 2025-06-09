@@ -77,6 +77,18 @@
       flex-direction: column;
     }
   </style>
+  <script>
+// Make sure you’ve already called Notification.requestPermission()
+// and have permission === "granted"
+
+function showChatNotification(messageText) {
+  new Notification("New Chat Message", {
+    body: messageText,
+    icon:  "/images/notification-icon.png",   // <–– your 72×72 (or 96×96) PNG
+    badge: "/images/notification-badge.png"   // <–– optional, 24×24 monochrome PNG
+  });
+}
+  </script>
 </head>
 <body>
 
