@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Admin Inbox – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -85,7 +84,6 @@
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-messaging-compat.js"></script>
 </head>
-
 <body>
   <div id="login-form">
     <h3>Admin Login</h3>
@@ -105,34 +103,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // — Notification & FCM setup —
-      const messaging = firebase.messaging();
-      // Register SW
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-          .then(reg => messaging.useServiceWorker(reg))
-          .catch(console.error);
-      }
-      // Ask for permission & store token
-      messaging.requestPermission()
-        .then(() => messaging.getToken())
-        .then(token => {
-          console.log('FCM Token:', token);
-          // store under adminTokens for your server to pick up
-          firebase.database().ref('adminTokens').set({ token });
-        })
-        .catch(err => console.warn('FCM error:', err));
-      // Foreground handler
-      messaging.onMessage(payload => {
-        const { title, body } = payload.notification;
-        new Notification(title, {
-          body,
-          icon:  'Beaverlogo.jpg',
-          badge: 'Beaverlogo.jpg'
-        });
-      });
-
-      // — Firebase & Auth —
+      // 1) Initialize Firebase first
       const firebaseConfig = {
         apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
         authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -144,10 +115,41 @@
         measurementId: "G-XT02YCCFYM"
       };
       firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db   = firebase.database();
 
-      // — UI elements —
+      // 2) Set up Auth, Database, Messaging
+      const auth      = firebase.auth();
+      const db        = firebase.database();
+      const messaging = firebase.messaging();
+
+      // 3) Register Service Worker for background pushes
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(reg => messaging.useServiceWorker(reg))
+          .catch(console.error);
+      }
+
+      // 4) Ask permission & grab FCM token
+      messaging.requestPermission()
+        .then(() => messaging.getToken())
+        .then(token => {
+          console.log('FCM Token:', token);
+          db.ref('adminTokens').set({ token });
+        })
+        .catch(err => console.warn('FCM error:', err));
+
+      // 5) Handle foreground messages
+      messaging.onMessage(payload => {
+        const { title, body } = payload.notification || {};
+        if (title && body) {
+          new Notification(title, {
+            body,
+            icon:  'Beaverlogo.jpg',
+            badge: 'Beaverlogo.jpg'
+          });
+        }
+      });
+
+      // 6) Cache UI elements
       const loginForm   = document.getElementById("login-form");
       const emailInput  = document.getElementById("login-email");
       const passInput   = document.getElementById("login-password");
@@ -157,11 +159,8 @@
       const replyInput  = document.getElementById("reply-input");
       const replyBtn    = document.getElementById("reply-btn");
 
+      // 7) Login flow
       const ADMIN_UID = "LtKEk3kvMQgMpLPfUISsS5067xc2";
-      let currentThreadUid = null;
-      const visitorNames = {};
-
-      // — Login handler —
       loginBtn.addEventListener("click", () => {
         const email = emailInput.value.trim();
         const pw    = passInput.value;
@@ -170,7 +169,6 @@
           .catch(e => alert("Login failed: " + e.message));
       });
 
-      // — On auth change —
       auth.onAuthStateChanged(user => {
         if (!user) return;
         if (user.uid !== ADMIN_UID) {
@@ -178,11 +176,18 @@
           auth.signOut();
           return;
         }
+        // Show inbox
         loginForm.style.display   = "none";
         threadList.style.display  = "block";
         messagesDiv.style.display = "flex";
+        attachThreadListeners();
+      });
 
-        // Listen for threads
+      // 8) Thread loading & messaging
+      let currentThreadUid = null;
+      const visitorNames = {};
+
+      function attachThreadListeners() {
         db.ref("threads").on("child_added", snap => {
           const uid = snap.key;
           db.ref("threads/" + uid).limitToFirst(1).once("value", firstSnap => {
@@ -190,7 +195,6 @@
             const name  = first.sender || uid;
             visitorNames[uid] = name;
 
-            // Build thread item
             const row = document.createElement("div");
             row.className = "thread-item";
             row.style.background = "#333";
@@ -222,7 +226,6 @@
             threadList.appendChild(row);
 
             label.onclick = () => {
-              // highlight
               document.querySelectorAll(".thread-item")
                       .forEach(el=>el.style.background="#333");
               row.style.background = "#666";
@@ -230,9 +233,8 @@
             };
           });
         });
-      });
+      }
 
-      // — Open & render thread —
       function openThread(uid) {
         currentThreadUid = uid;
         messagesDiv.innerHTML = "";
@@ -269,7 +271,7 @@
         });
       }
 
-      // — Reply handler —
+      // 9) Reply handler
       replyBtn.addEventListener("click", () => {
         if (!currentThreadUid) return alert("Select a thread first");
         const txt = replyInput.value.trim();
