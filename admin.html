@@ -77,17 +77,22 @@
       flex-direction: column;
     }
   </style>
-  <script>
-// Make sure you’ve already called Notification.requestPermission()
-// and have permission === "granted"
 
-function showChatNotification(messageText) {
-  new Notification("New Chat Message", {
-    body: messageText,
-    icon:  "Beaverlogo.ico",   // <–– your 72×72 (or 96×96) PNG
-    badge: "Beaverlogo.ico"   // <–– optional, 24×24 monochrome PNG
-  });
-}
+  <!-- Notification setup -->
+  <script>
+    // Request permission up front
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    function showNotification(title, message) {
+      if (Notification.permission !== "granted") return;
+      new Notification(title, {
+        body:  message,
+        icon:  "Beaverlogo.jpg",
+        badge: "Beaverlogo.jpg"
+      });
+    }
   </script>
 </head>
 <body>
@@ -114,16 +119,6 @@ function showChatNotification(messageText) {
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
 
   <script>
-    // 🔔 Notifications
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
-    function showNotification(title, message) {
-      if (Notification.permission === "granted") {
-        new Notification(title, { body: message, icon: "https://beaverbuiltfurniture.com/beaverlogo.png" });
-      }
-    }
-
     // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
