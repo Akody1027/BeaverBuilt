@@ -4,125 +4,29 @@
   <meta charset="UTF-8" />
   <title>Admin Inbox – BeaverBuilt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
+    /* (your existing dark‐mode styling) */
     * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background-color: #121212;
-      color: #eee;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-    }
-    #login-form {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 24px;
-      margin: auto;
-      text-align: center;
-      width: 320px;
-    }
-    #login-form input, #reply-input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 4px;
-      background: #242424;
-      color: #eee;
-      border: 1px solid #333;
-    }
-    #login-form button, #reply-btn {
-      padding: 10px 16px;
-      background: #333;
-      color: #eee;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .admin-container { display: flex; height: 100%; width: 100%; }
-    #thread-list {
-      width: 30%;
-      background: #1e1e1e;
-      border-right: 1px solid #333;
-      padding: 16px;
-      overflow-y: auto;
-      display: none;
-    }
-    .thread-item {
-      padding: 10px;
-      margin: 6px 0;
-      background: #333;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-    }
-    .thread-item:hover { background: #444; }
-    .chat-column {
-      width: 70%;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-    }
-    #messages {
-      flex: 1;
-      border: 1px solid #333;
-      background: #1e1e1e;
-      border-radius: 8px;
-      padding: 12px;
-      overflow-y: auto;
-      display: none;
-      flex-direction: column;
-    }
+    html, body { margin:0; padding:0; background:#121212; color:#eee; font-family:Arial,sans-serif; height:100vh; }
+    #login-form { background:#1e1e1e; border:1px solid #333; border-radius:8px; padding:24px; margin:auto; text-align:center; width:320px; }
+    #login-form input, #reply-input { width:100%; padding:10px; margin:8px 0; border-radius:4px; background:#242424; color:#eee; border:1px solid #333; }
+    #login-form button, #reply-btn { padding:10px 16px; background:#333; color:#eee; border:none; border-radius:4px; cursor:pointer; }
+    .admin-container { display:flex; height:100%; width:100%; }
+    #thread-list { width:30%; background:#1e1e1e; border-right:1px solid #333; padding:16px; overflow-y:auto; display:none; }
+    .thread-item { padding:10px; margin:6px 0; background:#333; border-radius:6px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .thread-item:hover { background:#444; }
+    .chat-column { width:70%; padding:16px; display:flex; flex-direction:column; }
+    #messages { flex:1; border:1px solid #333; background:#1e1e1e; border-radius:8px; padding:12px; overflow-y:auto; display:none; flex-direction:column; }
   </style>
-
-  <script>
-    // 1) Request notification permission up front
-    document.addEventListener('DOMContentLoaded', () => {
-      if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-      }
-    });
-
-    // 2) Helper to fire an OS notification
-    function showChatNotification(title, message) {
-      if (Notification.permission !== "granted") return;
-      new Notification(title, {
-        body:  message,
-        icon:  "Beaverlogo.jpg",
-        badge: "Beaverlogo.jpg"
-      });
-    }
-  </script>
-</head>
-<body>
-
-  <div id="login-form">
-    <h3>Admin Login</h3>
-    <input id="login-email"    type="email"    placeholder="Email" />
-    <input id="login-password" type="password" placeholder="Password" />
-    <button id="login-button">Log In</button>
-  </div>
-
-  <div class="admin-container">
-    <div id="thread-list"></div>
-    <div class="chat-column">
-      <div id="messages"></div>
-      <input id="reply-input" type="text" placeholder="Type a reply…" />
-      <button id="reply-btn">Reply</button>
-    </div>
-  </div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.9.0/firebase-messaging-compat.js"></script>
 
   <script>
-    // Firebase config
+    // 1) Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCZ5Kmh9XjZKYGJBbEL6qUR3QsPpXY8K1o",
       authDomain: "beaverbuiltchat.firebaseapp.com",
@@ -134,100 +38,127 @@
       measurementId: "G-XT02YCCFYM"
     };
     firebase.initializeApp(firebaseConfig);
+    const auth      = firebase.auth();
+    const db        = firebase.database();
+    const messaging = firebase.messaging();
 
-    const auth       = firebase.auth();
-    const db         = firebase.database();
+    // 2) Register Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then(reg => messaging.useServiceWorker(reg))
+        .catch(console.error);
+    }
+
+    // 3) Ask permission & get FCM token
+    function initFCM() {
+      messaging.requestPermission()
+        .then(() => messaging.getToken())
+        .then(token => {
+          console.log('FCM Token:', token);
+          // Save your admin token so your server/Cloud Function can read it:
+          db.ref('adminTokens').set({ token });
+        })
+        .catch(err => console.warn('FCM permission/token error:', err));
+    }
+
+    // 4) In-app (foreground) message handler
+    messaging.onMessage(payload => {
+      const { title, body } = payload.notification;
+      new Notification(title, {
+        body,
+        icon:  'Beaverlogo.jpg',
+        badge: 'Beaverlogo.jpg'
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initFCM();
+      // … then your existing auth & chat setup kicks in …
+    });
+
+    // — Your existing chat code below — (unchanged)
     const ADMIN_UID  = "LtKEk3kvMQgMpLPfUISsS5067xc2";
-
-    const loginForm   = document.getElementById("login-form");
-    const emailInput  = document.getElementById("login-email");
-    const passInput   = document.getElementById("login-password");
-    const loginBtn    = document.getElementById("login-button");
-    const threadList  = document.getElementById("thread-list");
-    const messagesDiv = document.getElementById("messages");
-    const replyInput  = document.getElementById("reply-input");
-    const replyBtn    = document.getElementById("reply-btn");
-
+    const loginForm  = document.getElementById("login-form");
+    const emailInput = document.getElementById("login-email");
+    const passInput  = document.getElementById("login-password");
+    const loginBtn   = document.getElementById("login-button");
+    const threadList = document.getElementById("thread-list");
+    const messagesDiv= document.getElementById("messages");
+    const replyInput = document.getElementById("reply-input");
+    const replyBtn   = document.getElementById("reply-btn");
     let currentThreadUid = null;
     const visitorNames = {};
 
-    // — Auth —
     loginBtn.addEventListener("click", () => {
-      const email = emailInput.value.trim(),
-            pw    = passInput.value;
+      const email = emailInput.value.trim(), pw = passInput.value;
       if (!email || !pw) return alert("Enter email & password");
       auth.signInWithEmailAndPassword(email, pw)
           .catch(e => alert("Login failed: " + e.message));
     });
 
     auth.onAuthStateChanged(user => {
-      if (user) {
-        if (user.uid !== ADMIN_UID) {
-          alert("Not authorized.");
-          auth.signOut();
-          return;
-        }
-        loginForm.style.display   = "none";
-        threadList.style.display  = "block";
-        messagesDiv.style.display = "flex";
-
-        // Listen for new threads
-        db.ref("threads").on("child_added", snap => {
-          const uid = snap.key;
-          db.ref("threads/" + uid).limitToFirst(1)
-            .once("value", firstSnap => {
-              const first = Object.values(firstSnap.val()||{})[0] || {};
-              const name  = first.sender || uid;
-              visitorNames[uid] = name;
-
-              const row = document.createElement("div");
-              row.className = "thread-item";
-              row.style.background = "#333";
-
-              const label = document.createElement("div");
-              label.textContent = name;
-              label.style.flex = "1";
-              label.style.paddingRight = "8px";
-
-              const delBtn = document.createElement("button");
-              delBtn.textContent = "➖";
-              delBtn.title = "Delete this thread";
-              delBtn.style.color = "red";
-              delBtn.style.border = "none";
-              delBtn.style.background = "transparent";
-              delBtn.onclick = e => {
-                e.stopPropagation();
-                if (confirm("Delete this entire thread?")) {
-                  db.ref("threads/"+uid).remove();
-                  row.remove();
-                  if (currentThreadUid === uid) {
-                    messagesDiv.innerHTML = "";
-                    currentThreadUid = null;
-                  }
-                }
-              };
-
-              row.append(label, delBtn);
-              threadList.appendChild(row);
-
-              label.onclick = () => {
-                document.querySelectorAll(".thread-item")
-                        .forEach(el=>el.style.background="#333");
-                row.style.background = "#666";
-                openThread(uid);
-              };
-          });
-        });
+      if (!user) return;
+      if (user.uid !== ADMIN_UID) {
+        alert("Not authorized.");
+        auth.signOut();
+        return;
       }
+      loginForm.style.display   = "none";
+      threadList.style.display  = "block";
+      messagesDiv.style.display = "flex";
+
+      db.ref("threads").on("child_added", snap => {
+        const uid = snap.key;
+        db.ref("threads/" + uid).limitToFirst(1).once("value", firstSnap => {
+          const first = Object.values(firstSnap.val()||{})[0] || {};
+          const name  = first.sender || uid;
+          visitorNames[uid] = name;
+
+          const row = document.createElement("div");
+          row.className = "thread-item";
+          row.style.background = "#333";
+
+          const label = document.createElement("div");
+          label.textContent = name;
+          label.style.flex = "1";
+          label.style.paddingRight = "8px";
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "➖";
+          delBtn.title = "Delete this thread";
+          delBtn.style.color = "red";
+          delBtn.style.border = "none";
+          delBtn.style.background = "transparent";
+          delBtn.onclick = e => {
+            e.stopPropagation();
+            if (confirm("Delete this entire thread?")) {
+              db.ref("threads/"+uid).remove();
+              row.remove();
+              if (currentThreadUid === uid) {
+                messagesDiv.innerHTML = "";
+                currentThreadUid = null;
+              }
+            }
+          };
+
+          row.append(label, delBtn);
+          threadList.appendChild(row);
+
+          label.onclick = () => {
+            document.querySelectorAll(".thread-item")
+                    .forEach(el=>el.style.background="#333");
+            row.style.background = "#666";
+            openThread(uid);
+          };
+        });
+      });
     });
 
-    // — Open & render thread —
     function openThread(uid) {
       currentThreadUid = uid;
       messagesDiv.innerHTML = "";
       const threadRef = db.ref("threads/" + uid);
       threadRef.off("child_added");
-
       const visitorName = visitorNames[uid];
 
       threadRef.on("child_added", snap => {
@@ -236,7 +167,6 @@
         const isVisitor = m.sender === visitorName;
         const isAdmin   = m.sender === "admin";
 
-        // Render message bubble
         const p = document.createElement("div");
         p.textContent = isSystem
           ? `⚙️ ${m.text}`
@@ -257,15 +187,9 @@
 
         messagesDiv.appendChild(p);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        // 🚨 Fire native notification for visitor messages
-        if (!isSystem && isVisitor) {
-          showChatNotification("New Chat Message", `${visitorName}: ${m.text}`);
-        }
       });
     }
 
-    // — Reply handler —
     replyBtn.addEventListener("click", () => {
       if (!currentThreadUid) return alert("Select a thread first");
       const txt = replyInput.value.trim();
@@ -281,5 +205,21 @@
       if (e.key === "Enter") { e.preventDefault(); replyBtn.click(); }
     });
   </script>
+</head>
+<body>
+  <div id="login-form">
+    <h3>Admin Login</h3>
+    <input id="login-email" type="email" placeholder="Email" />
+    <input id="login-password" type="password" placeholder="Password" />
+    <button id="login-button">Log In</button>
+  </div>
+  <div class="admin-container">
+    <div id="thread-list"></div>
+    <div class="chat-column">
+      <div id="messages"></div>
+      <input id="reply-input" type="text" placeholder="Type a reply…" />
+      <button id="reply-btn">Reply</button>
+    </div>
+  </div>
 </body>
 </html>
