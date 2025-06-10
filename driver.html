@@ -1,18 +1,86 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Driver Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver Navigation</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    #map { height: 400px; width: 100%; }
-    #status { font-size: 18px; margin: 15px 0; }
-    button { padding: 10px 20px; font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #f4f4f9;
+    }
+    header {
+      background: #fff;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-weight: 500; }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .controls input {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .controls button {
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+    .controls button#toggleButton {
+      background: #28a745;
+    }
+    #map {
+      flex: 1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .info {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
-  <h2>Driver Tracker</h2>
-  <div id="status">Status: <span id="driverStatus">Inactive</span></div>
-  <button id="toggleButton">Go Active</button>
-  <div id="map"></div>
+  <header>
+    <h1>Driver Navigation</h1>
+    <div>Status: <strong id="driverStatus">Inactive</strong></div>
+  </header>
+  <main>
+    <div class="controls">
+      <input type="text" id="destinationInput" placeholder="Enter destination address..." />
+      <button id="setDestination">Set Destination</button>
+      <button id="toggleButton">Go Active</button>
+    </div>
+    <div class="info">
+      ETA: <span id="etaText">N/A</span>
+    </div>
+    <div id="map"></div>
+  </main>
 
   <!-- Firebase & Google Maps -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -21,6 +89,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
 
   <script>
+    // — Your Firebase config —
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -31,70 +100,106 @@
       appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
       measurementId: "G-PT5072M6LC"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const deliveryId = urlParams.get('id') || 'test_delivery';
+    // — Get deliveryId from URL —
+    const params = new URLSearchParams(window.location.search);
+    const deliveryId = params.get('id') || 'test_delivery';
 
+    // — UI elements —
+    const toggleBtn = document.getElementById('toggleButton');
+    const statusEl = document.getElementById('driverStatus');
+    const destInput = document.getElementById('destinationInput');
+    const setDestBtn = document.getElementById('setDestination');
+    const etaText = document.getElementById('etaText');
+
+    // — Maps & Directions setup —
     let map, marker, watchId;
-    let isActive = false;
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+    let destAddress = null;
 
-    const statusText = document.getElementById("driverStatus");
-    const toggleButton = document.getElementById("toggleButton");
-
-    function updateUI() {
-      statusText.textContent = isActive ? "Active" : "Inactive";
-      toggleButton.textContent = isActive ? "Go Inactive" : "Go Active";
+    function initMap(lat, lng) {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat, lng },
+        zoom: 14,
+        disableDefaultUI: true
+      });
+      marker = new google.maps.Marker({ map, position: { lat, lng }, title: 'Your position' });
+      directionsRenderer.setMap(map);
     }
 
-    toggleButton.onclick = () => {
-      isActive = !isActive;
-      db.ref("drivers/" + deliveryId + "/status").set(isActive ? "active" : "inactive");
-      updateUI();
+    function updateUI(active) {
+      statusEl.textContent = active ? 'Active' : 'Inactive';
+      toggleBtn.textContent = active ? 'Go Inactive' : 'Go Active';
+      toggleBtn.style.background = active ? '#dc3545' : '#28a745';
+    }
 
+    let isActive = false;
+    toggleBtn.onclick = () => {
+      isActive = !isActive;
+      db.ref(`drivers/${deliveryId}/status`).set(isActive ? 'active' : 'inactive');
+      updateUI(isActive);
       if (isActive) {
-        db.ref("drivers/" + deliveryId + "/createdAt").set(Date.now());
+        db.ref(`drivers/${deliveryId}/createdAt`).set(Date.now());
         startTracking();
       } else {
-        stopTracking();
+        navigator.geolocation.clearWatch(watchId);
       }
     };
 
+    setDestBtn.onclick = () => {
+      const addr = destInput.value.trim();
+      if (!addr) return alert('Enter a destination.');
+      destAddress = addr;
+      db.ref(`drivers/${deliveryId}/destination`).set(addr);
+      calculateRoute();
+    };
+
+    function calculateRoute() {
+      if (!destAddress || !marker) return;
+      const origin = marker.getPosition();
+      directionsService.route({
+        origin,
+        destination: destAddress,
+        travelMode: 'DRIVING'
+      }, (res, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(res);
+          const leg = res.routes[0].legs[0];
+          etaText.textContent = leg.duration.text;
+          db.ref(`drivers/${deliveryId}/eta`).set(leg.duration.value); // seconds
+        } else console.error('Directions error:', status);
+      });
+    }
+
     function startTracking() {
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(pos => {
-          const { latitude, longitude } = pos.coords;
-          db.ref("drivers/" + deliveryId + "/location").set({ latitude, longitude });
-          if (!map) initMap(latitude, longitude);
-          else {
-            marker.setPosition({ lat: latitude, lng: longitude });
-            map.setCenter({ lat: latitude, lng: longitude });
-          }
-        }, err => alert("Location error: " + err.message), { enableHighAccuracy: true });
-      } else {
-        alert("Geolocation not supported.");
-      }
+      if (!navigator.geolocation) return alert('Geolocation unsupported.');
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        db.ref(`drivers/${deliveryId}/location`).set({ latitude, longitude });
+        if (!map) initMap(latitude, longitude);
+        else {
+          marker.setPosition({ lat: latitude, lng: longitude });
+          map.setCenter({ lat: latitude, lng: longitude });
+        }
+        if (destAddress) calculateRoute();
+      }, err => alert('Location error: ' + err.message), { enableHighAccuracy: true });
     }
 
-    function stopTracking() {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    }
-
-    function initMap(lat, lng) {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat, lng },
-        zoom: 15
+    // — Auto-sign in and initialize map listener —
+    firebase.auth().signInAnonymously().then(() => {
+      // Optional: you could preload existing destination
+      db.ref(`drivers/${deliveryId}`).once('value').then(snap => {
+        const data = snap.val() || {};
+        if (data.destination) {
+          destInput.value = data.destination;
+          destAddress = data.destination;
+        }
       });
-      marker = new google.maps.Marker({
-        map,
-        position: { lat, lng },
-        title: "Driver Location"
-      });
-    }
+    });
 
-    firebase.auth().signInAnonymously().catch(console.error);
   </script>
 </body>
 </html>
