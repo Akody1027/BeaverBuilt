@@ -1,18 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Track Delivery</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    #map { height: 400px; width: 100%; }
-    #status { font-size: 18px; margin: 15px 0; }
-    #expired { color: red; font-weight: bold; display: none; }
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #fdfdfd;
+    }
+    header {
+      background: #fff;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header h1 {
+      margin: 0;
+      font-weight: 500;
+      font-size: 1.25rem;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+    .info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+    #map { flex: 1; border-radius: 4px; overflow: hidden; }
+    #expired {
+      color: #c00;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 1rem;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h2>Track Your Delivery</h2>
-  <div id="status">Driver Status: <span id="driverStatus">Loading...</span></div>
-  <div id="expired">This tracking link has expired.</div>
-  <div id="map"></div>
+  <header>
+    <h1>Live Delivery Tracker</h1>
+  </header>
+  <main>
+    <div class="info">
+      <div>Destination: <strong id="destText">N/A</strong></div>
+      <div>ETA: <strong id="etaText">--</strong></div>
+      <div>Status: <strong id="statusText">--</strong></div>
+    </div>
+    <div id="map"></div>
+    <div id="expired">This tracking link has expired.</div>
+  </main>
 
   <!-- Firebase & Google Maps -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -20,6 +66,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
 
   <script>
+    // — Your Firebase config —
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -30,58 +77,79 @@
       appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
       measurementId: "G-PT5072M6LC"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const deliveryId = urlParams.get('id') || 'test_delivery';
+    // — Get deliveryId from URL —
+    const params = new URLSearchParams(window.location.search);
+    const deliveryId = params.get('id') || 'test_delivery';
 
+    // — UI elements —
+    const destText = document.getElementById('destText');
+    const etaText = document.getElementById('etaText');
+    const statusText = document.getElementById('statusText');
+    const expiredEl = document.getElementById('expired');
+
+    // — Maps & Directions setup —
     let map, marker;
-    const statusText = document.getElementById("driverStatus");
-    const expiredMsg = document.getElementById("expired");
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+    let destination = null;
 
     function initMap(lat, lng) {
-      map = new google.maps.Map(document.getElementById("map"), {
+      map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng },
-        zoom: 15
+        zoom: 14,
+        disableDefaultUI: true
       });
-      marker = new google.maps.Marker({
-        map,
-        position: { lat, lng },
-        title: "Driver Location"
-      });
+      marker = new google.maps.Marker({ map, position: { lat, lng }, title: 'Driver' });
+      directionsRenderer.setMap(map);
     }
 
     function showExpired() {
-      expiredMsg.style.display = "block";
-      statusText.textContent = "Expired";
+      expiredEl.style.display = 'block';
+      document.querySelector('.info').style.display = 'none';
     }
 
-    db.ref("drivers/" + deliveryId).on("value", snapshot => {
-      const data = snapshot.val();
+    db.ref(`drivers/${deliveryId}`).on('value', snap => {
+      const data = snap.val();
       if (!data) return;
 
-      const createdAt = data.createdAt || 0;
-      const now = Date.now();
-      const age = now - createdAt;
-
-      if (age > 24 * 60 * 60 * 1000) { // 24 hours
+      // Expire after 24h
+      const age = Date.now() - (data.createdAt || 0);
+      if (age > 24 * 60 * 60 * 1000) {
         showExpired();
         return;
       }
 
+      // Status
+      statusText.textContent = data.status === 'active' ? 'Active' : 'Inactive';
+
+      // Destination
+      if (data.destination) {
+        destination = data.destination;
+        destText.textContent = destination;
+      }
+
+      // Location + route
       if (data.location) {
         const { latitude, longitude } = data.location;
         if (!map) initMap(latitude, longitude);
-        else {
-          marker.setPosition({ lat: latitude, lng: longitude });
-          map.setCenter({ lat: latitude, lng: longitude });
-        }
-      }
+        else marker.setPosition({ lat: latitude, lng: longitude });
 
-      if (data.status) {
-        statusText.textContent = data.status === "active" ? "Active" : "Inactive";
+        if (destination) {
+          directionsService.route({
+            origin: { lat: latitude, lng: longitude },
+            destination,
+            travelMode: 'DRIVING'
+          }, (res, status) => {
+            if (status === 'OK') {
+              directionsRenderer.setDirections(res);
+              const leg = res.routes[0].legs[0];
+              etaText.textContent = leg.duration.text;
+            }
+          });
+        }
       }
     });
   </script>
