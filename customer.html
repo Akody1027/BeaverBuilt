@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Track Delivery</title>
+  <style>
+    #map { height: 400px; width: 100%; }
+    #status { font-size: 18px; margin: 15px 0; }
+    #expired { color: red; font-weight: bold; display: none; }
+  </style>
+</head>
+<body>
+  <h2>Track Your Delivery</h2>
+  <div id="status">Driver Status: <span id="driverStatus">Loading...</span></div>
+  <div id="expired">This tracking link has expired.</div>
+  <div id="map"></div>
+
+  <!-- Firebase & Google Maps -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
+      authDomain: "delivery-tracker-f3adc.firebaseapp.com",
+      databaseURL: "https://delivery-tracker-f3adc.firebaseio.com",
+      projectId: "delivery-tracker-f3adc",
+      storageBucket: "delivery-tracker-f3adc.appspot.com",
+      messagingSenderId: "934356625713",
+      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
+      measurementId: "G-PT5072M6LC"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const deliveryId = urlParams.get('id') || 'test_delivery';
+
+    let map, marker;
+    const statusText = document.getElementById("driverStatus");
+    const expiredMsg = document.getElementById("expired");
+
+    function initMap(lat, lng) {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat, lng },
+        zoom: 15
+      });
+      marker = new google.maps.Marker({
+        map,
+        position: { lat, lng },
+        title: "Driver Location"
+      });
+    }
+
+    function showExpired() {
+      expiredMsg.style.display = "block";
+      statusText.textContent = "Expired";
+    }
+
+    db.ref("drivers/" + deliveryId).on("value", snapshot => {
+      const data = snapshot.val();
+      if (!data) return;
+
+      const createdAt = data.createdAt || 0;
+      const now = Date.now();
+      const age = now - createdAt;
+
+      if (age > 24 * 60 * 60 * 1000) { // 24 hours
+        showExpired();
+        return;
+      }
+
+      if (data.location) {
+        const { latitude, longitude } = data.location;
+        if (!map) initMap(latitude, longitude);
+        else {
+          marker.setPosition({ lat: latitude, lng: longitude });
+          map.setCenter({ lat: latitude, lng: longitude });
+        }
+      }
+
+      if (data.status) {
+        statusText.textContent = data.status === "active" ? "Active" : "Inactive";
+      }
+    });
+  </script>
+</body>
+</html>
