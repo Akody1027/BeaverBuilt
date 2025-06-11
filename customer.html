@@ -62,96 +62,75 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // 2) Grab UI refs
+    // 2) UI refs
     const statusEl  = document.getElementById('statusText');
     const etaEl     = document.getElementById('etaText');
     const expiredEl = document.getElementById('expired');
     const statusBar = document.getElementById('statusBar');
 
-    // 3) Map and marker vars
+    // 3) Map & marker
     let map, marker;
     let mapReady = false;
 
-    // 4) Directions service for ETA (no rendering of route)
-    const directionsService = new google.maps.DirectionsService();
-
-    // 5) Read deliveryId from URL
+    // 4) Get delivery ID
     const params     = new URLSearchParams(window.location.search);
     const deliveryId = params.get('id');
     if (!deliveryId) {
-      alert('Error: no delivery ID in URL.');
+      alert('Error: missing delivery ID.');
       throw new Error('Missing delivery ID');
     }
 
-    // 6) Auth + DB listening
-    firebase.auth().signInAnonymously()
-      .then(() => {
-        const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
-        dbRef.on('value', snap => {
-          const data = snap.val();
-          if (!data) {
-            console.warn('No data for:', deliveryId);
-            return;
+    // 5) Sign in and listen for updates
+    firebase.auth().signInAnonymously().then(() => {
+      const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
+      dbRef.on('value', snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        // Expiry after 24h
+        const age = Date.now() - (data.createdAt || 0);
+        if (age > 24 * 3600 * 1000) {
+          expiredEl.style.display = 'block';
+          statusBar.style.display = 'none';
+          return;
+        }
+
+        // Update status
+        statusEl.textContent = data.status === 'active' ? 'Active' : 'Inactive';
+
+        // Update ETA (driver page writes this in seconds)
+        if (typeof data.eta === 'number') {
+          const mins = Math.ceil(data.eta / 60);
+          etaEl.textContent = mins + ' min';
+        } else {
+          etaEl.textContent = '–––';
+        }
+
+        // Update map marker
+        if (data.location) {
+          const { latitude, longitude } = data.location;
+          const pos = { lat: latitude, lng: longitude };
+
+          if (!mapReady) {
+            map = new google.maps.Map(document.getElementById('map'), {
+              center: pos,
+              zoom: 12,
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: false
+            });
+            marker = new google.maps.Marker({ map, position: pos });
+            mapReady = true;
+          } else {
+            marker.setPosition(pos);
+            map.setCenter(pos);
           }
-
-          // Expiry check
-          const ageMs = Date.now() - (data.createdAt || 0);
-          if (ageMs > 24 * 3600 * 1000) {
-            expiredEl.style.display = 'block';
-            statusBar.style.display = 'none';
-            return;
-          }
-
-          // Update status
-          statusEl.textContent = data.status === 'active' ? 'Active' : 'Inactive';
-
-          // Update location
-          if (data.location) {
-            const { latitude, longitude } = data.location;
-            const pos = { lat: latitude, lng: longitude };
-
-            // Init map once
-            if (!mapReady) {
-              map = new google.maps.Map(document.getElementById('map'), {
-                center: pos,
-                zoom: 12,
-                mapTypeControl: false,
-                streetViewControl: false,
-                fullscreenControl: false
-              });
-              marker = new google.maps.Marker({ map, position: pos });
-              mapReady = true;
-            } else {
-              marker.setPosition(pos);
-              map.setCenter(pos);
-            }
-
-            // If driver has set a destination, calculate ETA
-            if (data.destination) {
-              directionsService.route({
-                origin: pos,
-                destination: data.destination,
-                travelMode: 'DRIVING'
-              }, (res, status) => {
-                if (status === 'OK') {
-                  const leg = res.routes[0].legs[0];
-                  etaEl.textContent = leg.duration.text;
-                } else {
-                  console.error('Directions error:', status);
-                }
-              });
-            } else {
-              etaEl.textContent = '–––';
-            }
-          }
-        }, err => {
-          console.error('DB read error:', err);
-        });
-      })
-      .catch(err => {
-        console.error('Auth failed:', err);
-        alert('Unable to authenticate with Firebase.');
+        }
       });
+    }).catch(err => {
+      console.error('Auth failed', err);
+      alert('Firebase authentication failed.');
+    });
   </script>
 </body>
 </html>
