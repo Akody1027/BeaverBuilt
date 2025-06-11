@@ -13,47 +13,44 @@
       background: #fdfdfd;
     }
     header {
-      background: #fff; padding: 1rem;
+      background: #fff; padding:1rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     header h1 { margin:0; font-size:1.25rem; }
     #statusBar {
-      display: flex; justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-      font-size: 1rem;
+      display:flex; justify-content: space-between;
+      padding:0.75rem 1rem;
+      background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.1);
+      font-size:1rem;
     }
-    #map { flex: 1; }
+    #map { flex:1; }
     #expired {
-      display: none;
-      padding: 1rem; text-align: center;
-      color: #c00; font-weight: bold;
-      background: #fff;
+      display:none;
+      padding:1rem; text-align:center;
+      color:#c00; font-weight:bold;
+      background:#fff;
     }
-    #debug {
-      height: 150px;
-      overflow: auto;
-      background: #000;
-      color: #0f0;
-      padding: 0.5rem;
-      font-family: monospace;
-      font-size: 0.9rem;
+    #alert {
+      background: #ffe0e0;
+      color: #900;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <header><h1>Live Delivery Tracker</h1></header>
+  <div id="alert" style="display:none;">Unable to connect to Firebase.</div>
   <div id="statusBar">
     <div>Status: <strong id="statusText">–––</strong></div>
     <div>ETA: <strong id="etaText">–––</strong></div>
   </div>
   <div id="map"></div>
   <div id="expired">This tracking link has expired.</div>
-  <div id="debug">Debug output...</div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <!-- Google Maps JS -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
@@ -72,34 +69,75 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // UI references
+    // UI refs
     const statusEl  = document.getElementById('statusText');
     const etaEl     = document.getElementById('etaText');
     const expiredEl = document.getElementById('expired');
     const statusBar = document.getElementById('statusBar');
-    const debugEl   = document.getElementById('debug');
+    const alertEl   = document.getElementById('alert');
 
-    // Map & marker
+    // Map/marker
     let map, marker, mapReady = false;
 
-    // Read deliveryId
-    const params     = new URLSearchParams(window.location.search);
+    // Get deliveryId
+    const params = new URLSearchParams(window.location.search);
     const deliveryId = params.get('id');
     if (!deliveryId) {
-      alert('Error: missing delivery ID in URL');
-      debugEl.textContent = 'ERROR: delivery ID missing';
+      alert('Error: no delivery ID in URL.');
       throw new Error('Missing delivery ID');
     }
 
-    debugEl.textContent = `Listening to drivers/${deliveryId}\n`;
+    // Listen for data
+    try {
+      const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
+      dbRef.on('value', snap => {
+        const data = snap.val();
+        if (!data) return;
+        
+        // Expire after 24h
+        const age = Date.now() - (data.createdAt || 0);
+        if (age > 24 * 3600 * 1000) {
+          expiredEl.style.display = 'block';
+          statusBar.style.display = 'none';
+          return;
+        }
 
-    // Anonymous auth, then DB listener
-    firebase.auth().signInAnonymously()
-      .then(() => {
-        debugEl.textContent += '✅ Authenticated\n';
-        const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
-        dbRef.on('value', snap => {
-          const data = snap.val();
-          debugEl.textContent += `\n【UPDATE】 ${new Date().toLocaleTimeString()}\n` + JSON.stringify(data, null, 2) + '\n';
-          
-          if (!data
+        // Status
+        statusEl.textContent = data.status === 'active' ? 'Active' : 'Inactive';
+
+        // ETA (driver writes seconds)
+        if (typeof data.eta === 'number') {
+          etaEl.textContent = Math.ceil(data.eta/60) + ' min';
+        } else {
+          etaEl.textContent = '–––';
+        }
+
+        // Map update
+        if (data.location) {
+          const { latitude, longitude } = data.location;
+          const pos = { lat: latitude, lng: longitude };
+          if (!mapReady) {
+            map = new google.maps.Map(document.getElementById('map'), {
+              center: pos, zoom: 12,
+              mapTypeControl:false,
+              streetViewControl:false,
+              fullscreenControl:false
+            });
+            marker = new google.maps.Marker({ map, position: pos });
+            mapReady = true;
+          } else {
+            marker.setPosition(pos);
+            map.setCenter(pos);
+          }
+        }
+      }, err => {
+        console.error('DB error', err);
+        alertEl.style.display = 'block';
+      });
+    } catch(e) {
+      console.error('Firebase init error', e);
+      alertEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
