@@ -6,7 +6,7 @@
   <title>Track Delivery</title>
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; }
+    body, html { margin:0; padding:0; height:100%; }
     body {
       font-family: 'Roboto', sans-serif;
       display: flex; flex-direction: column;
@@ -16,7 +16,7 @@
       background: #fff; padding: 1rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    header h1 { margin: 0; font-size: 1.25rem; }
+    header h1 { margin:0; font-size:1.25rem; }
     #statusBar {
       display: flex; justify-content: space-between;
       padding: 0.75rem 1rem;
@@ -30,6 +30,15 @@
       color: #c00; font-weight: bold;
       background: #fff;
     }
+    #debug {
+      height: 150px;
+      overflow: auto;
+      background: #000;
+      color: #0f0;
+      padding: 0.5rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -40,6 +49,7 @@
   </div>
   <div id="map"></div>
   <div id="expired">This tracking link has expired.</div>
+  <div id="debug">Debug output...</div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -49,7 +59,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
 
   <script>
-    // 1) Initialize Firebase
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -62,75 +72,34 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // 2) UI refs
+    // UI references
     const statusEl  = document.getElementById('statusText');
     const etaEl     = document.getElementById('etaText');
     const expiredEl = document.getElementById('expired');
     const statusBar = document.getElementById('statusBar');
+    const debugEl   = document.getElementById('debug');
 
-    // 3) Map & marker
-    let map, marker;
-    let mapReady = false;
+    // Map & marker
+    let map, marker, mapReady = false;
 
-    // 4) Get delivery ID
+    // Read deliveryId
     const params     = new URLSearchParams(window.location.search);
     const deliveryId = params.get('id');
     if (!deliveryId) {
-      alert('Error: missing delivery ID.');
+      alert('Error: missing delivery ID in URL');
+      debugEl.textContent = 'ERROR: delivery ID missing';
       throw new Error('Missing delivery ID');
     }
 
-    // 5) Sign in and listen for updates
-    firebase.auth().signInAnonymously().then(() => {
-      const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
-      dbRef.on('value', snap => {
-        const data = snap.val();
-        if (!data) return;
+    debugEl.textContent = `Listening to drivers/${deliveryId}\n`;
 
-        // Expiry after 24h
-        const age = Date.now() - (data.createdAt || 0);
-        if (age > 24 * 3600 * 1000) {
-          expiredEl.style.display = 'block';
-          statusBar.style.display = 'none';
-          return;
-        }
-
-        // Update status
-        statusEl.textContent = data.status === 'active' ? 'Active' : 'Inactive';
-
-        // Update ETA (driver page writes this in seconds)
-        if (typeof data.eta === 'number') {
-          const mins = Math.ceil(data.eta / 60);
-          etaEl.textContent = mins + ' min';
-        } else {
-          etaEl.textContent = '–––';
-        }
-
-        // Update map marker
-        if (data.location) {
-          const { latitude, longitude } = data.location;
-          const pos = { lat: latitude, lng: longitude };
-
-          if (!mapReady) {
-            map = new google.maps.Map(document.getElementById('map'), {
-              center: pos,
-              zoom: 12,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false
-            });
-            marker = new google.maps.Marker({ map, position: pos });
-            mapReady = true;
-          } else {
-            marker.setPosition(pos);
-            map.setCenter(pos);
-          }
-        }
-      });
-    }).catch(err => {
-      console.error('Auth failed', err);
-      alert('Firebase authentication failed.');
-    });
-  </script>
-</body>
-</html>
+    // Anonymous auth, then DB listener
+    firebase.auth().signInAnonymously()
+      .then(() => {
+        debugEl.textContent += '✅ Authenticated\n';
+        const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
+        dbRef.on('value', snap => {
+          const data = snap.val();
+          debugEl.textContent += `\n【UPDATE】 ${new Date().toLocaleTimeString()}\n` + JSON.stringify(data, null, 2) + '\n';
+          
+          if (!data
