@@ -25,19 +25,19 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <!-- Google Maps JS (replace YOUR_GOOGLE_MAPS_API_KEY) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
+  <!-- Google Maps JS -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM&libraries=places"></script>
 
   <script>
-    // Firebase config – replace with your own
+    // Firebase config
     const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
+      authDomain: "delivery-tracker-f3adc.firebaseapp.com",
+      databaseURL: "https://delivery-tracker-f3adc-default-rtdb.firebaseio.com",
+      projectId: "delivery-tracker-f3adc",
+      storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
+      messagingSenderId: "934356625713",
+      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810"
     };
     firebase.initializeApp(firebaseConfig);
 
@@ -46,8 +46,7 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 37.773, lng: -122.431 }, // default center
-        zoom: 12
+        center: { lat: 37.773, lng: -122.431 }, zoom: 12
       });
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ map });
@@ -68,12 +67,10 @@
         navigator.geolocation.watchPosition(pos => {
           const { latitude: lat, longitude: lng } = pos.coords;
           debugLog(`Driver pos: ${lat.toFixed(5)},${lng.toFixed(5)}`);
-          // write to Firebase
           firebase.database().ref('drivers/driver1').set({ lat, lng, timestamp: Date.now() })
             .then(() => debugLog('Location written to Firebase'))
             .catch(e => debugLog('Firebase write error: ' + e.message));
 
-          // update route if destination set
           if (window.destination) updateRouteOnMap(lat, lng);
         }, err => debugLog('Geo error: ' + err.message),
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
@@ -81,14 +78,9 @@
     }
 
     function updateRouteOnMap(lat, lng) {
-      directionsService.route({
-        origin: { lat, lng },
-        destination: window.destination,
-        travelMode: 'DRIVING'
-      }, (res, status) => {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(res);
-        } else debugLog('Route error: ' + status);
+      directionsService.route({ origin: { lat, lng }, destination: window.destination, travelMode: 'DRIVING' }, (res, status) => {
+        if (status === 'OK') directionsRenderer.setDirections(res);
+        else debugLog('Route error: ' + status);
       });
     }
 
