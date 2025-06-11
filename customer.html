@@ -1,143 +1,86 @@
+<!-- customer.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Track Delivery</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customer Tracker – Delivery Tracker</title>
   <style>
-    body, html { margin:0; padding:0; height:100%; }
-    body {
-      font-family: 'Roboto', sans-serif;
-      display: flex; flex-direction: column;
-      background: #fdfdfd;
-    }
-    header {
-      background: #fff; padding:1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    header h1 { margin:0; font-size:1.25rem; }
-    #statusBar {
-      display:flex; justify-content: space-between;
-      padding:0.75rem 1rem;
-      background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.1);
-      font-size:1rem;
-    }
-    #map { flex:1; }
-    #expired {
-      display:none;
-      padding:1rem; text-align:center;
-      color:#c00; font-weight:bold;
-      background:#fff;
-    }
-    #alert {
-      background: #ffe0e0;
-      color: #900;
-      padding: 0.75rem 1rem;
-      text-align: center;
-      font-weight: bold;
-    }
+    body, html { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    #map { height: 100%; }
+    #eta { position: fixed; top: 10px; right: 10px; background: #fff;
+           padding: 8px; border-radius: 4px; z-index: 999; }
+    #debug { position: fixed; bottom: 0; left: 0; width: 100%; font-size: 12px;
+             background: rgba(0,0,0,0.7); color: #fff; max-height: 100px;
+             overflow: auto; z-index: 9999; padding: 5px; }
   </style>
 </head>
 <body>
-  <header><h1>Live Delivery Tracker</h1></header>
-  <div id="alert" style="display:none;">Unable to connect to Firebase.</div>
-  <div id="statusBar">
-    <div>Status: <strong id="statusText">–––</strong></div>
-    <div>ETA: <strong id="etaText">–––</strong></div>
-  </div>
+  <div id="eta">ETA: calculating…</div>
   <div id="map"></div>
-  <div id="expired">This tracking link has expired.</div>
+  <div id="debug"><strong>Debug:</strong><br></div>
 
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <!-- Google Maps JS -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Google Maps JS (replace YOUR_GOOGLE_MAPS_API_KEY) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 
   <script>
-    // Initialize Firebase
+    // Firebase config – replace with your own
     const firebaseConfig = {
-      apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
-      authDomain: "delivery-tracker-f3adc.firebaseapp.com",
-      databaseURL: "https://delivery-tracker-f3adc.firebaseio.com",
-      projectId: "delivery-tracker-f3adc",
-      storageBucket: "delivery-tracker-f3adc.appspot.com",
-      messagingSenderId: "934356625713",
-      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
-      measurementId: "G-PT5072M6LC"
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
     firebase.initializeApp(firebaseConfig);
 
-    // UI refs
-    const statusEl  = document.getElementById('statusText');
-    const etaEl     = document.getElementById('etaText');
-    const expiredEl = document.getElementById('expired');
-    const statusBar = document.getElementById('statusBar');
-    const alertEl   = document.getElementById('alert');
+    let customerMap;
+    const debugLog = msg => document.getElementById('debug').innerHTML += msg + '<br>';
 
-    // Map/marker
-    let map, marker, mapReady = false;
-
-    // Get deliveryId
-    const params = new URLSearchParams(window.location.search);
-    const deliveryId = params.get('id');
-    if (!deliveryId) {
-      alert('Error: no delivery ID in URL.');
-      throw new Error('Missing delivery ID');
-    }
-
-    // Listen for data
-    try {
-      const dbRef = firebase.database().ref(`drivers/${deliveryId}`);
-      dbRef.on('value', snap => {
-        const data = snap.val();
-        if (!data) return;
-        
-        // Expire after 24h
-        const age = Date.now() - (data.createdAt || 0);
-        if (age > 24 * 3600 * 1000) {
-          expiredEl.style.display = 'block';
-          statusBar.style.display = 'none';
-          return;
-        }
-
-        // Status
-        statusEl.textContent = data.status === 'active' ? 'Active' : 'Inactive';
-
-        // ETA (driver writes seconds)
-        if (typeof data.eta === 'number') {
-          etaEl.textContent = Math.ceil(data.eta/60) + ' min';
-        } else {
-          etaEl.textContent = '–––';
-        }
-
-        // Map update
-        if (data.location) {
-          const { latitude, longitude } = data.location;
-          const pos = { lat: latitude, lng: longitude };
-          if (!mapReady) {
-            map = new google.maps.Map(document.getElementById('map'), {
-              center: pos, zoom: 12,
-              mapTypeControl:false,
-              streetViewControl:false,
-              fullscreenControl:false
-            });
-            marker = new google.maps.Marker({ map, position: pos });
-            mapReady = true;
-          } else {
-            marker.setPosition(pos);
-            map.setCenter(pos);
-          }
-        }
-      }, err => {
-        console.error('DB error', err);
-        alertEl.style.display = 'block';
+    function initMap() {
+      customerMap = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 37.773, lng: -122.431 }, zoom: 12
       });
-    } catch(e) {
-      console.error('Firebase init error', e);
-      alertEl.style.display = 'block';
+
+      // Listen for driver updates
+      const driverRef = firebase.database().ref('drivers/driver1');
+      driverRef.on('value', snap => {
+        const data = snap.val();
+        if (!data) return debugLog('No driver data yet');
+        const { lat, lng, timestamp } = data;
+        debugLog(`Got driver update: ${lat.toFixed(5)},${lng.toFixed(5)} @ ${new Date(timestamp).toLocaleTimeString()}`);
+
+        // marker
+        if (!window.driverMarker) {
+          window.driverMarker = new google.maps.Marker({ position: { lat, lng }, map: customerMap });
+        } else {
+          window.driverMarker.setPosition({ lat, lng });
+        }
+
+        customerMap.panTo({ lat, lng });
+        updateETA({ lat, lng });
+      });
     }
+
+    function updateETA(origin) {
+      // assume fixed customer destination; replace with dynamic if needed
+      const customerDestination = window.customerDestination || { lat: 37.7749, lng: -122.4194 };
+      const ds = new google.maps.DirectionsService();
+      ds.route({ origin, destination: customerDestination, travelMode: 'DRIVING' }, (res, status) => {
+        if (status === 'OK') {
+          const leg = res.routes[0].legs[0];
+          document.getElementById('eta').innerText = 'ETA: ' + leg.duration.text;
+          debugLog('ETA updated: ' + leg.duration.text);
+        } else debugLog('ETA route error: ' + status);
+      });
+    }
+
+    window.onload = initMap;
   </script>
 </body>
 </html>
