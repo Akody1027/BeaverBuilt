@@ -6,58 +6,15 @@
   <title>Driver Navigation</title>
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background: #f4f4f9;
-    }
-    header {
-      background: #fff;
-      padding: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem;
-    }
-    .controls {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .controls input, .controls button {
-      padding: 0.6rem;
-      font-size: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    .controls button {
-      background: #007bff;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-    }
-    .controls button#toggleButton {
-      background: #28a745;
-    }
-    #map {
-      flex: 1;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .info {
-      margin-top: 0.5rem;
-      font-size: 1rem;
-    }
+    body { margin:0; font-family:'Roboto',sans-serif; display:flex; flex-direction:column; height:100vh; background:#f4f4f9; }
+    header { background:#fff; padding:1rem; box-shadow:0 2px 4px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center; }
+    main { flex:1; display:flex; flex-direction:column; padding:1rem; }
+    .controls { display:flex; gap:1rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .controls input, .controls button { padding:0.6rem; font-size:1rem; border-radius:4px; border:1px solid #ccc; }
+    .controls button { background:#007bff; color:#fff; border:none; cursor:pointer; }
+    .controls button#toggleButton { background:#28a745; }
+    #map { flex:1; border-radius:4px; overflow:hidden; }
+    .info { margin-top:0.5rem; font-size:1rem; }
   </style>
 </head>
 <body>
@@ -71,9 +28,7 @@
       <button id="setDestination">Set Destination</button>
       <button id="toggleButton">Go Active</button>
     </div>
-    <div class="info">
-      ETA: <span id="etaText">N/A</span>
-    </div>
+    <div class="info">ETA: <span id="etaText">N/A</span></div>
     <div id="map"></div>
   </main>
 
@@ -84,7 +39,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ"></script>
 
   <script>
-    // Your Firebase config
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -98,27 +53,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Read deliveryId from URL
     const params = new URLSearchParams(window.location.search);
     const deliveryId = params.get('id') || 'test_delivery';
 
-    const toggleBtn = document.getElementById('toggleButton');
-    const statusEl = document.getElementById('driverStatus');
-    const destInput = document.getElementById('destinationInput');
+    // UI elements
+    const toggleBtn  = document.getElementById('toggleButton');
+    const statusEl   = document.getElementById('driverStatus');
+    const destInput  = document.getElementById('destinationInput');
     const setDestBtn = document.getElementById('setDestination');
-    const etaText = document.getElementById('etaText');
+    const etaText    = document.getElementById('etaText');
 
-    let map, marker, watchId;
-    const directionsService = new google.maps.DirectionsService();
+    // Maps & routing
+    let map, marker, watchId, isMapInitialized = false, isActive = false, destAddress = null;
+    const directionsService  = new google.maps.DirectionsService();
     const directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
-    let destAddress = null;
-    let isMapInitialized = false;
-    let isActive = false;
 
     function initMap(lat, lng) {
       map = new google.maps.Map(document.getElementById('map'), {
         center: { lat, lng },
-        zoom: 18,                    // close-up driver view
-        mapTypeId: 'roadmap',
+        zoom: 18,
         zoomControl: true,
         rotateControl: true,
         streetViewControl: false,
@@ -157,11 +111,10 @@
 
     function calculateRoute() {
       if (!destAddress || !marker) return;
-      const origin = marker.getPosition();
       directionsService.route({
-        origin,
+        origin:      marker.getPosition(),
         destination: destAddress,
-        travelMode: 'DRIVING'
+        travelMode:  'DRIVING'
       }, (res, status) => {
         if (status === 'OK') {
           directionsRenderer.setDirections(res);
@@ -173,28 +126,22 @@
     }
 
     function startTracking() {
-      if (!navigator.geolocation) return alert('Geolocation not supported.');
+      if (!navigator.geolocation) return alert('Geolocation not supported');
       watchId = navigator.geolocation.watchPosition(pos => {
         const { latitude, longitude } = pos.coords;
         db.ref(`drivers/${deliveryId}/location`).set({ latitude, longitude });
 
-        // Initialize map once
         if (!isMapInitialized) {
           initMap(latitude, longitude);
+        } else {
+          marker.setPosition({ lat: latitude, lng: longitude });
         }
 
-        // Move marker, but do NOT re-center the map
-        marker.setPosition({ lat: latitude, lng: longitude });
-
-        // Recalculate route & ETA if destination set
         if (destAddress) calculateRoute();
-      }, err => alert('Location error: ' + err.message), {
-        enableHighAccuracy: true,
-        maximumAge: 0
-      });
+      }, err => alert('Location error: '+err.message), { enableHighAccuracy: true });
     }
 
-    // Auto-sign in & preload destination if exists
+    // Auto-sign-in & preload destination
     firebase.auth().signInAnonymously().then(() => {
       db.ref(`drivers/${deliveryId}`).once('value').then(snap => {
         const data = snap.val() || {};
