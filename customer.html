@@ -3,31 +3,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Customer Tracker – Delivery Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Tracker</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    body, html { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    #map { height: 100%; }
-    #eta { position: fixed; top: 10px; right: 10px; background: #fff;
-           padding: 8px; border-radius: 4px; z-index: 999; }
-    #debug { position: fixed; bottom: 0; left: 0; width: 100%; font-size: 12px;
-             background: rgba(0,0,0,0.7); color: #fff; max-height: 100px;
-             overflow: auto; z-index: 9999; padding: 5px; }
+    body, html { margin:0; padding:0; height:100%; font-family:'Roboto',sans-serif; }
+    #statusCard {
+      position: absolute; top:1rem; left:1rem;
+      background: rgba(255,255,255,0.9); padding:1rem; border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.15); z-index:5;
+    }
+    #map { height:100%; width:100%; }
   </style>
 </head>
 <body>
-  <div id="eta">ETA: calculating…</div>
+  <div id="statusCard">
+    <div><strong>Status:</strong> <span id="drvStatus">—</span></div>
+    <div><strong>ETA:</strong> <span id="eta">—</span></div>
+  </div>
   <div id="map"></div>
-  <div id="debug"><strong>Debug:</strong><br></div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <!-- Google Maps JS -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM"></script>
+  <!-- Firebase & Maps SDKs -->
+  <script type="module">
+    // FIREBASE SETUP
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js";
 
-  <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -35,44 +37,59 @@
       projectId: "delivery-tracker-f3adc",
       storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
       messagingSenderId: "934356625713",
-      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810"
+      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
+      measurementId: "G-PT5072M6LC"
     };
-    firebase.initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const db = getDatabase(app);
+    const driverRef = ref(db, 'driver');
 
-    let customerMap;
-    const debugLog = msg => document.getElementById('debug').innerHTML += msg + '<br>';
+    // MAP & ROUTING
+    let map, directionsService, directionsRenderer, marker;
 
     function initMap() {
-      customerMap = new google.maps.Map(document.getElementById('map'), { center: { lat: 37.773, lng: -122.431 }, zoom: 12 });
-      const driverRef = firebase.database().ref('drivers/driver1');
-      driverRef.on('value', snap => {
-        const data = snap.val();
-        if (!data) return debugLog('No driver data yet');
-        const { lat, lng, timestamp } = data;
-        debugLog(`Got driver update: ${lat.toFixed(5)},${lng.toFixed(5)} @ ${new Date(timestamp).toLocaleTimeString()}`);
-        if (!window.driverMarker) {
-          window.driverMarker = new google.maps.Marker({ position: { lat, lng }, map: customerMap });
-        } else {
-          window.driverMarker.setPosition({ lat, lng });
-        }
-        customerMap.panTo({ lat, lng });
-        updateETA({ lat, lng });
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 39.8283, lng: -98.5795 },
+        zoom: 5
       });
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
+      marker = new google.maps.Marker({ map });
     }
 
-    function updateETA(origin) {
-      const customerDestination = window.customerDestination || { lat: 37.7749, lng: -122.4194 };
-      const ds = new google.maps.DirectionsService();
-      ds.route({ origin, destination: customerDestination, travelMode: 'DRIVING' }, (res, status) => {
-        if (status === 'OK') {
-          const leg = res.routes[0].legs[0];
-          document.getElementById('eta').innerText = 'ETA: ' + leg.duration.text;
-          debugLog('ETA updated: ' + leg.duration.text);
-        } else debugLog('ETA route error: ' + status);
-      });
-    }
+    onValue(driverRef, snap => {
+      const data = snap.val();
+      if (!data) return;
+      document.getElementById("drvStatus").textContent =
+        data.status.charAt(0).toUpperCase() + data.status.slice(1);
+      if (data.status !== 'active' || !data.lat || !data.lng) {
+        document.getElementById("eta").textContent = '—';
+        directionsRenderer.set('directions', null);
+        return;
+      }
+      const pos = { lat: data.lat, lng: data.lng };
+      marker.setPosition(pos);
 
-    window.onload = initMap;
+      directionsService.route({
+        origin: pos,
+        destination: data.destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (res, stat) => {
+        if (stat === "OK") {
+          directionsRenderer.setDirections(res);
+          map.fitBounds(res.routes[0].bounds);
+          document.getElementById("eta").textContent =
+            res.routes[0].legs[0].duration.text;
+        } else console.error("Directions error:", stat);
+      });
+    });
+
+    window.initMap = initMap;
+  </script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places&callback=initMap">
   </script>
 </body>
 </html>
