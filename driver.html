@@ -3,33 +3,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver Navigation – Delivery Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver Navigation</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet">
   <style>
-    body, html { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-    #map { height: 70%; }
-    #controls { padding: 10px; background: #f4f4f4; }
-    #debug { position: fixed; bottom: 0; left: 0; width: 100%; font-size: 12px;
-             background: rgba(0,0,0,0.7); color: #fff; max-height: 100px;
-             overflow: auto; z-index: 9999; padding: 5px; }
+    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif; }
+    #controls { 
+      position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 5;
+      display: flex; gap: 1rem; align-items: center;
+    }
+    #map { height: 100%; width: 100%; }
+    .toggle-switch {
+      position: relative; width: 50px; display: inline-block;
+    }
+    .toggle-switch input { display: none; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; border-radius: 34px; transition: .4s;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #4caf50; }
+    input:checked + .slider:before { transform: translateX(26px); }
   </style>
 </head>
 <body>
   <div id="controls">
-    <input id="destination-input" type="text" placeholder="Enter destination address" style="width:80%; padding:8px;" />
-    <button id="set-dest">Go</button>
+    <label class="toggle-switch">
+      <input type="checkbox" id="statusToggle">
+      <span class="slider"></span>
+    </label>
+    <span id="statusLabel">Inactive</span>
+    <input type="text" id="destInput" placeholder="Enter destination" />
+    <button id="setDestBtn">Set Destination</button>
   </div>
   <div id="map"></div>
-  <div id="debug"><strong>Debug:</strong><br></div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <!-- Google Maps JS -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM&libraries=places"></script>
+  <!-- Firebase & Maps SDKs -->
+  <script type="module">
+    // FIREBASE SETUP
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js";
 
-  <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
       authDomain: "delivery-tracker-f3adc.firebaseapp.com",
@@ -37,54 +57,87 @@
       projectId: "delivery-tracker-f3adc",
       storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
       messagingSenderId: "934356625713",
-      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810"
+      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
+      measurementId: "G-PT5072M6LC"
     };
-    firebase.initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const db = getDatabase(app);
+    const driverRef = ref(db, 'driver');
 
-    let map, directionsService, directionsRenderer;
-    const debugLog = msg => document.getElementById('debug').innerHTML += msg + '<br>';
+    // MAP & ROUTING
+    let map, directionsService, directionsRenderer, watchId, currentStatus = 'inactive';
 
     function initMap() {
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 37.773, lng: -122.431 }, zoom: 12
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 39.8283, lng: -98.5795 },
+        zoom: 5,
       });
       directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map });
-
-      document.getElementById('set-dest').onclick = () => {
-        const addr = document.getElementById('destination-input').value;
-        if (!addr) return alert('Enter a destination');
-        new google.maps.places.PlacesService(map).textSearch({ query: addr }, results => {
-          if (!results || !results.length) return debugLog('Address not found');
-          const dest = results[0].geometry.location;
-          window.destination = dest;
-          debugLog('Destination set: ' + results[0].formatted_address);
-          directionsRenderer.set('directions', null);
-        });
-      };
-
-      if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(pos => {
-          const { latitude: lat, longitude: lng } = pos.coords;
-          debugLog(`Driver pos: ${lat.toFixed(5)},${lng.toFixed(5)}`);
-          firebase.database().ref('drivers/driver1').set({ lat, lng, timestamp: Date.now() })
-            .then(() => debugLog('Location written to Firebase'))
-            .catch(e => debugLog('Firebase write error: ' + e.message));
-
-          if (window.destination) updateRouteOnMap(lat, lng);
-        }, err => debugLog('Geo error: ' + err.message),
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
-      } else debugLog('Geolocation not supported');
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
     }
 
-    function updateRouteOnMap(lat, lng) {
-      directionsService.route({ origin: { lat, lng }, destination: window.destination, travelMode: 'DRIVING' }, (res, status) => {
-        if (status === 'OK') directionsRenderer.setDirections(res);
-        else debugLog('Route error: ' + status);
+    function updateFirebase(payload) {
+      set(driverRef, payload);
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) return alert("Geolocation not supported.");
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        updateFirebase({
+          status: currentStatus,
+          lat: latitude,
+          lng: longitude,
+          destination: window.destCoords || null,
+          timestamp: Date.now()
+        });
+      }, console.error, { enableHighAccuracy: true });
+    }
+    function stopTracking() {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+    }
+
+    function drawRoute(origin, destination) {
+      directionsService.route({
+        origin,
+        destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (res, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(res);
+          map.fitBounds(res.routes[0].bounds);
+        } else console.error("Directions error:", status);
       });
     }
 
-    window.onload = initMap;
+    // UI EVENTS
+    document.getElementById("statusToggle").addEventListener("change", e => {
+      currentStatus = e.target.checked ? 'active' : 'inactive';
+      document.getElementById("statusLabel").textContent =
+        currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+      updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords || null, timestamp: Date.now() });
+      currentStatus === 'active' ? startTracking() : stopTracking();
+    });
+
+    document.getElementById("setDestBtn").addEventListener("click", () => {
+      const address = document.getElementById("destInput").value.trim();
+      if (!address) return alert("Please enter a destination.");
+      new google.maps.Geocoder().geocode({ address }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          const loc = results[0].geometry.location;
+          window.destCoords = { lat: loc.lat(), lng: loc.lng() };
+          updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords, timestamp: Date.now() });
+          drawRoute(map.getCenter(), window.destCoords);
+        } else alert("Address not found.");
+      });
+    });
+
+    window.initMap = initMap;
+  </script>
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places&callback=initMap">
   </script>
 </body>
 </html>
