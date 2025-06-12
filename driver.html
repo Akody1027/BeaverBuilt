@@ -74,7 +74,7 @@
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
+      background-color: #f44336; /* red when inactive */
       border-radius: 34px;
       transition: 0.4s;
     }
@@ -90,17 +90,20 @@
       border-radius: 50%;
     }
     input:checked + .slider {
-      background-color: #4caf50;
+      background-color: #4caf50; /* green when active */
     }
     input:checked + .slider:before {
       transform: translateX(22px);
+    }
+    #statusLabel {
+      font-weight: 500;
+      color: #f44336; /* initial red for inactive */
     }
   </style>
 </head>
 <body>
   <div id="controls">
     <div class="toggle-wrapper">
-      <span>Status:</span>
       <label class="toggle-switch">
         <input type="checkbox" id="statusToggle">
         <span class="slider"></span>
@@ -108,7 +111,7 @@
       <span id="statusLabel">Inactive</span>
     </div>
     <input type="text" id="destInput" placeholder="Enter destination" />
-    <button id="goBtn">Go</button>
+    <button type="button" id="goBtn">Go</button>
   </div>
 
   <div id="map-container">
@@ -172,30 +175,34 @@
 
     document.getElementById('statusToggle').addEventListener('change', e => {
       currentStatus = e.target.checked ? 'active' : 'inactive';
-      document.getElementById('statusLabel').textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+      const label = document.getElementById('statusLabel');
+      label.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+      label.style.color = currentStatus === 'active' ? '#4caf50' : '#f44336';
       updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords || null, timestamp: Date.now() });
       currentStatus === 'active' ? startTracking() : stopTracking();
     });
 
     document.getElementById('goBtn').addEventListener('click', () => {
       const address = document.getElementById('destInput').value.trim();
+      console.log('Go clicked with address:', address);
       if (!address) return alert('Please enter a destination.');
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ address }, (results, status) => {
-        console.log('Geocode status:', status);
+        console.log('Geocode status:', status, results);
         if (status === 'OK' && results[0]) {
           const loc = results[0].geometry.location;
           window.destCoords = { lat: loc.lat(), lng: loc.lng() };
           updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords, timestamp: Date.now() });
+          document.getElementById('map-container').style.display = 'block';
           directionsService.route({
             origin: map.getCenter(),
             destination: window.destCoords,
             travelMode: 'DRIVING'
           }, (res, stat) => {
+            console.log('Route status:', stat, res);
             if (stat === 'OK') {
               directionsRenderer.setDirections(res);
               map.fitBounds(res.routes[0].bounds);
-              document.getElementById('map-container').style.display = 'block';
             } else {
               alert('Route error: ' + stat);
             }
