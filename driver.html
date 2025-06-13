@@ -17,8 +17,7 @@
     /* 1) Initial “enter name” screen */
     #initial-container {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       background: #fff;
       padding: 2rem;
@@ -47,53 +46,53 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    #initial-container button:hover {
-      background: #43a047;
-    }
+    #initial-container button:hover { background: #43a047; }
+
     /* 2) Status bar (hidden until activated) */
     #status-bar {
       position: fixed;
-      top: 1rem;
-      left: 1rem;
+      top: 1rem; left: 1rem;
       display: none;
       align-items: center;
       gap: 0.5rem;
       font-weight: 500;
       color: #333;
-      transition: opacity 0.5s ease, transform 0.5s ease;
     }
     .status-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #4caf50;
+      width: 12px; height: 12px;
+      border-radius: 50%; background: #4caf50;
     }
-    /* 3) Header: destination input + buttons */
+    /* 3) Trip ID display */
+    #tripId {
+      position: fixed;
+      top: 1rem; right: 1rem;
+      display: none;
+      font-weight: 500;
+      color: #333;
+    }
+    /* 4) Header: destination input + calculate */
     #navigation-container {
       position: fixed;
-      top: 4rem;
-      left: 0;
-      width: 100%;
+      top: 4rem; left: 0; width: 100%;
       display: none;
-      flex-direction: row;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 1rem;
+      gap: 0.5rem;
       background: rgba(255,255,255,0.95);
       padding: 0.5rem 1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       z-index: 9;
     }
     #navigation-container input {
-      flex: 1;
-      max-width: 24rem;
+      width: 100%; max-width: 28rem;
       padding: 0.5rem 1rem;
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 8px;
     }
     #navigation-container button {
-      padding: 0.5rem 1.25rem;
+      width: 100%; max-width: 28rem;
+      padding: 0.75rem;
       font-size: 1rem;
       border: none;
       border-radius: 8px;
@@ -101,73 +100,89 @@
       color: #fff;
       cursor: pointer;
       transition: background 0.2s;
-      min-width: 8rem;
     }
-    #navigation-container button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    #navigation-container button:hover:not(:disabled) {
-      background: #43a047;
-    }
-    /* 4) Trip info below header */
+    #navigation-container button:disabled { background: #ccc; cursor: not-allowed; }
+    #navigation-container button:hover:not(:disabled) { background: #43a047; }
+
+    /* 5) Trip info below header */
     #tripInfo {
       position: fixed;
       top: calc(4rem + 3.5rem);
-      left: 0;
-      width: 100%;
+      left: 0; width: 100%;
       display: none;
       flex-direction: row;
       justify-content: center;
       gap: 2rem;
-      text-align: center;
       padding: 0.5rem 0;
       font-weight: 600;
       color: #333;
       font-size: 1.25rem;
       z-index: 8;
     }
-    /* 5) Map container hidden by default */
+    /* 6) Navigate & confirm buttons under trip info */
+    #action-buttons {
+      position: fixed;
+      top: calc(4rem + 3.5rem + 2.5rem);
+      left: 0; width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 7;
+    }
+    #action-buttons button {
+      width: 80%; max-width: 20rem;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none; border-radius: 8px;
+      background: #4caf50; color: #fff;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #action-buttons button:disabled { background: #ccc; cursor: not-allowed; }
+    #action-buttons button:hover:not(:disabled) { background: #43a047; }
+
+    /* 7) Map container hidden by default */
     #map-container {
       display: none;
       position: absolute;
-      top: calc(4rem + 3.5rem + 3rem);
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: calc(4rem + 3.5rem + 5.5rem);
+      left: 0; right: 0; bottom: 0;
     }
     #map { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
 
-  <!-- 1) Initial “enter name” screen -->
+  <!-- Initial name input -->
   <div id="initial-container">
     <input id="driverNameInput" type="text" placeholder="Enter driver name"/>
     <button id="activateBtn">Activate</button>
   </div>
 
-  <!-- 2) Status bar -->
+  <!-- Status bar & trip ID -->
   <div id="status-bar">
-    <span class="status-dot"></span>
-    <span id="statusDriverName"></span>
+    <span class="status-dot"></span><span id="statusDriverName"></span>
   </div>
+  <div id="tripId"></div>
 
-  <!-- 3) Header: address + Calculate/Navigate/Confirm -->
+  <!-- Destination input + calculate -->
   <div id="navigation-container">
     <input id="addressInput" type="text" placeholder="Enter destination"/>
     <button id="calculateBtn">Calculate</button>
+  </div>
+
+  <!-- Trip duration & ETA -->
+  <div id="tripInfo">
+    <div id="duration"></div><div id="etaDisplay"></div>
+  </div>
+
+  <!-- Navigate & Confirm buttons -->
+  <div id="action-buttons">
     <button id="navigateBtn" disabled>Navigate</button>
     <button id="confirmBtn" style="display:none;">Confirm Delivery</button>
   </div>
 
-  <!-- 4) Trip info below header -->
-  <div id="tripInfo">
-    <div id="duration"></div>
-    <div id="etaDisplay"></div>
-  </div>
-
-  <!-- 5) Map container -->
+  <!-- Map container -->
   <div id="map-container">
     <div id="map"></div>
   </div>
@@ -177,136 +192,94 @@
     let lastOrigin, lastDestination;
 
     function initMap() {
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 39.8283, lng: -98.5795 },
-        zoom: 5
-      });
+      map = new google.maps.Map(document.getElementById('map'), { center: { lat: 39.8283, lng: -98.5795 }, zoom: 5 });
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ map });
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          pos => {
-            currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            map.setCenter(currentPosition);
-          },
+          pos => { currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude }; map.setCenter(currentPosition); },
           () => console.warn('Geolocation unavailable')
         );
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const initial       = document.getElementById('initial-container');
-      const driverInput   = document.getElementById('driverNameInput');
-      const activateBtn   = document.getElementById('activateBtn');
-      const statusBar     = document.getElementById('status-bar');
-      const nameLabel     = document.getElementById('statusDriverName');
-      const navCont       = document.getElementById('navigation-container');
-      const addrInput     = document.getElementById('addressInput');
-      const calculateBtn  = document.getElementById('calculateBtn');
-      const tripInfo      = document.getElementById('tripInfo');
-      const durationEl    = document.getElementById('duration');
-      const etaEl         = document.getElementById('etaDisplay');
-      const navigateBtn   = document.getElementById('navigateBtn');
-      const confirmBtn    = document.getElementById('confirmBtn');
-      const mapContainer  = document.getElementById('map-container');
+      const initial     = document.getElementById('initial-container');
+      const driverInput = document.getElementById('driverNameInput');
+      const activateBtn = document.getElementById('activateBtn');
+      const statusBar   = document.getElementById('status-bar');
+      const nameLabel   = document.getElementById('statusDriverName');
+      const tripIdEl    = document.getElementById('tripId');
+      const navCont     = document.getElementById('navigation-container');
+      const addrInput   = document.getElementById('addressInput');
+      const calculateBtn= document.getElementById('calculateBtn');
+      const tripInfo    = document.getElementById('tripInfo');
+      const durationEl  = document.getElementById('duration');
+      const etaEl       = document.getElementById('etaDisplay');
+      const actionBtns  = document.getElementById('action-buttons');
+      const navigateBtn = document.getElementById('navigateBtn');
+      const confirmBtn  = document.getElementById('confirmBtn');
+      const mapContainer= document.getElementById('map-container');
 
-      // Activate driver
       activateBtn.addEventListener('click', () => {
         const name = driverInput.value.trim();
         if (!name) return alert('Please enter a driver name.');
-        initial.style.opacity    = '0';
-        initial.style.transform  = 'translate(-50%,-60%)';
-        setTimeout(() => {
-          initial.style.display       = 'none';
-          nameLabel.textContent       = `Driver: ${name}`;
-          statusBar.style.display     = 'flex';
-          navCont.style.display       = 'flex';
-        }, 500);
+        initial.style.opacity   = '0'; initial.style.transform = 'translate(-50%,-60%)';
+        setTimeout(() => { initial.style.display='none'; nameLabel.textContent=`Driver: ${name}`; statusBar.style.display='flex'; navCont.style.display='flex'; }, 500);
       });
 
-      // Calculate route and show on map
       calculateBtn.addEventListener('click', () => {
-        const addr = addrInput.value.trim();
-        if (!addr) return alert('Please enter a destination.');
+        const addr = addrInput.value.trim(); if (!addr) return alert('Please enter a destination.');
         geocoder.geocode({ address: addr }, (results, status) => {
-          if (status === 'OK') {
-            const dest = results[0].geometry.location;
-            const origin = currentPosition
-              ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
-              : map.getCenter();
-            directionsService.route({ origin, destination: dest, travelMode: 'DRIVING' }, (res, stat) => {
-              if (stat === 'OK') {
-                // show map
-                mapContainer.style.display = 'block';
-                // draw route
+          if (status==='OK'){
+            const dest=results[0].geometry.location;
+            const origin=currentPosition? new google.maps.LatLng(currentPosition.lat,currentPosition.lng):map.getCenter();
+            directionsService.route({ origin,destination:dest,travelMode:'DRIVING' },(res,stat)=>{
+              if(stat==='OK'){
+                mapContainer.style.display='block';
                 directionsRenderer.setDirections(res);
                 map.fitBounds(res.routes[0].bounds);
-                // show trip info
-                durationEl.textContent = `Duration: ${res.routes[0].legs[0].duration.text}`;
-                const arrival = new Date(Date.now() + res.routes[0].legs[0].duration.value * 1000);
-                let h = arrival.getHours(); const m = arrival.getMinutes().toString().padStart(2,'0');
-                const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
-                etaEl.textContent = `ETA: ${h}:${m} ${ampm}`;
-                tripInfo.style.display = 'flex';
-                navigateBtn.disabled = false;
-                lastOrigin = origin;
-                lastDestination = dest;
-                addrInput.disabled = true;
-              } else {
-                alert('Route error: ' + stat);
-              }
+                const leg=res.routes[0].legs[0];
+                durationEl.textContent=`Duration: ${leg.duration.text}`;
+                const arrival=new Date(Date.now()+leg.duration.value*1000);
+                let h=arrival.getHours(),m=String(arrival.getMinutes()).padStart(2,'0'),ampm=h>=12?'PM':'AM';h=h%12||12;
+                etaEl.textContent=`ETA: ${h}:${m} ${ampm}`;
+                tripInfo.style.display='flex'; actionBtns.style.display='flex';
+                navigateBtn.disabled=false;
+                lastOrigin=origin; lastDestination=dest;
+                addrInput.disabled=true;
+                // generate trip ID
+                const id=Math.floor(1000+Math.random()*9000);
+                tripIdEl.textContent=`Trip ID: ${id}`; tripIdEl.style.display='block';
+              } else alert('Route error: '+stat);
             });
-          } else {
-            alert('Geocode error: ' + status);
-          }
+          } else alert('Geocode error: '+status);
         });
       });
 
-      // Navigate: open full-screen popup
-      navigateBtn.addEventListener('click', () => {
-        const originParam = `${lastOrigin.lat()},${lastOrigin.lng()}`;
-        const destParam = `${lastDestination.lat()},${lastDestination.lng()}`;
-        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originParam}` +
-                        `&destination=${destParam}&travelmode=driving`;
-        document.body.style.opacity = '0';
-        setTimeout(() => {
-          const w = screen.availWidth, h = screen.availHeight;
-          window.open(mapsUrl, '_blank', `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=0,top=0,width=${w},height=${h}`);
-          document.body.style.opacity = '1';
-        }, 500);
-        calculateBtn.style.display = 'none';
-        navigateBtn.style.display = 'none';
-        confirmBtn.style.display  = 'inline-block';
+      navigateBtn.addEventListener('click', ()=>{
+        const originParam=`${lastOrigin.lat()},${lastOrigin.lng()}`;
+        const destParam=`${lastDestination.lat()},${lastDestination.lng()}`;
+        const mapsUrl=`https://www.google.com/maps/dir/?api=1&origin=${originParam}&destination=${destParam}&travelmode=driving`;
+        document.body.style.opacity='0';setTimeout(()=>{window.open(mapsUrl,'_blank',`toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=0,top=0,width=${screen.availWidth},height=${screen.availHeight}`);document.body.style.opacity='1';},500);
+        calculateBtn.style.display='none';
+        navigateBtn.style.display='none';
+        confirmBtn.style.display='inline-block';
       });
 
-      // Confirm delivery and reset with pop-up confirmation
-      confirmBtn.addEventListener('click', () => {
-        const delivered = window.confirm('Was the product delivered?');
-        if (delivered) {
-          // reset everything
-          tripInfo.style.display         = 'none';
-          navCont.style.opacity          = '0';
-          statusBar.style.opacity        = '0';
-          setTimeout(() => {
-            statusBar.style.display      = 'none';
-            navCont.style.display        = 'none';
-            initial.style.display        = 'flex';
-            initial.style.opacity        = '1';
-            initial.style.transform      = 'translate(-50%,-50%)';
-            driverInput.value            = '';
-            addrInput.value              = '';
-            addrInput.disabled           = false;
-            calculateBtn.style.display   = 'inline-block';
-            calculateBtn.disabled        = false;
-            navigateBtn.disabled         = true;
-            navigateBtn.style.display    = 'inline-block';
-            confirmBtn.style.display     = 'none';
-            mapContainer.style.display   = 'none';
-          }, 500);
-        } else {
-          // user not delivered: return to map
-          // simply close the dialog, keep current UI
+      confirmBtn.addEventListener('click', ()=>{
+        const delivered=window.confirm('Was the product delivered?');
+        if(delivered){
+          tripInfo.style.display='none';
+          navCont.style.opacity='0'; statusBar.style.opacity='0'; actionBtns.style.opacity='0';
+          setTimeout(()=>{
+            statusBar.style.display='none'; navCont.style.display='none'; initial.style.display='flex'; initial.style.opacity='1'; initial.style.transform='translate(-50%,-50%)';
+            driverInput.value=''; addrInput.value=''; addrInput.disabled=false;
+            calculateBtn.style.display='inline-block'; calculateBtn.disabled=false;
+            navigateBtn.disabled=true; navigateBtn.style.display='inline-block'; confirmBtn.style.display='none';
+            mapContainer.style.display='none'; tripIdEl.style.display='none'; actionBtns.style.display='none';
+          },500);
         }
       });
     });
