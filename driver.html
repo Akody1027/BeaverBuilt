@@ -1,84 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Driver Navigation</title>
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet"/>
   <style>
     body, html {
       margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif;
-      background: #f4f4f9;
+      background: #f4f4f9; transition: opacity 0.5s ease;
     }
-    /* 1) Initial “enter name” screen */
+    /* Initial name screen */
     #initial-container {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff; padding: 2rem;
-      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column; gap: 1rem; align-items: center;
+      position: absolute; top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      background: #fff; padding:2rem; border-radius:12px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      display:flex; flex-direction:column; gap:1rem; align-items:center;
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
-    #initial-container input {
-      padding: 0.75rem 1rem; font-size: 1rem;
-      border: 1px solid #ccc; border-radius: 8px; width: 16rem;
-    }
-    #initial-container button {
-      padding: 0.75rem 1.5rem; font-size: 1rem;
-      border: none; border-radius: 8px;
-      background: #4caf50; color: #fff; cursor: pointer;
-      transition: background 0.2s;
-    }
-    #initial-container button:hover {
-      background: #43a047;
-    }
-
-    /* 2) Status bar (hidden until activated) */
+    /* Status bar */
     #status-bar {
-      position: fixed; top: 1rem; left: 1rem;
-      display: none; align-items: center; gap: 0.5rem;
-      font-weight: 500; color: #333;
+      position:fixed; top:1rem; left:1rem;
+      display:none; align-items:center; gap:0.5rem;
+      font-weight:500; color:#333;
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
     .status-dot {
-      width: 12px; height: 12px; border-radius: 50%;
-      background: #4caf50;
+      width:12px; height:12px; border-radius:50%; background:#4caf50;
     }
-
-    /* 3) Address + Navigate / Confirm container */
+    /* Address + buttons */
     #navigation-container {
-      position: fixed; top: 4rem; left: 50%; transform: translateX(-50%);
-      display: none; align-items: center; gap: 1rem;
-      background: rgba(255,255,255,0.9); padding: 0.5rem 1rem;
-      border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      z-index: 9;
+      position:fixed; top:4rem; left:50%; transform:translateX(-50%);
+      display:none; align-items:center; gap:1rem;
+      background:rgba(255,255,255,0.9); padding:0.5rem 1rem;
+      border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      transition: opacity 0.5s ease, transform 0.5s ease;
     }
-    #navigation-container input {
-      padding: 0.5rem 1rem; font-size: 1rem;
-      border: 1px solid #ccc; border-radius: 8px; width: 16rem;
+    input, button {
+      font-size:1rem; padding:0.5rem 1rem; border-radius:8px;
     }
-    #navigation-container button {
-      padding: 0.5rem 1.25rem; font-size: 1rem;
-      border: none; border-radius: 8px;
-      background: #4caf50; color: #fff; cursor: pointer;
+    input {
+      border:1px solid #ccc; width:16rem;
+    }
+    button {
+      border:none; background:#4caf50; color:#fff; cursor:pointer;
       transition: background 0.2s;
     }
-    #navigation-container button:disabled {
-      background: #ccc; cursor: not-allowed;
+    button:disabled {
+      background:#ccc; cursor:not-allowed;
     }
-    #navigation-container button:hover:not(:disabled) {
-      background: #43a047;
+    button:hover:not(:disabled) {
+      background:#43a047;
     }
-
-    /* 4) Map container */
-    #map-container {
-      display: none;
-      position: absolute; top: 8rem; left: 0; right: 0; bottom: 0;
-    }
-    #map { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
-
-  <!-- 1) Initial “enter name” screen -->
+  <!-- 1) Enter driver name -->
   <div id="initial-container">
     <input id="driverNameInput" type="text" placeholder="Enter driver name"/>
     <button id="activateBtn">Activate</button>
@@ -90,130 +68,112 @@
     <span id="statusDriverName"></span>
   </div>
 
-  <!-- 3) Address + Navigate / Confirm -->
+  <!-- 3) Destination + actions -->
   <div id="navigation-container">
     <input id="addressInput" type="text" placeholder="Enter destination"/>
     <button id="navigateBtn">Navigate</button>
     <button id="confirmBtn" style="display:none;">Confirm Delivery</button>
   </div>
 
-  <!-- 4) Map -->
-  <div id="map-container">
-    <div id="map"></div>
-  </div>
-
   <script>
-    let map, geocoder, directionsService, directionsRenderer, currentPosition;
+    let geocoder, currentPosition;
 
     function initMap() {
-      // Set up map & services
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 39.8283, lng: -98.5795 },
-        zoom: 5
-      });
       geocoder = new google.maps.Geocoder();
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map });
-
-      // Grab current GPS if possible
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          pos => {
-            currentPosition = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            };
-            map.setCenter(currentPosition);
-          },
-          () => console.warn('Geolocation failed or denied.')
+          pos => { currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+          () => console.warn('Geolocation unavailable')
         );
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const initialContainer    = document.getElementById('initial-container');
-      const driverNameInput     = document.getElementById('driverNameInput');
-      const activateBtn         = document.getElementById('activateBtn');
-      const statusBar           = document.getElementById('status-bar');
-      const statusDriverName    = document.getElementById('statusDriverName');
-      const navigationContainer = document.getElementById('navigation-container');
-      const addressInput        = document.getElementById('addressInput');
-      const navigateBtn         = document.getElementById('navigateBtn');
-      const confirmBtn          = document.getElementById('confirmBtn');
-      const mapContainer        = document.getElementById('map-container');
+      const initial     = document.getElementById('initial-container');
+      const driverInput = document.getElementById('driverNameInput');
+      const activate    = document.getElementById('activateBtn');
+      const statusBar   = document.getElementById('status-bar');
+      const nameLabel   = document.getElementById('statusDriverName');
+      const navCont     = document.getElementById('navigation-container');
+      const addrInput   = document.getElementById('addressInput');
+      const navBtn      = document.getElementById('navigateBtn');
+      const confirmBtn  = document.getElementById('confirmBtn');
 
-      // Activate driver
-      activateBtn.addEventListener('click', () => {
-        const name = driverNameInput.value.trim();
+      activate.addEventListener('click', () => {
+        const name = driverInput.value.trim();
         if (!name) return alert('Please enter a driver name.');
-        initialContainer.style.display      = 'none';
-        statusDriverName.textContent        = `Driver: ${name}`;
-        statusBar.style.display             = 'flex';
-        navigationContainer.style.display   = 'flex';
+        // animate out initial screen
+        initial.style.opacity = '0';
+        initial.style.transform = 'translate(-50%,-60%)';
+        setTimeout(() => {
+          initial.style.display = 'none';
+          nameLabel.textContent = `Driver: ${name}`;
+          statusBar.style.display = 'flex';
+          navCont.style.display  = 'flex';
+        }, 500);
       });
 
-      // Navigate — draw route on same map
-      navigateBtn.addEventListener('click', () => {
-        const addr = addressInput.value.trim();
-        if (!addr) return alert('Please enter a destination.');
+      navBtn.addEventListener('click', () => {
+        const destAddr = addrInput.value.trim();
+        if (!destAddr) return alert('Please enter a destination.');
 
-        geocoder.geocode({ address: addr }, (results, status) => {
+        geocoder.geocode({ address: destAddr }, (results, status) => {
           if (status === 'OK') {
             const dest = results[0].geometry.location;
             const origin = currentPosition
-              ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
-              : map.getCenter();
+              ? `${currentPosition.lat},${currentPosition.lng}`
+              : '';
+            const mapsUrl =
+              `https://www.google.com/maps/dir/?api=1` +
+              `&origin=${origin}` +
+              `&destination=${dest.lat()},${dest.lng()}` +
+              `&travelmode=driving`;
 
-            // Show map
-            mapContainer.style.display = 'block';
+            // fade out current page
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+              const w = screen.availWidth, h = screen.availHeight;
+              window.open(
+                mapsUrl,
+                '_blank',
+                `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=0,top=0,width=${w},height=${h}`
+              );
+              // restore behind-the-scenes so page isn't stuck transparent
+              document.body.style.opacity = '1';
+            }, 500);
 
-            // Draw route
-            directionsService.route({
-              origin,
-              destination: dest,
-              travelMode: 'DRIVING'
-            }, (res, stat) => {
-              if (stat === 'OK') {
-                directionsRenderer.setDirections(res);
-                // Zoom in for a “navigation” feel
-                map.fitBounds(res.routes[0].bounds);
-                map.setZoom(15);
-
-                // Swap to Confirm Delivery
-                navigateBtn.style.display = 'none';
-                confirmBtn.style.display  = 'inline-block';
-                addressInput.disabled     = true;
-              } else {
-                alert('Route error: ' + stat);
-              }
-            });
+            // swap to Confirm Delivery
+            navBtn.style.display     = 'none';
+            confirmBtn.style.display = 'inline-block';
+            addrInput.disabled       = true;
           } else {
             alert('Geocode error: ' + status);
           }
         });
       });
 
-      // Confirm delivery — reset everything
       confirmBtn.addEventListener('click', () => {
-        mapContainer.style.display        = 'none';
-        statusBar.style.display           = 'none';
-        navigationContainer.style.display = 'none';
-        initialContainer.style.display    = 'flex';
-
-        driverNameInput.value = '';
-        addressInput.value    = '';
-        addressInput.disabled = false;
-        navigateBtn.style.display = 'inline-block';
-        confirmBtn.style.display  = 'none';
-
-        // Reset map view
-        map.setCenter(currentPosition || { lat: 39.8283, lng: -98.5795 });
-        map.setZoom(5);
+        // reset all
+        navCont.style.opacity    = '0';
+        statusBar.style.opacity  = '0';
+        setTimeout(() => {
+          statusBar.style.display = 'none';
+          navCont.style.display   = 'none';
+          initial.style.display   = 'flex';
+          initial.style.opacity   = '1';
+          initial.style.transform = 'translate(-50%,-50%)';
+          driverInput.value       = '';
+          addrInput.value         = '';
+          addrInput.disabled      = false;
+          navBtn.style.display    = 'inline-block';
+          confirmBtn.style.display= 'none';
+        }, 500);
       });
     });
   </script>
 
-  <!-- Load Maps JS API -->
-  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&callback=initMap&libraries=places"></script>
+  <script defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&callback=initMap">
+  </script>
 </body>
 </html>
