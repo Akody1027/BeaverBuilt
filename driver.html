@@ -118,102 +118,82 @@
     <div id="map"></div>
   </div>
 
+  <!-- Firebase and Maps SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js"></script>
   <script>
-    // Initialize Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
-      authDomain: "delivery-tracker-f3adc.firebaseapp.com",
-      databaseURL: "https://delivery-tracker-f3adc-default-rtdb.firebaseio.com",
-      projectId: "delivery-tracker-f3adc",
-      storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
-      messagingSenderId: "934356625713",
-      appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
-      measurementId: "G-PT5072M6LC"
-    };
-    firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
-    const db = firebase.database();
-    const driverRef = db.ref('driver');
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
+        authDomain: "delivery-tracker-f3adc.firebaseapp.com",
+        databaseURL: "https://delivery-tracker-f3adc-default-rtdb.firebaseio.com",
+        projectId: "delivery-tracker-f3adc",
+        storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
+        messagingSenderId: "934356625713",
+        appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
+        measurementId: "G-PT5072M6LC"
+      };
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+      const db = firebase.database();
+      const driverRef = db.ref('driver');
 
-    let map, directionsService, directionsRenderer, watchId;
-    let currentStatus = 'inactive';
+      // Map & Routing setup
+      let map, directionsService, directionsRenderer, watchId;
+      let currentStatus = 'inactive';
 
-    function initMap() {
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 39.8283, lng: -98.5795 },
-        zoom: 5
+      window.initMap = function() {
+        map = new google.maps.Map(document.getElementById('map'), { center: { lat: 39.8283, lng: -98.5795 }, zoom: 5 });
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer.setMap(map);
+      };
+
+      // Event references
+      const toggle = document.getElementById('statusToggle');
+      const statusLabel = document.getElementById('statusLabel');
+      const goBtn = document.getElementById('goBtn');
+
+      // Toggle handler
+      toggle.addEventListener('change', () => {
+        currentStatus = toggle.checked ? 'active' : 'inactive';
+        statusLabel.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+        statusLabel.style.color = toggle.checked ? '#4caf50' : '#f44336';
+        document.title = `Driver Navigation - ${statusLabel.textContent}`;
+        driverRef.set({ status: currentStatus, lat: null, lng: null, destination: null, timestamp: Date.now() });
+        if (toggle.checked) {
+          if (navigator.geolocation) {
+            watchId = navigator.geolocation.watchPosition(pos => {
+              driverRef.set({ status: currentStatus, lat: pos.coords.latitude, lng: pos.coords.longitude, destination: window.destCoords || null, timestamp: Date.now() });
+            }, err => console.error(err), { enableHighAccuracy: true });
+          } else alert('Geolocation not supported');
+        } else if (watchId) navigator.geolocation.clearWatch(watchId);
       });
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
-    }
 
-    function updateFirebase(data) {
-      driverRef.set(data);
-    }
-
-    function startTracking() {
-      if (!navigator.geolocation) return alert('Geolocation not supported');
-      watchId = navigator.geolocation.watchPosition(pos => {
-        const { latitude, longitude } = pos.coords;
-        updateFirebase({
-          status: currentStatus,
-          lat: latitude,
-          lng: longitude,
-          destination: window.destCoords || null,
-          timestamp: Date.now()
+      // Go button handler
+      goBtn.addEventListener('click', () => {
+        const address = document.getElementById('destInput').value.trim();
+        if (!address) return alert('Please enter a destination.');
+        new google.maps.Geocoder().geocode({ address }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            window.destCoords = { lat: loc.lat(), lng: loc.lng() };
+            driverRef.set({ status: currentStatus, lat: null, lng: null, destination: window.destCoords, timestamp: Date.now() });
+            document.getElementById('map-container').style.display = 'block';
+            directionsService.route({ origin: map.getCenter(), destination: window.destCoords, travelMode: 'DRIVING' }, (res, stat) => {
+              if (stat === 'OK') {
+                directionsRenderer.setDirections(res);
+                map.fitBounds(res.routes[0].bounds);
+              } else alert('Route error: ' + stat);
+            });
+          } else {
+            alert('Address not found (status: ' + status + '). Please check and try again.');
+          }
         });
-      }, err => console.error(err), { enableHighAccuracy: true });
-    }
-    function stopTracking() {
-      if (watchId) navigator.geolocation.clearWatch(watchId);
-    }
-
-    document.getElementById('statusToggle').addEventListener('change', e => {
-      currentStatus = e.target.checked ? 'active' : 'inactive';
-      const label = document.getElementById('statusLabel');
-      label.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
-      label.style.color = currentStatus === 'active' ? '#4caf50' : '#f44336';
-      document.title = `Driver Navigation - ${label.textContent}`;
-      updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords || null, timestamp: Date.now() });
-      currentStatus === 'active' ? startTracking() : stopTracking();
-    });
-
-    document.getElementById('goBtn').addEventListener('click', () => {
-      const address = document.getElementById('destInput').value.trim();
-      console.log('Go clicked with address:', address);
-      if (!address) return alert('Please enter a destination.');
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address }, (results, status) => {
-        console.log('Geocode status:', status, results);
-        if (status === 'OK' && results[0]) {
-          const loc = results[0].geometry.location;
-          window.destCoords = { lat: loc.lat(), lng: loc.lng() };
-          updateFirebase({ status: currentStatus, lat: null, lng: null, destination: window.destCoords, timestamp: Date.now() });
-          document.getElementById('map-container').style.display = 'block';
-          directionsService.route({
-            origin: map.getCenter(),
-            destination: window.destCoords,
-            travelMode: 'DRIVING'
-          }, (res, stat) => {
-            console.log('Route status:', stat, res);
-            if (stat === 'OK') {
-              directionsRenderer.setDirections(res);
-              map.fitBounds(res.routes[0].bounds);
-            } else {
-              alert('Route error: ' + stat);
-            }
-          });
-        } else {
-          alert('Address not found (status: ' + status + '). Please check and try again.');
-        }
       });
     });
-
-    window.initMap = initMap;
   </script>
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places&callback=initMap"></script>
 </body>
