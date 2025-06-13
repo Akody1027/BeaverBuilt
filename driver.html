@@ -42,24 +42,26 @@
       width: 12px; height: 12px; border-radius: 50%;
       background: #4caf50;
     }
-    /* 3) Address input and buttons */
+    /* 3) Header: destination input + buttons */
     #navigation-container {
-      position: fixed; top: 4rem; left: 50%; transform: translateX(-50%);
-      display: none; flex-direction: column; align-items: center; gap: 0.5rem;
-      background: rgba(255,255,255,0.9); padding: 1rem;
-      border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      position: fixed; top: 4rem; left: 0; width: 100%;
+      display: none;
+      flex-direction: row; align-items: center; justify-content: center;
+      gap: 1rem;
+      background: rgba(255,255,255,0.95); padding: 0.5rem 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       z-index: 9;
     }
     #navigation-container input {
+      flex: 1; max-width: 24rem;
       padding: 0.5rem 1rem; font-size: 1rem;
-      border: 1px solid #ccc; border-radius: 8px; width: 16rem;
+      border: 1px solid #ccc; border-radius: 8px;
     }
     #navigation-container button {
       padding: 0.5rem 1.25rem; font-size: 1rem;
       border: none; border-radius: 8px; background: #4caf50;
       color: #fff; cursor: pointer; transition: background 0.2s;
-      width: 8rem;
+      min-width: 8rem;
     }
     #navigation-container button:disabled {
       background: #ccc; cursor: not-allowed;
@@ -67,18 +69,22 @@
     #navigation-container button:hover:not(:disabled) {
       background: #43a047;
     }
-    /* Info lines */
+    /* 4) Trip info below header */
     #tripInfo {
+      position: fixed; top: calc(4rem + 3.5rem); /* header + buffer */
+      left: 0; width: 100%;
       display: none; flex-direction: column; align-items: center;
-      gap: 0.25rem;
-      margin-top: 0.5rem;
-      text-align: center;
+      gap: 0.25rem; text-align: center;
+      padding: 0.5rem 0;
+      font-weight: 500; color: #333;
+      z-index: 8;
     }
-    /* Confirm button style */
-    #confirmBtn {
-      margin-top: 1rem;
-      width: 8rem;
+    /* 5) Map container fills rest of screen */
+    #map-container {
+      position: absolute; top: calc(4rem + 3.5rem + 3rem); /* header + tripInfo */
+      left: 0; right: 0; bottom: 0;
     }
+    #map { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
@@ -95,27 +101,42 @@
     <span id="statusDriverName"></span>
   </div>
 
-  <!-- 3) Destination input, calculate & navigate -->
+  <!-- 3) Header: address + Calculate/Navigate/Confirm -->
   <div id="navigation-container">
     <input id="addressInput" type="text" placeholder="Enter destination"/>
     <button id="calculateBtn">Calculate</button>
-    <div id="tripInfo">
-      <div id="duration"></div>
-      <div id="etaDisplay"></div>
-    </div>
-    <button id="navigateBtn" style="display:none;">Navigate</button>
+    <button id="navigateBtn" disabled>Navigate</button>
     <button id="confirmBtn" style="display:none;">Confirm Delivery</button>
   </div>
 
+  <!-- 4) Trip info below header -->
+  <div id="tripInfo">
+    <div id="duration"></div>
+    <div id="etaDisplay"></div>
+  </div>
+
+  <!-- 5) Map container -->
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+
   <script>
-    let geocoder, directionsService, currentPosition, lastOrigin, lastDestination;
+    let map, geocoder, directionsService, directionsRenderer, currentPosition;
+    let lastOrigin, lastDestination;
 
     function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 39.8283, lng: -98.5795 }, zoom: 5
+      });
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map });
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          pos => { currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude }; },
+          pos => {
+            currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            map.setCenter(currentPosition);
+          },
           () => console.warn('Geolocation unavailable')
         );
       }
@@ -143,14 +164,14 @@
         initial.style.opacity    = '0';
         initial.style.transform  = 'translate(-50%,-60%)';
         setTimeout(() => {
-          initial.style.display = 'none';
-          nameLabel.textContent = `Driver: ${name}`;
-          statusBar.style.display = 'flex';
-          navCont.style.display   = 'flex';
+          initial.style.display       = 'none';
+          nameLabel.textContent       = `Driver: ${name}`;
+          statusBar.style.display     = 'flex';
+          navCont.style.display       = 'flex';
         }, 500);
       });
 
-      // Calculate duration & ETA
+      // Calculate route and show on map
       calculateBtn.addEventListener('click', () => {
         const addr = addrInput.value.trim();
         if (!addr) return alert('Please enter a destination.');
@@ -159,24 +180,18 @@
             const dest = results[0].geometry.location;
             const origin = currentPosition
               ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
-              : null;
-            directionsService.route({
-              origin,
-              destination: dest,
-              travelMode: 'DRIVING'
-            }, (res, stat) => {
+              : map.getCenter();
+            directionsService.route({ origin, destination: dest, travelMode: 'DRIVING' }, (res, stat) => {
               if (stat === 'OK') {
-                const leg = res.routes[0].legs[0];
-                durationEl.textContent = `Duration: ${leg.duration.text}`;
-                // compute ETA time
-                const arrival = new Date(Date.now() + leg.duration.value * 1000);
-                let h = arrival.getHours();
-                const m = arrival.getMinutes().toString().padStart(2,'0');
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12 || 12;
+                directionsRenderer.setDirections(res);
+                map.fitBounds(res.routes[0].bounds);
+                durationEl.textContent = `Duration: ${res.routes[0].legs[0].duration.text}`;
+                const arrival = new Date(Date.now() + res.routes[0].legs[0].duration.value * 1000);
+                let h = arrival.getHours(); const m = arrival.getMinutes().toString().padStart(2,'0');
+                const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
                 etaEl.textContent = `ETA: ${h}:${m} ${ampm}`;
                 tripInfo.style.display = 'flex';
-                navigateBtn.style.display = 'inline-block';
+                navigateBtn.disabled = false;
                 lastOrigin = origin;
                 lastDestination = dest;
                 addrInput.disabled = true;
@@ -190,49 +205,41 @@
         });
       });
 
-      // Navigate (popup)
+      // Navigate: open full-screen popup
       navigateBtn.addEventListener('click', () => {
-        if (!lastOrigin || !lastDestination) return;
         const originParam = `${lastOrigin.lat()},${lastOrigin.lng()}`;
-        const destParam   = `${lastDestination.lat()},${lastDestination.lng()}`;
-        const mapsUrl =
-          `https://www.google.com/maps/dir/?api=1` +
-          `&origin=${originParam}` +
-          `&destination=${destParam}` +
-          `&travelmode=driving`;
+        const destParam = `${lastDestination.lat()},${lastDestination.lng()}`;
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originParam}` +
+                        `&destination=${destParam}&travelmode=driving`;
         document.body.style.opacity = '0';
         setTimeout(() => {
           const w = screen.availWidth, h = screen.availHeight;
-          window.open(
-            mapsUrl,
-            '_blank',
-            `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=0,top=0,width=${w},height=${h}`
-          );
+          window.open(mapsUrl, '_blank', `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,left=0,top=0,width=${w},height=${h}`);
           document.body.style.opacity = '1';
         }, 500);
+        calculateBtn.style.display = 'none';
         navigateBtn.style.display = 'none';
         confirmBtn.style.display  = 'inline-block';
       });
 
-      // Confirm delivery
+      // Confirm delivery and reset
       confirmBtn.addEventListener('click', () => {
-        // reset everything
-        tripInfo.style.display        = 'none';
-        navCont.style.opacity         = '0';
-        statusBar.style.opacity       = '0';
+        tripInfo.style.display         = 'none';
+        navCont.style.opacity          = '0';
+        statusBar.style.opacity        = '0';
         setTimeout(() => {
-          statusBar.style.display         = 'none';
-          navCont.style.display           = 'none';
-          initial.style.display           = 'flex';
-          initial.style.opacity           = '1';
-          initial.style.transform         = 'translate(-50%,-50%)';
-          driverInput.value               = '';
-          addrInput.value                 = '';
-          addrInput.disabled              = false;
-          calculateBtn.style.display      = 'inline-block';
-          navigateBtn.style.display       = 'none';
-          confirmBtn.style.display        = 'none';
-          tripInfo.style.display          = 'none';
+          statusBar.style.display      = 'none';
+          navCont.style.display        = 'none';
+          initial.style.display        = 'flex';
+          initial.style.opacity        = '1';
+          initial.style.transform      = 'translate(-50%,-50%)';
+          driverInput.value            = ''; addrInput.value = '';
+          addrInput.disabled           = false;
+          calculateBtn.style.display   = 'inline-block';
+          calculateBtn.disabled        = false;
+          navigateBtn.disabled         = true;
+          navigateBtn.style.display    = 'inline-block';
+          confirmBtn.style.display     = 'none';
         }, 500);
       });
     });
