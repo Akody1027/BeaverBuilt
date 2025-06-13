@@ -7,82 +7,133 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet"/>
   <style>
     body, html {
-      margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif;
-      background: #f4f4f9; transition: opacity 0.5s ease;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Roboto', sans-serif;
+      background: #f4f4f9;
+      transition: opacity 0.5s ease;
     }
     /* 1) Initial “enter name” screen */
     #initial-container {
-      position: absolute; top: 50%; left: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      background: #fff; padding: 2rem;
-      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column; gap: 1rem; align-items: center;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
     #initial-container input {
-      padding: 0.75rem 1rem; font-size: 1rem;
-      border: 1px solid #ccc; border-radius: 8px; width: 16rem;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 16rem;
     }
     #initial-container button {
-      padding: 0.75rem 1.5rem; font-size: 1rem;
-      border: none; border-radius: 8px; background: #4caf50;
-      color: #fff; cursor: pointer; transition: background 0.2s;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
     }
     #initial-container button:hover {
       background: #43a047;
     }
     /* 2) Status bar (hidden until activated) */
     #status-bar {
-      position: fixed; top: 1rem; left: 1rem;
-      display: none; align-items: center; gap: 0.5rem;
-      font-weight: 500; color: #333;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      color: #333;
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
     .status-dot {
-      width: 12px; height: 12px; border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
       background: #4caf50;
     }
     /* 3) Header: destination input + buttons */
     #navigation-container {
-      position: fixed; top: 4rem; left: 0; width: 100%;
+      position: fixed;
+      top: 4rem;
+      left: 0;
+      width: 100%;
       display: none;
-      flex-direction: row; align-items: center; justify-content: center;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       gap: 1rem;
-      background: rgba(255,255,255,0.95); padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.95);
+      padding: 0.5rem 1rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       z-index: 9;
     }
     #navigation-container input {
-      flex: 1; max-width: 24rem;
-      padding: 0.5rem 1rem; font-size: 1rem;
-      border: 1px solid #ccc; border-radius: 8px;
+      flex: 1;
+      max-width: 24rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     #navigation-container button {
-      padding: 0.5rem 1.25rem; font-size: 1rem;
-      border: none; border-radius: 8px; background: #4caf50;
-      color: #fff; cursor: pointer; transition: background 0.2s;
+      padding: 0.5rem 1.25rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
       min-width: 8rem;
     }
     #navigation-container button:disabled {
-      background: #ccc; cursor: not-allowed;
+      background: #ccc;
+      cursor: not-allowed;
     }
     #navigation-container button:hover:not(:disabled) {
       background: #43a047;
     }
     /* 4) Trip info below header */
     #tripInfo {
-      position: fixed; top: calc(4rem + 3.5rem); /* header + buffer */
-      left: 0; width: 100%;
-      display: none; flex-direction: column; align-items: center;
-      gap: 0.25rem; text-align: center;
+      position: fixed;
+      top: calc(4rem + 3.5rem);
+      left: 0;
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      text-align: center;
       padding: 0.5rem 0;
-      font-weight: 500; color: #333;
+      font-weight: 500;
+      color: #333;
       z-index: 8;
     }
-    /* 5) Map container fills rest of screen */
+    /* 5) Map container hidden by default */
     #map-container {
-      position: absolute; top: calc(4rem + 3.5rem + 3rem); /* header + tripInfo */
-      left: 0; right: 0; bottom: 0;
+      display: none;
+      position: absolute;
+      top: calc(4rem + 3.5rem + 3rem);
+      left: 0;
+      right: 0;
+      bottom: 0;
     }
     #map { width: 100%; height: 100%; }
   </style>
@@ -126,7 +177,8 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 39.8283, lng: -98.5795 }, zoom: 5
+        center: { lat: 39.8283, lng: -98.5795 },
+        zoom: 5
       });
       geocoder = new google.maps.Geocoder();
       directionsService = new google.maps.DirectionsService();
@@ -156,6 +208,7 @@
       const etaEl         = document.getElementById('etaDisplay');
       const navigateBtn   = document.getElementById('navigateBtn');
       const confirmBtn    = document.getElementById('confirmBtn');
+      const mapContainer  = document.getElementById('map-container');
 
       // Activate driver
       activateBtn.addEventListener('click', () => {
@@ -183,8 +236,12 @@
               : map.getCenter();
             directionsService.route({ origin, destination: dest, travelMode: 'DRIVING' }, (res, stat) => {
               if (stat === 'OK') {
+                // show map
+                mapContainer.style.display = 'block';
+                // draw route
                 directionsRenderer.setDirections(res);
                 map.fitBounds(res.routes[0].bounds);
+                // show trip info
                 durationEl.textContent = `Duration: ${res.routes[0].legs[0].duration.text}`;
                 const arrival = new Date(Date.now() + res.routes[0].legs[0].duration.value * 1000);
                 let h = arrival.getHours(); const m = arrival.getMinutes().toString().padStart(2,'0');
@@ -233,7 +290,8 @@
           initial.style.display        = 'flex';
           initial.style.opacity        = '1';
           initial.style.transform      = 'translate(-50%,-50%)';
-          driverInput.value            = ''; addrInput.value = '';
+          driverInput.value            = '';
+          addrInput.value             = '';
           addrInput.disabled           = false;
           calculateBtn.style.display   = 'inline-block';
           calculateBtn.disabled        = false;
