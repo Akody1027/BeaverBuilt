@@ -117,13 +117,14 @@
       left: 0;
       width: 100%;
       display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.25rem;
+      flex-direction: row;
+      justify-content: center;
+      gap: 2rem;
       text-align: center;
       padding: 0.5rem 0;
-      font-weight: 500;
+      font-weight: 600;
       color: #333;
+      font-size: 1.25rem;
       z-index: 8;
     }
     /* 5) Map container hidden by default */
@@ -279,26 +280,34 @@
         confirmBtn.style.display  = 'inline-block';
       });
 
-      // Confirm delivery and reset
+      // Confirm delivery and reset with pop-up confirmation
       confirmBtn.addEventListener('click', () => {
-        tripInfo.style.display         = 'none';
-        navCont.style.opacity          = '0';
-        statusBar.style.opacity        = '0';
-        setTimeout(() => {
-          statusBar.style.display      = 'none';
-          navCont.style.display        = 'none';
-          initial.style.display        = 'flex';
-          initial.style.opacity        = '1';
-          initial.style.transform      = 'translate(-50%,-50%)';
-          driverInput.value            = '';
-          addrInput.value             = '';
-          addrInput.disabled           = false;
-          calculateBtn.style.display   = 'inline-block';
-          calculateBtn.disabled        = false;
-          navigateBtn.disabled         = true;
-          navigateBtn.style.display    = 'inline-block';
-          confirmBtn.style.display     = 'none';
-        }, 500);
+        const delivered = window.confirm('Was the product delivered?');
+        if (delivered) {
+          // reset everything
+          tripInfo.style.display         = 'none';
+          navCont.style.opacity          = '0';
+          statusBar.style.opacity        = '0';
+          setTimeout(() => {
+            statusBar.style.display      = 'none';
+            navCont.style.display        = 'none';
+            initial.style.display        = 'flex';
+            initial.style.opacity        = '1';
+            initial.style.transform      = 'translate(-50%,-50%)';
+            driverInput.value            = '';
+            addrInput.value              = '';
+            addrInput.disabled           = false;
+            calculateBtn.style.display   = 'inline-block';
+            calculateBtn.disabled        = false;
+            navigateBtn.disabled         = true;
+            navigateBtn.style.display    = 'inline-block';
+            confirmBtn.style.display     = 'none';
+            mapContainer.style.display   = 'none';
+          }, 500);
+        } else {
+          // user not delivered: return to map
+          // simply close the dialog, keep current UI
+        }
       });
     });
   </script>
