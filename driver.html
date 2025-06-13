@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Driver Navigation - Inactive</title>
-  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet" />
   <style>
-    body, html { margin:0; padding:0; height:100%; font-family:'Roboto',sans-serif; background:#f4f4f9; }
+    body, html { margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif; background: #f4f4f9; }
     #controls {
-      position:absolute; top:1rem; left:50%; transform:translateX(-50%);
-      background:#fff; padding:1rem 1.5rem; border-radius:12px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1); display:flex; align-items:center; gap:1rem; z-index:10;
+      position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+      background: #fff; padding: 1rem 1.5rem; border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 1rem; z-index: 10;
     }
     #controls input[type="text"] {
-      flex:1; padding:0.75rem 1rem; font-size:1rem; border:1px solid #ccc;
-      border-radius:8px; outline:none; transition:border-color .2s;
+      flex: 1; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid #ccc;
+      border-radius: 8px; outline: none; transition: border-color 0.2s;
     }
-    #controls input[type="text"]:focus { border-color:#4caf50; }
+    #controls input[type="text"]:focus { border-color: #4caf50; }
     #controls button {
-      padding:0.75rem 1.25rem; font-size:1rem; border:none; border-radius:8px;
-      background:#4caf50; color:#fff; cursor:pointer; transition:background .2s;
+      padding: 0.75rem 1.25rem; font-size: 1rem; border: none; border-radius: 8px;
+      background: #4caf50; color: #fff; cursor: pointer; transition: background 0.2s;
     }
-    #controls button:hover { background:#43a047; }
-    .toggle-wrapper { display:flex; align-items:center; gap:0.5rem; }
-    .toggle-switch { position:relative; width:50px; height:28px; }
-    .toggle-switch input { display:none; }
-    .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
-      background-color:#f44336; border-radius:34px; transition:.4s;
+    #controls button:hover { background: #43a047; }
+    .toggle-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+    .toggle-switch { position: relative; width: 50px; height: 28px; }
+    .toggle-switch input { display: none; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #f44336; border-radius: 34px; transition: 0.4s;
     }
-    .slider:before { position:absolute; content:''; height:22px; width:22px;
-      left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.4s;
+    .slider:before {
+      position: absolute; content: ''; height: 22px; width: 22px;
+      left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.4s;
     }
-    input:checked + .slider { background:#4caf50; }
-    input:checked + .slider:before { transform:translateX(22px); }
-    #statusLabel { font-weight:500; color:#f44336; }
-    #map-container { display:none; position:absolute; top:5rem; left:0; right:0; bottom:0;
-      border-top-left-radius:16px; border-top-right-radius:16px; overflow:hidden;
-      box-shadow:0 -2px 8px rgba(0,0,0,0.1);
+    input:checked + .slider { background: #4caf50; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    #statusLabel { font-weight: 500; color: #f44336; }
+    #map-container {
+      display: none; position: absolute; top: 5rem; left: 0; right: 0; bottom: 0;
+      border-top-left-radius: 16px; border-top-right-radius: 16px; overflow: hidden;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
     }
-    #map { width:100%; height:100%; }
+    #map { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
@@ -56,15 +59,14 @@
   <div id="map-container"><div id="map"></div></div>
 
   <script>
-    let map, geocoder, directionsService, directionsRenderer;
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize Google Map
-      map = new google.maps.Map(document.getElementById('map'), { center:{lat:39.8283,lng:-98.5795}, zoom:5 });
-      geocoder = new google.maps.Geocoder();
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
+      // Map initialization
+      const map = new google.maps.Map(document.getElementById('map'), { center: { lat: 39.8283, lng: -98.5795 }, zoom: 5 });
+      const geocoder = new google.maps.Geocoder();
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
 
+      // Elements
       const toggle = document.getElementById('statusToggle');
       const statusLabel = document.getElementById('statusLabel');
       const goBtn = document.getElementById('goBtn');
@@ -73,38 +75,35 @@
 
       // Toggle handler
       toggle.addEventListener('change', () => {
-        if (toggle.checked) {
-          statusLabel.textContent = 'Active';
-          statusLabel.style.color = '#4caf50';
-          document.title = 'Driver Navigation - Active';
-        } else {
-          statusLabel.textContent = 'Inactive';
-          statusLabel.style.color = '#f44336';
-          document.title = 'Driver Navigation - Inactive';
-        }
+        const active = toggle.checked;
+        statusLabel.textContent = active ? 'Active' : 'Inactive';
+        statusLabel.style.color = active ? '#4caf50' : '#f44336';
+        document.title = `Driver Navigation - ${statusLabel.textContent}`;
       });
 
-      // Go button handler
+      // Go handler
       goBtn.addEventListener('click', () => {
         const address = destInput.value.trim();
         if (!address) return alert('Please enter a destination.');
         geocoder.geocode({ address }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            mapContainer.style.display = 'block';
+          if (status === 'OK') {
             const loc = results[0].geometry.location;
+            mapContainer.style.display = 'block';
             directionsService.route({ origin: map.getCenter(), destination: loc, travelMode: 'DRIVING' }, (res, stat) => {
               if (stat === 'OK') {
                 directionsRenderer.setDirections(res);
                 map.fitBounds(res.routes[0].bounds);
-              } else alert('Route error: ' + stat);
+              } else {
+                alert('Route error: ' + stat);
+              }
             });
           } else {
-            alert('Address not found (status: ' + status + '). Please check and try again.');
+            alert('Address not found: ' + status);
           }
         });
       });
     });
   </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places&callback=initMap"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places"></script>
 </body>
 </html>
