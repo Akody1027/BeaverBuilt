@@ -28,10 +28,6 @@
       border: 1px solid #ccc;
       border-radius: 8px;
       outline: none;
-      transition: border-color 0.2s;
-    }
-    #controls input[type="text"]:focus {
-      border-color: #4caf50;
     }
     #controls button {
       padding: 0.75rem 1.25rem;
@@ -41,64 +37,27 @@
       background: #4caf50;
       color: #fff;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    #controls button:hover {
-      background: #43a047;
-    }
-    #map-container {
-      position: absolute;
-      top: 5rem;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: none;
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-    }
-    #map { width: 100%; height: 100%; }
-    .toggle-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .toggle-switch {
-      position: relative;
-      width: 50px;
-      height: 28px;
-    }
+    .toggle-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+    .toggle-switch { position: relative; width: 50px; height: 28px; }
     .toggle-switch input { display: none; }
     .slider {
-      position: absolute;
-      cursor: pointer;
+      position: absolute; cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
       background-color: #f44336;
       border-radius: 34px;
       transition: 0.4s;
     }
     .slider:before {
-      position: absolute;
-      content: "";
-      height: 22px;
-      width: 22px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: 0.4s;
-      border-radius: 50%;
+      position: absolute; content: ''; height: 22px; width: 22px;
+      left: 3px; bottom: 3px;
+      background-color: #fff; border-radius: 50%; transition: 0.4s;
     }
-    input:checked + .slider {
-      background-color: #4caf50;
-    }
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-    #statusLabel {
-      font-weight: 500;
-      color: #f44336;
-    }
+    input:checked + .slider { background-color: #4caf50; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    #statusLabel { font-weight: 500; color: #f44336; }
+    #map-container { display: none; position: absolute; top: 5rem; left:0; right:0; bottom:0; border-top-left-radius:16px; border-top-right-radius:16px; overflow:hidden; }
+    #map { width:100%; height:100%; }
   </style>
 </head>
 <body>
@@ -111,90 +70,27 @@
       <span id="statusLabel">Inactive</span>
     </div>
     <input type="text" id="destInput" placeholder="Enter destination" />
-    <button type="button" id="goBtn">Go</button>
+    <button id="goBtn">Go</button>
   </div>
+  <div id="map-container"><div id="map"></div></div>
 
-  <div id="map-container">
-    <div id="map"></div>
-  </div>
-
-  <!-- Firebase and Maps SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyCvDPrwPZAcnr4q9AGnVj0VTbPezoAtBMM",
-        authDomain: "delivery-tracker-f3adc.firebaseapp.com",
-        databaseURL: "https://delivery-tracker-f3adc-default-rtdb.firebaseio.com",
-        projectId: "delivery-tracker-f3adc",
-        storageBucket: "delivery-tracker-f3adc.firebasestorage.app",
-        messagingSenderId: "934356625713",
-        appId: "1:934356625713:web:b4bac3d9eb9d68c6fa2810",
-        measurementId: "G-PT5072M6LC"
-      };
-      firebase.initializeApp(firebaseConfig);
-      firebase.analytics();
-      const db = firebase.database();
-      const driverRef = db.ref('driver');
-
-      // Map & Routing setup
-      let map, directionsService, directionsRenderer, watchId;
-      let currentStatus = 'inactive';
-
-      window.initMap = function() {
-        map = new google.maps.Map(document.getElementById('map'), { center: { lat: 39.8283, lng: -98.5795 }, zoom: 5 });
-        directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer();
-        directionsRenderer.setMap(map);
-      };
-
-      // Event references
       const toggle = document.getElementById('statusToggle');
       const statusLabel = document.getElementById('statusLabel');
-      const goBtn = document.getElementById('goBtn');
 
-      // Toggle handler
       toggle.addEventListener('change', () => {
-        currentStatus = toggle.checked ? 'active' : 'inactive';
-        statusLabel.textContent = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
-        statusLabel.style.color = toggle.checked ? '#4caf50' : '#f44336';
-        document.title = `Driver Navigation - ${statusLabel.textContent}`;
-        driverRef.set({ status: currentStatus, lat: null, lng: null, destination: null, timestamp: Date.now() });
         if (toggle.checked) {
-          if (navigator.geolocation) {
-            watchId = navigator.geolocation.watchPosition(pos => {
-              driverRef.set({ status: currentStatus, lat: pos.coords.latitude, lng: pos.coords.longitude, destination: window.destCoords || null, timestamp: Date.now() });
-            }, err => console.error(err), { enableHighAccuracy: true });
-          } else alert('Geolocation not supported');
-        } else if (watchId) navigator.geolocation.clearWatch(watchId);
-      });
-
-      // Go button handler
-      goBtn.addEventListener('click', () => {
-        const address = document.getElementById('destInput').value.trim();
-        if (!address) return alert('Please enter a destination.');
-        new google.maps.Geocoder().geocode({ address }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const loc = results[0].geometry.location;
-            window.destCoords = { lat: loc.lat(), lng: loc.lng() };
-            driverRef.set({ status: currentStatus, lat: null, lng: null, destination: window.destCoords, timestamp: Date.now() });
-            document.getElementById('map-container').style.display = 'block';
-            directionsService.route({ origin: map.getCenter(), destination: window.destCoords, travelMode: 'DRIVING' }, (res, stat) => {
-              if (stat === 'OK') {
-                directionsRenderer.setDirections(res);
-                map.fitBounds(res.routes[0].bounds);
-              } else alert('Route error: ' + stat);
-            });
-          } else {
-            alert('Address not found (status: ' + status + '). Please check and try again.');
-          }
-        });
+          statusLabel.textContent = 'Active';
+          statusLabel.style.color = '#4caf50';
+          document.title = 'Driver Navigation - Active';
+        } else {
+          statusLabel.textContent = 'Inactive';
+          statusLabel.style.color = '#f44336';
+          document.title = 'Driver Navigation - Inactive';
+        }
       });
     });
   </script>
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&libraries=places&callback=initMap"></script>
 </body>
 </html>
