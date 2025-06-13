@@ -4,130 +4,81 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Driver Navigation - Inactive</title>
-  <link
-    href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500&display=swap" rel="stylesheet" />
   <style>
     body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Roboto', sans-serif;
+      margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif;
       background: #f4f4f9;
     }
-    /* Fixed toolbar at top */
+    /* 1. Toolbar now spans 100% */
     #controls {
       position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #fff;
-      padding: 1rem 1.5rem;
+      top: 0; left: 0; width: 100%;
+      background: #fff; padding: 1rem 1.5rem;
       border-bottom-left-radius: 12px;
       border-bottom-right-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      z-index: 10;
+      display: flex; align-items: center;
+      gap: 1rem; flex-wrap: wrap; z-index: 10;
     }
     #controls input[type="text"] {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      outline: none;
+      flex: 1; padding: 0.75rem 1rem; font-size: 1rem;
+      border: 1px solid #ccc; border-radius: 8px; outline: none;
       transition: border-color 0.2s;
     }
-    #controls input[type="text"]:focus {
-      border-color: #4caf50;
-    }
-    #controls input[type="text"]:disabled {
-      background: #eee;
-    }
+    #controls input:disabled { background: #eee; }
     #controls button {
-      padding: 0.75rem 1.25rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background: #4caf50;
-      color: #fff;
-      cursor: pointer;
+      padding: 0.75rem 1.25rem; font-size: 1rem;
+      border: none; border-radius: 8px;
+      background: #4caf50; color: #fff; cursor: pointer;
       transition: background 0.2s;
     }
     #controls button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
+      background: #ccc; cursor: not-allowed;
     }
-    #controls button:hover:not(:disabled) {
-      background: #43a047;
-    }
-    .toggle-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .toggle-switch {
-      position: relative;
-      width: 50px;
-      height: 28px;
-    }
+    #controls button:hover:not(:disabled) { background: #43a047; }
+
+    .toggle-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+    .toggle-switch { position: relative; width: 50px; height: 28px; }
     .toggle-switch input { display: none; }
     .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #f44336;
-      border-radius: 34px;
-      transition: 0.4s;
+      position: absolute; cursor: pointer;
+      top:0; left:0; right:0; bottom:0;
+      background-color: #f44336; border-radius: 34px; transition:0.4s;
     }
     .slider:before {
-      position: absolute;
-      content: '';
-      height: 22px; width: 22px;
-      left: 3px; bottom: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: 0.4s;
+      position: absolute; content:''; height:22px; width:22px;
+      left:3px; bottom:3px; background:#fff; border-radius:50%; transition:0.4s;
     }
-    input:checked + .slider {
-      background: #4caf50;
+    input:checked + .slider       { background: #4caf50; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    #statusLabel { font-weight:500; color:#f44336; }
+    /* ETA & Tracking get full-row lines */
+    #eta, #trackingCode {
+      flex-basis: 100%; margin-top:0.5rem; text-align:center;
+      font-weight:500; color:#333;
     }
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-    #statusLabel {
-      font-weight: 500;
-      color: #f44336;
-    }
-    /* ETA and Tracking on their own lines */
-    #eta,
-    #trackingCode {
-      flex-basis: 100%;
-      margin-top: 0.5rem;
-      text-align: center;
-      font-weight: 500;
-      color: #333;
-    }
-    /* Map sits below toolbar + ETA + tracking code */
+
+    /* map + directions sit below toolbar */
     #map-container {
       display: none;
       position: absolute;
-      top: 7rem;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      top: 9rem;   /* adjust so it's below toolbar + ETA + tracking */
+      left: 0; right: 0; bottom: 30%;
+      border-top-left-radius:16px; border-top-right-radius:16px;
+      overflow:hidden; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
     }
-    #map {
-      width: 100%;
-      height: 100%;
+    #map { width:100%; height:100%; }
+
+    /* Turn-by-turn panel at bottom */
+    #directionsPanel {
+      position: absolute; top: auto; bottom:0; left:0; right:0;
+      height:30%; overflow-y:auto; background:#fff;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -140,9 +91,11 @@
       </label>
       <span id="statusLabel">Inactive</span>
     </div>
+
     <input type="text" id="destInput" placeholder="Enter destination" disabled />
     <button id="goBtn" disabled>Go</button>
     <button id="startNavBtn" disabled>Start Navigation</button>
+
     <span id="eta"></span>
     <span id="trackingCode"></span>
   </div>
@@ -150,6 +103,7 @@
   <div id="map-container">
     <div id="map"></div>
   </div>
+  <div id="directionsPanel"></div>
 
   <script>
     let currentPosition = null;
@@ -162,7 +116,10 @@
       });
       const geocoder = new google.maps.Geocoder();
       const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+      const directionsRenderer = new google.maps.DirectionsRenderer({
+        map,
+        suppressMarkers: false
+      });
 
       const toggle = document.getElementById('statusToggle');
       const statusLabel = document.getElementById('statusLabel');
@@ -171,9 +128,10 @@
       const startNavBtn = document.getElementById('startNavBtn');
       const etaDisplay = document.getElementById('eta');
       const trackingCodeDisplay = document.getElementById('trackingCode');
+      const directionsPanel = document.getElementById('directionsPanel');
       const mapContainer = document.getElementById('map-container');
 
-      // Get device location
+      // grab GPS location
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           pos => {
@@ -183,9 +141,7 @@
             };
             map.setCenter(currentPosition);
           },
-          err => {
-            console.warn('Geolocation error:', err);
-          }
+          err => console.warn('Geolocation error:', err)
         );
       }
 
@@ -204,99 +160,73 @@
           mapContainer.style.display = 'none';
           etaDisplay.textContent = '';
           trackingCodeDisplay.textContent = '';
+          directionsPanel.innerHTML = '';
         }
       });
 
-      // “Go” handler: geocode + draw route
+      // “Go” => geocode & draw route
       goBtn.addEventListener('click', () => {
         const address = destInput.value.trim();
-        if (!address) {
-          alert('Please enter a destination.');
-          return;
-        }
+        if (!address) return alert('Please enter a destination.');
 
         geocoder.geocode({ address }, (results, status) => {
           console.log('Geocode status:', status, results);
-          switch (status) {
-            case 'OK':
-              mapContainer.style.display = 'block';
-              const destLocation = results[0].geometry.location;
-              const originLocation = currentPosition
-                ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
-                : map.getCenter();
+          if (status === 'OK') {
+            mapContainer.style.display = 'block';
+            const destLoc = results[0].geometry.location;
+            const originLoc = currentPosition
+              ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
+              : map.getCenter();
 
-              directionsService.route({
-                origin: originLocation,
-                destination: destLocation,
-                travelMode: 'DRIVING'
-              }, (res, stat) => {
-                if (stat === 'OK') {
-                  directionsRenderer.setDirections(res);
-                  map.fitBounds(res.routes[0].bounds);
+            directionsService.route({
+              origin: originLoc,
+              destination: destLoc,
+              travelMode: 'DRIVING'
+            }, (res, stat) => {
+              if (stat === 'OK') {
+                directionsRenderer.setDirections(res);
+                map.fitBounds(res.routes[0].bounds);
 
-                  // Show ETA
-                  const duration = res.routes[0].legs[0].duration.text;
-                  etaDisplay.textContent = `ETA: ${duration}`;
+                // ETA
+                const dur = res.routes[0].legs[0].duration.text;
+                etaDisplay.textContent = `ETA: ${dur}`;
 
-                  // Enable Start Navigation
-                  startNavBtn.disabled = false;
-
-                  // Save for navigation & tracking
-                  window.lastRoute = {
-                    origin: {
-                      lat: originLocation.lat(),
-                      lng: originLocation.lng()
-                    },
-                    destination: {
-                      lat: destLocation.lat(),
-                      lng: destLocation.lng()
-                    }
-                  };
-                } else {
-                  alert('Route error: ' + stat);
-                }
-              });
-              break;
-
-            case 'ZERO_RESULTS':
-              alert('No matching address found. Try a more specific query.');
-              break;
-
-            case 'REQUEST_DENIED':
-              alert(
-                'Geocoding request denied – check your API key,\n' +
-                'enable Geocoding API, billing & referrer settings.'
-              );
-              break;
-
-            default:
-              alert('Geocoding error: ' + status);
+                startNavBtn.disabled = false;
+                window.lastRoute = {
+                  origin: { lat: originLoc.lat(), lng: originLoc.lng() },
+                  destination: { lat: destLoc.lat(), lng: destLoc.lng() }
+                };
+              } else {
+                alert('Route error: ' + stat);
+              }
+            });
+          } else {
+            alert('Geocode error: ' + status);
           }
         });
       });
 
-      // Start turn-by-turn navigation + generate tracking code
+      // “Start Navigation” => inject turn-by-turn panel in-page
       startNavBtn.addEventListener('click', () => {
         if (!window.lastRoute) return;
 
-        // 4-digit tracking code
+        // Tracking code stays the same
         const code = Math.floor(1000 + Math.random() * 9000);
         localStorage.setItem('tracking_' + code, JSON.stringify(window.lastRoute));
         trackingCodeDisplay.textContent = `Tracking Code: ${code}`;
 
-        // Launch Google Maps navigation
-        const { origin, destination } = window.lastRoute;
-        const navUrl = 
-          `https://www.google.com/maps/dir/?api=1` +
-          `&origin=${origin.lat},${origin.lng}` +
-          `&destination=${destination.lat},${destination.lng}` +
-          `&travelmode=driving`;
-        window.open(navUrl, '_blank');
+        // Show step-by-step inside our directionsPanel
+        directionsRenderer.setPanel(directionsPanel);
+
+        // Zoom in for navigation
+        map.setZoom(15);
+        map.setCenter(
+          new google.maps.LatLng(window.lastRoute.origin.lat, window.lastRoute.origin.lng)
+        );
       });
     }
   </script>
 
-  <!-- Load Maps API with callback -->
   <script
     defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&callback=initMap&libraries=places">
