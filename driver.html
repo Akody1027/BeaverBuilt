@@ -69,21 +69,15 @@
       background: #43a047;
     }
 
-    /* 4) Map and turn-by-turn panel */
+    /* 4) Map iframe */
     #map-container {
       display: none;
-      position: absolute; top: 8rem; left: 0; right: 0; bottom: 30%;
+      position: absolute; top: 8rem; left: 0; right: 0; bottom: 20%;
       border-top-left-radius: 16px; border-top-right-radius: 16px;
       overflow: hidden; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
     }
-    #map { width: 100%; height: 100%; }
-
-    #directionsPanel {
-      display: none;
-      position: absolute; bottom: 0; left: 0; right: 0; height: 30%;
-      overflow-y: auto; background: #fff;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-      padding: 1rem; font-size: 0.9rem;
+    #map-frame {
+      width: 100%; height: 100%; border: none;
     }
   </style>
 </head>
@@ -108,28 +102,21 @@
     <button id="confirmBtn" style="display:none;">Confirm Delivery</button>
   </div>
 
-  <!-- 4) Map -->
+  <!-- 4) Embedded Google Navigate -->
   <div id="map-container">
-    <div id="map"></div>
+    <iframe 
+      id="map-frame"
+      src=""
+      allowfullscreen>
+    </iframe>
   </div>
 
-  <!-- 5) Turn-by-turn panel -->
-  <div id="directionsPanel"></div>
-
   <script>
-    let map, geocoder, directionsService, directionsRenderer, currentPosition;
+    let geocoder, currentPosition;
 
+    // Initialize only geocoder + geolocation
     function initMap() {
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 39.8283, lng: -98.5795 },
-        zoom: 5
-      });
       geocoder = new google.maps.Geocoder();
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({
-        map, suppressMarkers: false
-      });
-
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           pos => {
@@ -137,7 +124,6 @@
               lat: pos.coords.latitude,
               lng: pos.coords.longitude
             };
-            map.setCenter(currentPosition);
           },
           () => console.warn('Geolocation failed or denied.')
         );
@@ -155,7 +141,7 @@
       const navigateBtn         = document.getElementById('navigateBtn');
       const confirmBtn          = document.getElementById('confirmBtn');
       const mapContainer        = document.getElementById('map-container');
-      const directionsPanel     = document.getElementById('directionsPanel');
+      const mapFrame            = document.getElementById('map-frame');
 
       // Activate driver
       activateBtn.addEventListener('click', () => {
@@ -167,7 +153,7 @@
         navigationContainer.style.display   = 'flex';
       });
 
-      // Navigate to destination
+      // Navigate: embed Google Maps navigation
       navigateBtn.addEventListener('click', () => {
         const addr = addressInput.value.trim();
         if (!addr) return alert('Please enter a destination.');
@@ -176,62 +162,49 @@
           if (status === 'OK') {
             const dest = results[0].geometry.location;
             const origin = currentPosition
-              ? new google.maps.LatLng(currentPosition.lat, currentPosition.lng)
-              : map.getCenter();
+              ? `${currentPosition.lat},${currentPosition.lng}`
+              : '';
 
-            // Show map & turn-by-turn panel
-            mapContainer.style.display      = 'block';
-            directionsPanel.style.display   = 'block';
+            // Build the embed URL for navigation
+            const embedUrl = 
+              `https://www.google.com/maps/embed/v1/directions` +
+              `?key=YOUR_API_KEY` +
+              `&origin=${origin}` +
+              `&destination=${dest.lat()},${dest.lng()}` +
+              `&mode=driving&dir_action=navigate`;
 
-            directionsService.route({
-              origin,
-              destination: dest,
-              travelMode: 'DRIVING'
-            }, (res, stat) => {
-              if (stat === 'OK') {
-                directionsRenderer.setDirections(res);
-                directionsRenderer.setPanel(directionsPanel);
-                map.fitBounds(res.routes[0].bounds);
+            mapFrame.src = embedUrl;
+            mapContainer.style.display = 'block';
 
-                // Swap buttons
-                navigateBtn.style.display = 'none';
-                confirmBtn.style.display  = 'inline-block';
-                addressInput.disabled     = true;
-              } else {
-                alert('Route error: ' + stat);
-              }
-            });
+            // Swap buttons
+            navigateBtn.style.display = 'none';
+            confirmBtn.style.display  = 'inline-block';
+            addressInput.disabled     = true;
           } else {
             alert('Geocode error: ' + status);
           }
         });
       });
 
-      // Confirm delivery: reset to initial state
+      // Confirm delivery: reset to start
       confirmBtn.addEventListener('click', () => {
+        // Hide everything
         mapContainer.style.display        = 'none';
-        directionsPanel.style.display     = 'none';
-
         statusBar.style.display           = 'none';
         navigationContainer.style.display = 'none';
         initialContainer.style.display    = 'flex';
 
-        driverNameInput.value             = '';
-        addressInput.value                = '';
-        addressInput.disabled             = false;
-        navigateBtn.style.display         = 'inline-block';
-        confirmBtn.style.display          = 'none';
-
-        map.setCenter(currentPosition || { lat: 39.8283, lng: -98.5795 });
-        map.setZoom(5);
+        // Reset inputs/buttons
+        driverNameInput.value = '';
+        addressInput.value    = '';
+        addressInput.disabled = false;
+        navigateBtn.style.display = 'inline-block';
+        confirmBtn.style.display  = 'none';
       });
     });
   </script>
 
-  <!-- Load Maps API with callback -->
-  <script
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&callback=initMap&libraries=places">
-  </script>
+  <!-- Load Google Maps Geocoder -->
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBYk1zuUkelnUHH5u_w4NGSnUYKBzQpQFQ&callback=initMap&libraries=places"></script>
 </body>
 </html>
