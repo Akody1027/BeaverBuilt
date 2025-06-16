@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Portal</title>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
+  <!-- Tailwind via CDN for rapid modern styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Accent & theming overrides */
+    :root {
+      --accent: #ffcccc;
+    }
+    .btn-accent { @apply bg-[var(--accent)] hover:bg-red-200 transition transform hover:scale-105; }
+    .card { @apply bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-3xl">
+    <!-- PIN Entry -->
+    <div id="pin-section" class="card mb-6">
+      <h1 class="text-2xl font-semibold mb-4">Enter Admin PIN</h1>
+      <input id="admin-pin" type="password" maxlength="4"
+             class="w-full p-3 border rounded-lg mb-4"
+             placeholder="4-digit PIN" />
+      <button id="pin-submit" class="btn-accent text-white px-6 py-3 rounded-lg">Enter</button>
+      <p id="pin-error" class="text-red-600 mt-2"></p>
+    </div>
+
+    <!-- Admin Interface -->
+    <div id="admin-section" class="hidden space-y-6">
+      <!-- Add Customer -->
+      <div class="card">
+        <h2 class="text-xl font-semibold mb-4">+ Add Customer</h2>
+        <input id="cust-name" type="text"
+               class="w-full p-3 border rounded-lg mb-4"
+               placeholder="Customer Name" />
+        <input id="cust-email" type="email"
+               class="w-full p-3 border rounded-lg mb-4"
+               placeholder="Customer Email" />
+        <button id="add-cust-btn" class="btn-accent text-white px-6 py-3 rounded-lg">Add</button>
+      </div>
+
+      <!-- Customer List -->
+      <div id="customers-list" class="space-y-4"></div>
+
+      <!-- Send All New Bills -->
+      <button id="send-all-btn"
+              class="btn-accent text-white w-full py-4 rounded-lg text-lg">Send All New Bills</button>
+    </div>
+  </div>
+
+  <script>
+    // *** CONFIGURE THESE ***
+    const ADMIN_PIN = "1234";             // ← your chosen admin PIN
+    const firebaseConfig = { /* …your firebaseConfig… */ };
+    // ********************************
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const functions = firebase.app().functions('us-central1');
+
+    // UI elements
+    const pinSection = document.getElementById('pin-section');
+    const adminSection = document.getElementById('admin-section');
+    const errorP = document.getElementById('pin-error');
+
+    // 1) Admin PIN check
+    document.getElementById('pin-submit').onclick = () => {
+      if (document.getElementById('admin-pin').value === ADMIN_PIN) {
+        pinSection.classList.add('hidden');
+        adminSection.classList.remove('hidden');
+        loadCustomers();
+      } else {
+        errorP.textContent = 'Invalid PIN';
+      }
+    };
+
+    // 2) Load & display customers
+    async function loadCustomers() {
+      const listDiv = document.getElementById('customers-list');
+      listDiv.innerHTML = '';
+      const snap = await db.collection('customers').orderBy('createdAt').get();
+      snap.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement('div');
+        card.className = 'card flex justify-between items-center';
+        card.innerHTML = `
+          <div>
+            <p class="font-semibold">${data.name}</p>
+            <p class="text-sm text-gray-600">${data.email}</p>
+            <p class="text-xs">PIN: <span class="font-mono">${data.pin}</span></p>
+          </div>
+          <button class="btn-accent text-white px-4 py-2 rounded-lg"
+                  onclick="addBill('${doc.id}','${data.name}')">
+            Add Bill
+          </button>
+        `;
+        listDiv.appendChild(card);
+      });
+    }
+
+    // 3) Add customer
+    document.getElementById('add-cust-btn').onclick = async () => {
+      const name  = document.getElementById('cust-name').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      if (!name || !email) return alert('Enter both name and email.');
+      // generate unique 4-digit PIN
+      let pin;
+      do {
+        pin = Math.floor(1000 + Math.random() * 9000).toString();
+        const exists = await db.collection('customers').where('pin','==',pin).get();
+        if (exists.empty) break;
+      } while(true);
+      await db.collection('customers').add({
+        name, email, pin,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-email').value = '';
+      loadCustomers();
+    };
+
+    // 4) Add bill prompt
+    async function addBill(custId, custName) {
+      const amount = prompt(`Amount for ${custName}:`);
+      if (!amount) return;
+      const desc  = prompt('Description (optional):','');
+      const due   = prompt('Due Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
+      // generate invoice number
+      const prefix = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      const todayBills = await db.collection('bills')
+        .where('invoiceNumber','>=', prefix)
+        .where('invoiceNumber','<', (parseInt(prefix)+1).toString())
+        .get();
+      const index = todayBills.size + 1;
+      const invoiceNumber = `${prefix}-${String(index).padStart(3,'0')}`;
+
+      await db.collection('bills').add({
+        customerId: custId,
+        invoiceNumber,
+        dueDate: due,
+        amount: parseFloat(amount),
+        description: desc,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        sent: false,
+        paid: false
+      });
+      alert(`Created invoice ${invoiceNumber}`);
+    }
+
+    // 5) Send All New Bills
+    document.getElementById('send-all-btn').onclick = async () => {
+      // fetch only unsent bills
+      const billsSnap = await db.collection('bills').where('sent','==',false).get();
+      if (billsSnap.empty) return alert('No new bills to send.');
+      if (!confirm(`Send ${billsSnap.size} emails now?`)) return;
+
+      // prepare payload
+      const payload = [];
+      billsSnap.forEach(doc => {
+        const b = doc.data();
+        payload.push({
+          id: doc.id,
+          email: b.email || '' /* we'll fetch email below */,
+          link: `${location.origin}/checkout.html?pin=${b.customerId}`
+        });
+      });
+
+      // enrich with customer emails
+      for (let item of payload) {
+        const cust = await db.collection('customers').doc(item.id).get();
+        item.email = cust.data().email;
+      }
+
+      // call Cloud Function
+      const sendFn = functions.httpsCallable('sendNewBills');
+      await sendFn({ bills: payload });
+
+      // mark sent
+      const batch = db.batch();
+      billsSnap.forEach(doc => batch.update(doc.ref, { sent: true }));
+      await batch.commit();
+
+      alert('All emails sent successfully.');
+    };
+  </script>
+</body>
+</html>
