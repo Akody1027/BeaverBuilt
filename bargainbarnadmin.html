@@ -10,11 +10,9 @@
     .grid-cell { aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E0; border-radius:.25rem; background:#fff; color:#1A202C; font-size:.75rem; }
     .grid-cell.unpaid { background:#48BB78; border-color:#48BB78; color:#fff; }
     .grid-cell.paid { background:#A0AEC0; border-color:#A0AEC0; color:#fff; }
-    #debug-out { font-size:0.9em; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; margin:1em 0; padding:1em;}
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
-  <div id="debug-out" style="display:none"></div>
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
@@ -108,47 +106,60 @@
       }
 
       // --- Local Storage Helpers ---
-      function getCustomers() {
-        try {
-          return JSON.parse(localStorage.getItem('customers') || '[]');
-        } catch(e) {
-          debugOut("localStorage not supported: " + e);
-          return [];
-        }
+      function getCustomers() { 
+        try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
+        catch(e) { return []; }
       }
       function saveCustomers(c) {
-        try {
-          localStorage.setItem('customers', JSON.stringify(c));
-        } catch(e) {
-          debugOut("localStorage write failed: " + e);
-        }
+        try { localStorage.setItem('customers', JSON.stringify(c)); }
+        catch(e) {}
       }
-      function getBills() {
-        try {
-          return JSON.parse(localStorage.getItem('bills') || '[]');
-        } catch(e) { return []; }
+      function getBills() { 
+        try { return JSON.parse(localStorage.getItem('bills') || '[]'); }
+        catch(e) { return []; }
       }
       function saveBills(b) {
-        try {
-          localStorage.setItem('bills', JSON.stringify(b));
-        } catch(e) {}
+        try { localStorage.setItem('bills', JSON.stringify(b)); }
+        catch(e) {}
       }
 
-      // --- Debug Out ---
-      function debugOut(msg) {
-        var debug = document.getElementById('debug-out');
-        debug.innerText = msg;
-        debug.style.display = 'block';
+      // --- DOM Refs ---
+      var loginOverlay = document.getElementById('login-overlay');
+      var loginBtn = document.getElementById('login-btn');
+      var pinInput = document.getElementById('admin-pin');
+      var pinError = document.getElementById('pin-error');
+      var sidebar = document.getElementById('sidebar');
+      var main = document.getElementById('main');
+      var navLinks = document.querySelectorAll('.nav-link');
+      var sidebarCustomerList = document.getElementById('sidebar-customer-list');
+      var addCustIcon = document.getElementById('add-cust-icon');
+      var addCustBtn = document.getElementById('add-cust-btn');
+      var addInvoiceBtn = document.getElementById('add-invoice-btn');
+      var deleteCustBtn = document.getElementById('delete-cust-btn');
+      var activeCustomer = null;
+
+      // --- Section Display ---
+      function showSection(id) {
+        ['dashboard','customers','profile'].forEach(function(sec){
+          document.getElementById(sec).style.display = (sec===id?'block':'none');
+        });
+        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
       }
+
+      navLinks.forEach(function(link){
+        link.addEventListener('click', function(e){
+          e.preventDefault();
+          navLinks.forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+          showSection(link.getAttribute('data-target'));
+        });
+      });
 
       // --- Sidebar Population ---
       function populateSidebar(){
         sidebarCustomerList.innerHTML='';
-        let cs = getCustomers();
-        if (!cs.length) {
-          debugOut("No customers found in localStorage after login.");
-        }
-        cs.forEach(function(c){
+        getCustomers().forEach(function(c){
           var btn = document.createElement('button');
           btn.textContent = c.name;
           btn.className = 'customer-btn w-full text-left px-2 py-1';
@@ -160,8 +171,6 @@
           var li = document.createElement('li'); li.appendChild(btn);
           sidebarCustomerList.appendChild(li);
         });
-        // Also log customers to debug box for confirmation
-        if(cs.length) debugOut("Loaded "+cs.length+" customers.\nFirst: "+JSON.stringify(cs[0]));
       }
 
       // --- Profile Display ---
@@ -194,15 +203,6 @@
           }
           listEl.appendChild(li);
         });
-      }
-
-      // --- Section Display ---
-      function showSection(id) {
-        ['dashboard','customers','profile'].forEach(function(sec){
-          document.getElementById(sec).style.display = (sec===id?'block':'none');
-        });
-        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
       }
 
       // --- Add Customer ---
@@ -272,25 +272,9 @@
         });
       }
 
-      // --- DOM REFS (AFTER) ---
-      var navLinks = document.querySelectorAll('.nav-link');
-      var sidebarCustomerList = document.getElementById('sidebar-customer-list');
-      var addCustIcon = document.getElementById('add-cust-icon');
-      var addCustBtn = document.getElementById('add-cust-btn');
-      var addInvoiceBtn = document.getElementById('add-invoice-btn');
-      var deleteCustBtn = document.getElementById('delete-cust-btn');
-      var activeCustomer = null;
-
       // --- LOGIN ---
-      var loginBtn = document.getElementById('login-btn');
-      var loginOverlay = document.getElementById('login-overlay');
-      var pinInput = document.getElementById('admin-pin');
-      var pinError = document.getElementById('pin-error');
-      var sidebar = document.getElementById('sidebar');
-      var main = document.getElementById('main');
-
       loginBtn.addEventListener('click', function(){
-        // Insert demo customers ON login if needed!
+        // Always inject demo customers if missing
         if(getCustomers().length === 0) {
           saveCustomers(makeDemoCustomers());
         }
@@ -307,7 +291,6 @@
           pinError.textContent = 'Invalid PIN';
         }
       });
-
     });
   </script>
 </body>
