@@ -47,7 +47,7 @@
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Total Customers</p><p id="customersCount" class="text-3xl font-bold">0</p></div>
           <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Outstanding Invoices</p><p id="outstandingCount" class="text-3xl font-bold">0</p></div>
-          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Overdue Amount</p><p id="overdueAmount" class="text-3xl font-bold">$0.00</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Unpaid Amount Due</p><p id="unpaidAmount" class="text-3xl font-bold">$0.00</p></div>
           <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Revenue This Month</p><p id="revenueCount" class="text-3xl font-bold">$0.00</p></div>
         </div>
         <div class="rounded-2xl bg-white p-6 shadow"><h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3><div id="invoice-grid"></div></div>
@@ -255,16 +255,13 @@
       function updateMetrics(){
         var cs = getCustomers();
         var bs = getBills();
-        var today = new Date().toISOString().substring(0,10);
         document.getElementById('customersCount').textContent = cs.length;
         document.getElementById('outstandingCount').textContent = bs.filter(function(b){ return !b.paid; }).length;
-        // OVERDUE AMOUNT: sum of unpaid invoices with due date < today
-        var overdue = bs.filter(function(b){ 
-          return !b.paid && b.dueDate < today;
-        }).reduce(function(sum, b){
+        // UNPAID AMOUNT DUE: sum of all unpaid invoices
+        var unpaid = bs.filter(function(b){ return !b.paid; }).reduce(function(sum, b){
           return sum + Number(b.amount || 0);
         }, 0);
-        document.getElementById('overdueAmount').textContent = '$'+overdue.toFixed(2);
+        document.getElementById('unpaidAmount').textContent = '$'+unpaid.toFixed(2);
         var start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
         document.getElementById('revenueCount').textContent='$'+bs.filter(function(b){ return b.paid&&new Date(b.createdAt)>=start; }).reduce(function(s,b){ return s+b.amount; },0).toFixed(2);
       }
