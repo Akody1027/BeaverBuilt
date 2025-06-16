@@ -253,10 +253,18 @@
 
       // --- Metrics & Calendar Grid ---
       function updateMetrics(){
-        var cs=getCustomers(), bs=getBills(), today=new Date().toISOString().substring(0,10);
-        document.getElementById('customersCount').textContent=cs.length;
-        document.getElementById('outstandingCount').textContent=bs.filter(function(b){ return !b.paid; }).length;
-        document.getElementById('overdueAmount').textContent='$'+bs.filter(function(b){ return !b.paid&&b.dueDate<today; }).reduce(function(s,b){ return s+b.amount; },0).toFixed(2);
+        var cs = getCustomers();
+        var bs = getBills();
+        var today = new Date().toISOString().substring(0,10);
+        document.getElementById('customersCount').textContent = cs.length;
+        document.getElementById('outstandingCount').textContent = bs.filter(function(b){ return !b.paid; }).length;
+        // OVERDUE AMOUNT: sum of unpaid invoices with due date < today
+        var overdue = bs.filter(function(b){ 
+          return !b.paid && b.dueDate < today;
+        }).reduce(function(sum, b){
+          return sum + Number(b.amount || 0);
+        }, 0);
+        document.getElementById('overdueAmount').textContent = '$'+overdue.toFixed(2);
         var start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
         document.getElementById('revenueCount').textContent='$'+bs.filter(function(b){ return b.paid&&new Date(b.createdAt)>=start; }).reduce(function(s,b){ return s+b.amount; },0).toFixed(2);
       }
@@ -265,7 +273,11 @@
         getCustomers().forEach(function(c){
           var cell=document.createElement('div'); cell.className='grid-cell'; cell.textContent=c.id;
           var bills=getBills().filter(function(b){ return b.customerId===c.id; });
-          if(bills.length) cell.classList.add(bills.some(function(b){ return !b.paid; })?'unpaid':'paid');
+          if(bills.some(function(b){ return !b.paid; })) {
+            cell.classList.add('unpaid'); // any unpaid: RED
+          } else {
+            cell.classList.add('paid');   // all paid or no bills: GREEN
+          }
           grid.appendChild(cell);
         });
       }
