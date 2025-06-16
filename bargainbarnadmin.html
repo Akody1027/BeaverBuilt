@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Dashboard</n>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+
   <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -12,10 +13,12 @@
     .card { @apply bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow; }
     .nav-link.active { @apply font-bold text-[var(--accent)]; }
   </style>
+
   <!-- Firebase SDKs (init after login) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
+
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -119,7 +122,6 @@
           <input id="cust-email" type="email"
                  class="w-full p-4 border rounded-lg mb-4 text-lg"
                  placeholder="Customer Email" />
-          <!-- ADD BUTTON -->
           <button id="add-cust-btn"
                   class="btn-accent text-white px-6 py-3 rounded-lg font-medium w-full">
             Add Customer
@@ -138,10 +140,13 @@
     // —— CONFIG ——
     const ADMIN_PIN = "1234";
     const firebaseConfig = {
-      apiKey: "...", authDomain: "...", projectId: "..."
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      // ...other Firebase config
     };
 
-    // UI refs
+    // UI references
     const overlay = document.getElementById('login-overlay');
     const loginBtn = document.getElementById('login-btn');
     const pinInput = document.getElementById('admin-pin');
@@ -157,15 +162,19 @@
 
     let db, functions;
 
-    // LOGIN
+    // LOGIN handler
     loginBtn.addEventListener('click', () => {
       if (pinInput.value === ADMIN_PIN) {
         overlay.classList.add('hidden');
         sidebar.classList.remove('hidden');
         mainDiv.classList.remove('hidden');
+
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         functions = firebase.app().functions('us-central1');
+
+        // Show default section
         showSection('dashboard');
         loadMetrics();
         loadActivity();
@@ -174,7 +183,7 @@
       }
     });
 
-    // NAVIGATION
+    // Navigation logic
     navLinks.forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
@@ -191,93 +200,108 @@
       if (name === 'customers') loadCustomers();
     }
 
-    // METRICS & CHART
+    // Load and display metrics
     async function loadMetrics() {
       const custSnap = await db.collection('customers').get();
       const totalCustomers = custSnap.size;
+
       const unpaidSnap = await db.collection('bills').where('paid','==',false).get();
       const unpaidCount = unpaidSnap.size;
+
       const today = new Date().toISOString().slice(0,10);
       const overdueSnap = await db.collection('bills')
         .where('paid','==',false)
         .where('dueDate','<', today)
         .get();
-      const overdueAmount = overdueSnap.docs.reduce((sum,doc) => sum + doc.data().amount, 0);
-      const fm = new Date(); fm.setDate(1); fm.setHours(0,0,0,0);
+      const overdueAmount = overdueSnap.docs.reduce((sum, d) => sum + d.data().amount, 0);
+
+      const firstOfMonth = new Date();
+      firstOfMonth.setDate(1);
+      firstOfMonth.setHours(0,0,0,0);
       const paidSnap = await db.collection('bills')
         .where('paid','==',true)
-        .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(fm))
+        .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(firstOfMonth))
         .get();
-      const revenue = paidSnap.docs.reduce((sum,doc) => sum + doc.data().amount, 0);
+      const revenue = paidSnap.docs.reduce((sum, d) => sum + d.data().amount, 0);
+
       document.getElementById('customersCount').innerText = totalCustomers;
       document.getElementById('outstandingCount').innerText = unpaidCount;
       document.getElementById('overdueAmount').innerText = `$${overdueAmount.toFixed(2)}`;
       document.getElementById('revenueCount').innerText = `$${revenue.toFixed(2)}`;
+
       drawStatusChart(paidSnap.size, unpaidCount);
     }
+
+    // Draw invoice status chart
     function drawStatusChart(paid, unpaid) {
       const ctx = document.getElementById('statusChart').getContext('2d');
       if (window.statusChart) window.statusChart.destroy();
       window.statusChart = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Paid','Unpaid'], datasets: [{ data: [paid, unpaid] }] },
+        data: {
+          labels: ['Paid','Unpaid'],
+          datasets: [{ data: [paid, unpaid] }]
+        },
         options: { responsive: true }
       });
     }
 
-    // ACTIVITY
+    // Load recent activity
     async function loadActivity() {
-      const feed = document.getElementById('activity-feed'); feed.innerHTML = '';
+      const feed = document.getElementById('activity-feed');
+      feed.innerHTML = '';
       const snap = await db.collection('actions')
-        .orderBy('timestamp','desc').limit(5).get();
+        .orderBy('timestamp','desc')
+        .limit(5)
+        .get();
       snap.forEach(doc => {
-        const d = doc.data();
+        const { desc, timestamp } = doc.data();
         const li = document.createElement('li');
-        const time = d.timestamp.toDate().toLocaleString();
-        li.textContent = `${time} — ${d.desc}`;
+        const time = timestamp.toDate().toLocaleString();
+        li.textContent = `${time} — ${desc}`;
         feed.appendChild(li);
       });
     }
 
-    // QUICK ACTIONS
-    document.getElementById('quick-add-customer').onclick = () => showSection('customers');
-    document.getElementById('quick-send-all').onclick = () => document.getElementById('send-all-btn').click();
+    // Quick actions
+    document.getElementById('quick-add-customer').addEventListener('click', () => showSection('customers'));
+    document.getElementById('quick-send-all').addEventListener('click', () => sendAllBills());
 
-    // ADD CUSTOMER
-    document.getElementById('add-cust-btn').onclick = async () => {
+    // Add customer
+    document.getElementById('add-cust-btn').addEventListener('click', async () => {
       const name = document.getElementById('cust-name').value.trim();
       const email = document.getElementById('cust-email').value.trim();
-      if (!name || !email) return alert('Enter both name and email.');
+      if (!name || !email) return alert('Please enter both name and email.');
       let pin;
       do {
         pin = Math.floor(1000 + Math.random()*9000).toString();
-        const ex = await db.collection('customers').where('pin','==',pin).get();
-        if (ex.empty) break;
-      } while(true);
-      const custRef = await db.collection('customers').add({ name, email, pin, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      } while (!(await db.collection('customers').where('pin','==',pin).get()).empty);
+      await db.collection('customers').add({ name, email, pin, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       await db.collection('actions').add({ desc: `Customer "${name}" added`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-      loadActivity(); loadMetrics();
       document.getElementById('cust-name').value = '';
       document.getElementById('cust-email').value = '';
+      loadMetrics();
+      loadActivity();
       loadCustomers();
-    };
+    });
 
-    // LOAD CUSTOMERS
+    // Load customers list
     async function loadCustomers() {
-      const listDiv = document.getElementById('customers-list'); listDiv.innerHTML = '';
+      const listDiv = document.getElementById('customers-list');
+      listDiv.innerHTML = '';
       const snap = await db.collection('customers').orderBy('createdAt','desc').get();
       snap.forEach(doc => {
-        const d = doc.data();
+        const { name, email, pin } = doc.data();
         const card = document.createElement('div');
         card.className = 'card flex justify-between items-center';
         card.innerHTML = `
           <div>
-            <p class="font-semibold text-lg">${d.name}</p>
-            <p class="text-gray-600">${d.email}</p>
-            <p class="text-sm">PIN: <span class="font-mono">${d.pin}</span></p>
+            <p class=\"font-semibold text-lg\">${name}</p>
+            <p class=\"text-gray-600\">${email}</p>
+            <p class=\"text-sm\">PIN: <span class=\"font-mono\">${pin}</span></p>
           </div>
-          <button class="btn-accent text-white px-5 py-3 rounded-lg font-medium"
-                  onclick="addBill('${doc.id}','${d.name}')">
+          <button class=\"btn-accent text-white px-5 py-3 rounded-lg font-medium\"
+                  onclick=\"addBill('${doc.id}','${name}')\">
             Add Bill
           </button>
         `;
@@ -285,36 +309,61 @@
       });
     }
 
-    // ADD BILL
-    window.addBill = async function(custId, custName) {
+    // Add a bill for a customer
+    async function addBill(custId, custName) {
       const amount = prompt(`Amount for ${custName}:`);
       if (!amount) return;
-      const desc = prompt('Description (optional):','');
-      const due = prompt('Due Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
+      const description = prompt('Description (optional):','');
+      const dueDate = prompt('Due Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
       const prefix = new Date().toISOString().slice(0,10).replace(/-/g,'');
       const todaySnap = await db.collection('bills')
-        .where('invoiceNumber','>=', prefix)
-        .where('invoiceNumber','<', (parseInt(prefix)+1).toString())
+        .where('invoiceNumber','>=',prefix)
+        .where('invoiceNumber','<',(parseInt(prefix)+1).toString())
         .get();
-      const idx = todaySnap.size + 1;
-      const invoiceNumber = `${prefix}-${String(idx).padStart(3,'0')}`;
-      await db.collection('bills').add({ customerId: custId, invoiceNumber, dueDate: due, amount: parseFloat(amount), description: desc, createdAt: firebase.firestore.FieldValue.serverTimestamp(), sent: false, paid: false });
+      const count = todaySnap.size + 1;
+      const invoiceNumber = `${prefix}-${String(count).padStart(3,'0')}`;
+      await db.collection('bills').add({
+        customerId: custId,
+        invoiceNumber,
+        dueDate,
+        amount: parseFloat(amount),
+        description,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        sent: false,
+        paid: false
+      });
       await db.collection('actions').add({ desc: `Invoice ${invoiceNumber} created for ${custName}`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-      loadActivity(); loadMetrics(); alert(`Created invoice ${invoiceNumber}`);
-    };
+      loadMetrics();
+      loadActivity();
+      alert(`Created invoice ${invoiceNumber}`);
+    }
 
-    // SEND ALL
-    const sendAllBtn = document.createElement('button'); sendAllBtn.id = 'send-all-btn'; document.body.appendChild(sendAllBtn);
-    sendAllBtn.onclick = async () => {
+    // Send all new bills via Cloud Function
+    async function sendAllBills() {
       const billsSnap = await db.collection('bills').where('sent','==',false).get();
-      if (billsSnap.empty) return alert('No new bills.');
+      if (billsSnap.empty) return alert('No new bills to send.');
       if (!confirm(`Send ${billsSnap.size} emails now?`)) return;
-      const payload = await Promise.all(billsSnap.docs.map(async doc => { const b = doc.data(); const cust = await db.collection('customers').doc(b.customerId).get(); return { id: doc.id, email: cust.data().email, invoiceNumber: b.invoiceNumber, link: `${location.origin}/checkout.html?pin=${cust.data().pin}` }; }));
-      const fn = functions.httpsCallable('sendNewBills'); await fn({ bills: payload });
-      const batch = db.batch(); billsSnap.docs.forEach(doc => batch.update(doc.ref, { sent: true })); await batch.commit();
+      const payload = await Promise.all(billsSnap.docs.map(async doc => {
+        const b = doc.data();
+        const custDoc = await db.collection('customers').doc(b.customerId).get();
+        const cust = custDoc.data();
+        return {
+          id: doc.id,
+          email: cust.email,
+          invoiceNumber: b.invoiceNumber,
+          link: `${location.origin}/checkout.html?pin=${cust.pin}`
+        };
+      }));
+      const fn = functions.httpsCallable('sendNewBills');
+      await fn({ bills: payload });
+      const batch = db.batch();
+      billsSnap.docs.forEach(doc => batch.update(doc.ref, { sent: true }));
+      await batch.commit();
       await db.collection('actions').add({ desc: `Sent ${payload.length} emails`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-      loadActivity(); loadMetrics(); alert('All emails sent successfully.');
-    };
+      loadMetrics();
+      loadActivity();
+      alert('All emails sent successfully.');
+    }
   </script>
 </body>
 </html>
