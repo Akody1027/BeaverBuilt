@@ -86,11 +86,35 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Demo customer data generation if empty
+      function makeDemoCustomers() {
+        const firstNames = ["Sam", "Lee", "Alex", "Jamie", "Morgan", "Casey", "Drew", "Taylor", "Jordan", "Riley"];
+        const lastNames = ["Smith", "Johnson", "Lee", "Kim", "Perez", "Brown", "Nguyen", "Davis", "Lopez", "Martin"];
+        const customers = [];
+        for(let i=2; i<=26; i++) {
+          const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
+          const ln = lastNames[Math.floor(Math.random()*lastNames.length)];
+          customers.push({
+            id: String(i),
+            name: fn + " " + ln,
+            email: (fn+ln+i+"@demo.com").toLowerCase(),
+            phone: "+1-" + (300 + i) + "-555-" + (1000 + i),
+            address: (100+i) + " " + ln + " St"
+          });
+        }
+        return customers;
+      }
+
       // --- Local Storage Helpers ---
       function getCustomers() { return JSON.parse(localStorage.getItem('customers') || '[]'); }
       function saveCustomers(c) { localStorage.setItem('customers', JSON.stringify(c)); }
       function getBills() { return JSON.parse(localStorage.getItem('bills') || '[]'); }
       function saveBills(b) { localStorage.setItem('bills', JSON.stringify(b)); }
+
+      // Inject demo data if needed
+      if(getCustomers().length === 0) {
+        saveCustomers(makeDemoCustomers());
+      }
 
       // --- DOM Refs ---
       var loginOverlay = document.getElementById('login-overlay');
@@ -256,6 +280,11 @@
           grid.appendChild(cell);
         });
       }
+
+      // --- INITIALIZE ---
+      // Only after login, for privacy
+      // populateSidebar(); updateMetrics(); updateGrid();
+
     });
   </script>
 </body>
