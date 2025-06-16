@@ -3,131 +3,322 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Portal</title>
-  <!-- Firebase SDKs (loaded but only initialized after login) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
-  <!-- TailwindCSS for styling -->
+  <title>Admin Dashboard</title>
+
+  <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --accent: #ffcccc; }
     .btn-accent { @apply bg-[var(--accent)] hover:bg-red-200 transition-transform hover:scale-105; }
     .card { @apply bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow; }
+    .nav-link.active { @apply font-bold text-[var(--accent)]; }
   </style>
+
+  <!-- Firebase SDKs (will init after login) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
+
+  <!-- Chart.js for the doughnut chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 flex h-screen overflow-hidden">
 
-  <!-- Sticky Header -->
-  <header class="bg-white shadow-md sticky top-0 z-20">
-    <div class="max-w-3xl mx-auto px-6 py-4">
-      <h1 class="text-3xl font-bold text-gray-800">Admin</h1>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="flex-grow max-w-3xl mx-auto px-6 py-8 space-y-8">
-
-    <!-- 1) PIN Entry -->
-    <section id="pin-section" class="card">
-      <h2 class="text-2xl font-semibold mb-6">Enter Admin PIN</h2>
+  <!-- LOGIN OVERLAY -->
+  <div id="login-overlay" class="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-30">
+    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Enter Admin PIN</h2>
       <input id="admin-pin" type="password" maxlength="4"
              class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-[var(--accent)]"
              placeholder="4-digit PIN" />
-      <!-- LOGIN BUTTON -->
-      <button id="pin-submit"
+      <button id="login-btn"
               class="btn-accent text-black w-full py-4 rounded-lg text-lg font-medium">
         Login
       </button>
       <p id="pin-error" class="text-red-600 mt-4"></p>
-    </section>
+    </div>
+  </div>
 
-    <!-- 2) Admin Interface (hidden until login) -->
-    <section id="admin-section" class="hidden space-y-8">
+  <!-- SIDEBAR NAVIGATION -->
+  <nav id="sidebar" class="hidden flex-shrink-0 w-64 bg-white shadow-lg p-6 flex flex-col">
+    <h1 class="text-2xl font-bold mb-8 text-gray-800">Lylia’s Admin</h1>
+    <ul class="space-y-4">
+      <li><a href="#" data-target="dashboard-section" class="nav-link block">📊 Dashboard</a></li>
+      <li><a href="#" data-target="customers-section" class="nav-link block">👥 Customers</a></li>
+    </ul>
+  </nav>
 
-      <!-- Add Customer -->
-      <div class="card">
-        <h2 class="text-xl font-semibold mb-4">+ Add Customer</h2>
-        <input id="cust-name" type="text"
-               class="w-full p-4 border rounded-lg mb-4 text-lg"
-               placeholder="Customer Name" />
-        <input id="cust-email" type="email"
-               class="w-full p-4 border rounded-lg mb-4 text-lg"
-               placeholder="Customer Email" />
-        <button id="add-cust-btn"
-                class="btn-accent text-white px-6 py-4 rounded-lg text-lg font-medium">
-          Add Customer
-        </button>
+  <!-- MAIN CONTENT -->
+  <div id="main" class="hidden flex-1 flex flex-col overflow-auto">
+
+    <!-- TOPBAR -->
+    <header class="bg-white shadow-md">
+      <div class="px-6 py-4 flex justify-between items-center">
+        <h2 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h2>
+        <!-- future: profile/logout -->
       </div>
+    </header>
 
-      <!-- Customer List -->
-      <div id="customers-list" class="space-y-4"></div>
+    <!-- PAGES -->
+    <main class="flex-1 overflow-auto p-6 space-y-6">
 
-      <!-- Send All New Bills -->
-      <button id="send-all-btn"
-              class="btn-accent text-white w-full py-4 rounded-lg text-lg font-medium">
-        Send All New Bills
-      </button>
+      <!-- DASHBOARD SECTION -->
+      <section id="dashboard-section" class="space-y-6">
 
-    </section>
-  </main>
+        <!-- KPI CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="card">
+            <p class="text-sm text-gray-500">Total Customers</p>
+            <p id="customersCount" class="text-3xl font-bold">0</p>
+          </div>
+          <div class="card">
+            <p class="text-sm text-gray-500">Outstanding Invoices</p>
+            <p id="outstandingCount" class="text-3xl font-bold">0</p>
+          </div>
+          <div class="card">
+            <p class="text-sm text-gray-500">Overdue Amount</p>
+            <p id="overdueAmount" class="text-3xl font-bold">$0.00</p>
+          </div>
+          <div class="card">
+            <p class="text-sm text-gray-500">Revenue This Month</p>
+            <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
+          </div>
+        </div>
 
+        <!-- QUICK ACTIONS -->
+        <div class="card flex space-x-4">
+          <button id="quick-add-customer"
+                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium">
+            + New Customer
+          </button>
+          <button id="quick-send-all"
+                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium">
+            Send All New Bills
+          </button>
+        </div>
+
+        <!-- INVOICE STATUS CHART -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Invoice Status</h3>
+          <canvas id="statusChart" height="200"></canvas>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="card">
+          <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+          <ul id="activity-feed" class="space-y-2 text-gray-700"></ul>
+        </div>
+
+      </section>
+
+      <!-- CUSTOMERS SECTION -->
+      <section id="customers-section" class="hidden space-y-8">
+
+        <!-- ADD CUSTOMER FORM -->
+        <div class="card">
+          <h3 class="text-xl font-semibold mb-4">+ Add Customer</h3>
+          <input id="cust-name" type="text"
+                 class="w-full p-4 border rounded-lg mb-4 text-lg"
+                 placeholder="Customer Name" />
+          <input id="cust-email" type="email"
+                 class="w-full p-4 border rounded-lg mb-4 text-lg"
+                 placeholder="Customer Email" />
+          <button id="add-cust-btn"
+                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium">
+            Add Customer
+          </button>
+        </div>
+
+        <!-- CUSTOMER LIST -->
+        <div class="space-y-4" id="customers-list"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- APP LOGIC -->
   <script>
-    // --------- CONFIGURE ---------
-    const ADMIN_PIN = "1234";           // ← your 4-digit PIN
-    const firebaseConfig = {            // ← your Firebase config
-      apiKey: "...",
-      authDomain: "...",
-      projectId: "...",
+    // —— CONFIG ——
+    const ADMIN_PIN = "1234"; // ← your 4-digit PIN
+    const firebaseConfig = {  // ← your Firebase config
+      apiKey: "...", authDomain: "...", projectId: "...",
       // etc.
     };
-    // ------------------------------
+    // —————————————————
 
-    // UI references
-    const pinInput     = document.getElementById('admin-pin');
-    const loginBtn     = document.getElementById('pin-submit');
-    const pinError     = document.getElementById('pin-error');
-    const pinSection   = document.getElementById('pin-section');
-    const adminSection = document.getElementById('admin-section');
+    // UI refs
+    const overlay     = document.getElementById('login-overlay');
+    const loginBtn    = document.getElementById('login-btn');
+    const pinInput    = document.getElementById('admin-pin');
+    const pinError    = document.getElementById('pin-error');
+    const sidebar     = document.getElementById('sidebar');
+    const mainDiv     = document.getElementById('main');
+    const navLinks    = document.querySelectorAll('.nav-link');
+    const sections    = {
+      dashboard: document.getElementById('dashboard-section'),
+      customers: document.getElementById('customers-section')
+    };
+    const pageTitle   = document.getElementById('page-title');
 
     let db, functions;
 
-    // Handle Login click
+    // LOGIN
     loginBtn.addEventListener('click', () => {
       if (pinInput.value === ADMIN_PIN) {
-        // Hide PIN entry, show admin UI
-        pinSection.classList.add('hidden');
-        adminSection.classList.remove('hidden');
+        overlay.classList.add('hidden');
+        sidebar.classList.remove('hidden');
+        mainDiv.classList.remove('hidden');
 
-        // Initialize Firebase now that PIN is correct
+        // Initialize Firebase once logged in
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         functions = firebase.app().functions('us-central1');
 
-        // Load customers
-        loadCustomers();
+        // Show dashboard by default
+        showSection('dashboard');
+        loadMetrics();
+        loadActivity();
       } else {
         pinError.textContent = 'Invalid PIN. Please try again.';
       }
     });
 
-    // Fetch & render customers
+    // NAVIGATION
+    navLinks.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        showSection(link.dataset.target.replace('-section',''));
+      });
+    });
+    function showSection(name) {
+      // toggle active link
+      navLinks.forEach(l => l.classList.remove('active'));
+      document.querySelector(`[data-target="${name}-section"]`).classList.add('active');
+      // toggle sections
+      Object.keys(sections).forEach(k => {
+        sections[k].classList.toggle('hidden', k !== name);
+      });
+      pageTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      if (name === 'customers') loadCustomers();
+    }
+
+    // KPI METRICS & CHART
+    async function loadMetrics() {
+      // total customers
+      const custSnap = await db.collection('customers').get();
+      const totalCustomers = custSnap.size;
+
+      // unpaid invoices
+      const unpaidSnap = await db.collection('bills').where('paid','==',false).get();
+      const unpaidCount = unpaidSnap.size;
+
+      // overdue amount
+      const today = new Date().toISOString().slice(0,10);
+      const overdueSnap = await db.collection('bills')
+        .where('paid','==',false)
+        .where('dueDate','<', today)
+        .get();
+      const overdueAmount = overdueSnap.docs.reduce((sum,doc) => sum + doc.data().amount, 0);
+
+      // revenue this month
+      const fm = new Date(); fm.setDate(1); fm.setHours(0,0,0,0);
+      const paidSnap = await db.collection('bills')
+        .where('paid','==',true)
+        .where('createdAt','>=', firebase.firestore.Timestamp.fromDate(fm))
+        .get();
+      const revenue = paidSnap.docs.reduce((sum,doc) => sum + doc.data().amount, 0);
+
+      // update UI
+      document.getElementById('customersCount').innerText   = totalCustomers;
+      document.getElementById('outstandingCount').innerText = unpaidCount;
+      document.getElementById('overdueAmount').innerText    = `$${overdueAmount.toFixed(2)}`;
+      document.getElementById('revenueCount').innerText     = `$${revenue.toFixed(2)}`;
+
+      // draw chart
+      drawStatusChart(paidSnap.size, unpaidCount);
+    }
+
+    function drawStatusChart(paid, unpaid) {
+      const ctx = document.getElementById('statusChart').getContext('2d');
+      if (window.statusChart) window.statusChart.destroy();
+      window.statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Paid','Unpaid'],
+          datasets: [{ data: [paid, unpaid] }]
+        },
+        options: { responsive: true }
+      });
+    }
+
+    // RECENT ACTIVITY
+    async function loadActivity() {
+      const feed = document.getElementById('activity-feed');
+      feed.innerHTML = '';
+      const snap = await db.collection('actions')
+        .orderBy('timestamp','desc').limit(5).get();
+      snap.forEach(doc => {
+        const d = doc.data();
+        const li = document.createElement('li');
+        const time = d.timestamp.toDate().toLocaleString();
+        li.textContent = `${time} — ${d.desc}`;
+        feed.appendChild(li);
+      });
+    }
+
+    // QUICK ACTIONS
+    document.getElementById('quick-add-customer').onclick =
+      () => showSection('customers');
+
+    document.getElementById('quick-send-all').onclick =
+      () => document.getElementById('send-all-btn').click();
+
+    // === CUSTOMERS LOGIC ===
+
+    // Add customer (and log action)
+    document.getElementById('add-cust-btn').onclick = async () => {
+      const name  = document.getElementById('cust-name').value.trim();
+      const email = document.getElementById('cust-email').value.trim();
+      if (!name || !email) return alert('Enter both name and email.');
+      // generate 4-digit PIN
+      let pin;
+      do {
+        pin = Math.floor(1000 + Math.random()*9000).toString();
+        const ex = await db.collection('customers').where('pin','==',pin).get();
+        if (ex.empty) break;
+      } while(true);
+      const custRef = await db.collection('customers').add({
+        name, email, pin,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await db.collection('actions').add({
+        desc: `Customer "${name}" added`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      loadActivity();
+      loadMetrics();
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-email').value = '';
+      loadCustomers();
+    };
+
+    // Load & render customers list
     async function loadCustomers() {
       const listDiv = document.getElementById('customers-list');
       listDiv.innerHTML = '';
-      const snap = await db.collection('customers').orderBy('createdAt').get();
+      const snap = await db.collection('customers').orderBy('createdAt','desc').get();
       snap.forEach(doc => {
-        const data = doc.data();
+        const d = doc.data();
         const card = document.createElement('div');
         card.className = 'card flex justify-between items-center';
         card.innerHTML = `
           <div>
-            <p class="font-semibold text-lg">${data.name}</p>
-            <p class="text-gray-600">${data.email}</p>
-            <p class="text-sm">PIN: <span class="font-mono">${data.pin}</span></p>
+            <p class="font-semibold text-lg">${d.name}</p>
+            <p class="text-gray-600">${d.email}</p>
+            <p class="text-sm">PIN: <span class="font-mono">${d.pin}</span></p>
           </div>
-          <button class="btn-accent text-white px-5 py-3 rounded-lg text-base font-medium"
-                  onclick="addBill('${doc.id}','${data.name}')">
+          <button class="btn-accent text-white px-5 py-3 rounded-lg font-medium"
+                  onclick="addBill('${doc.id}','${d.name}')">
             Add Bill
           </button>
         `;
@@ -135,81 +326,74 @@
       });
     }
 
-    // Add customer
-    document.getElementById('add-cust-btn').onclick = async () => {
-      const name  = document.getElementById('cust-name').value.trim();
-      const email = document.getElementById('cust-email').value.trim();
-      if (!name || !email) return alert('Enter both name and email.');
-
-      // generate unique 4-digit PIN
-      let pin;
-      do {
-        pin = Math.floor(1000 + Math.random() * 9000).toString();
-        const exists = await db.collection('customers').where('pin','==',pin).get();
-        if (exists.empty) break;
-      } while(true);
-
-      await db.collection('customers').add({
-        name, email, pin,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      document.getElementById('cust-name').value = '';
-      document.getElementById('cust-email').value = '';
-      loadCustomers();
-    };
-
-    // Prompt & create a bill
-    async function addBill(custId, custName) {
+    // Prompt & create a bill (and log action)
+    window.addBill = async function(custId, custName) {
       const amount = prompt(`Amount for ${custName}:`);
       if (!amount) return;
       const desc  = prompt('Description (optional):','');
       const due   = prompt('Due Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
-
       const prefix = new Date().toISOString().slice(0,10).replace(/-/g,'');
       const todaySnap = await db.collection('bills')
         .where('invoiceNumber','>=',prefix)
         .where('invoiceNumber','<',(parseInt(prefix)+1).toString())
         .get();
-      const index = todaySnap.size + 1;
-      const invoiceNumber = `${prefix}-${String(index).padStart(3,'0')}`;
-
+      const idx = todaySnap.size + 1;
+      const invoiceNumber = `${prefix}-${String(idx).padStart(3,'0')}`;
       await db.collection('bills').add({
         customerId: custId,
-        invoiceNumber,
-        dueDate: due,
+        invoiceNumber, dueDate: due,
         amount: parseFloat(amount),
         description: desc,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        sent: false,
-        paid: false
+        sent: false, paid: false
       });
+      await db.collection('actions').add({
+        desc: `Invoice ${invoiceNumber} created for ${custName}`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      loadActivity();
+      loadMetrics();
       alert(`Created invoice ${invoiceNumber}`);
-    }
+    };
 
-    // Send all new bills
-    document.getElementById('send-all-btn').onclick = async () => {
+    // Send All New Bills (and log action)
+    const sendAllBtn = document.createElement('button');
+    sendAllBtn.id = 'send-all-btn';
+    sendAllBtn.className = 'hidden';
+    document.body.appendChild(sendAllBtn);
+
+    sendAllBtn.onclick = async () => {
       const billsSnap = await db.collection('bills').where('sent','==',false).get();
-      if (billsSnap.empty) return alert('No new bills to send.');
+      if (billsSnap.empty) return alert('No new bills.');
       if (!confirm(`Send ${billsSnap.size} emails now?`)) return;
 
-      const payload = [];
-      for (let doc of billsSnap.docs) {
+      const payload = await Promise.all(billsSnap.docs.map(async doc => {
         const b = doc.data();
         const cust = await db.collection('customers').doc(b.customerId).get();
-        payload.push({
+        return {
           id: doc.id,
           email: cust.data().email,
           invoiceNumber: b.invoiceNumber,
           link: `${location.origin}/checkout.html?pin=${cust.data().pin}`
-        });
-      }
+        };
+      }));
 
-      const sendFn = functions.httpsCallable('sendNewBills');
-      await sendFn({ bills: payload });
+      // call Cloud Function
+      const fn = functions.httpsCallable('sendNewBills');
+      await fn({ bills: payload });
 
+      // mark sent
       const batch = db.batch();
       billsSnap.docs.forEach(doc => batch.update(doc.ref, { sent: true }));
       await batch.commit();
+
+      // log action
+      await db.collection('actions').add({
+        desc: `Sent ${payload.length} emails`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      loadActivity();
+      loadMetrics();
 
       alert('All emails sent successfully.');
     };
