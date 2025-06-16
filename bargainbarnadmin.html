@@ -86,25 +86,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Demo customer data generation if empty
-      function makeDemoCustomers() {
-        const firstNames = ["Sam", "Lee", "Alex", "Jamie", "Morgan", "Casey", "Drew", "Taylor", "Jordan", "Riley"];
-        const lastNames = ["Smith", "Johnson", "Lee", "Kim", "Perez", "Brown", "Nguyen", "Davis", "Lopez", "Martin"];
-        const customers = [];
-        for(let i=2; i<=26; i++) {
-          const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
-          const ln = lastNames[Math.floor(Math.random()*lastNames.length)];
-          customers.push({
-            id: String(i),
-            name: fn + " " + ln,
-            email: (fn+ln+i+"@demo.com").toLowerCase(),
-            phone: "+1-" + (300 + i) + "-555-" + (1000 + i),
-            address: (100+i) + " " + ln + " St"
-          });
-        }
-        return customers;
-      }
-
       // --- Local Storage Helpers ---
       function getCustomers() { 
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
@@ -238,7 +219,7 @@
         document.getElementById('invoice-amount').value='';
       });
 
-      // --- Delete Customer: Always Works ---
+      // --- Delete Customer ---
       deleteCustBtn.addEventListener('click',function(){
         if(!activeCustomer){ alert('Please select a customer first.'); return; }
         if(!confirm('Delete customer "'+activeCustomer.name+'" and all their invoices?')) return;
@@ -274,10 +255,6 @@
 
       // --- LOGIN ---
       loginBtn.addEventListener('click', function(){
-        // Always inject demo customers if missing
-        if(getCustomers().length === 0) {
-          saveCustomers(makeDemoCustomers());
-        }
         if(pinInput.value==='1234'){
           loginOverlay.style.display='none';
           sidebar.style.display='flex';
