@@ -171,7 +171,8 @@
         var listEl = document.getElementById('profile-bills-list');
         if(!activeCustomer || !listEl) return;
         listEl.innerHTML='';
-        getBills().filter(function(b){ return b.customerId===activeCustomer.id; }).forEach(function(b){
+        var bills = getBills();
+        bills.filter(function(b){ return b.customerId===activeCustomer.id; }).forEach(function(b){
           var li = document.createElement('li');
           li.className = 'p-4 bg-gray-100 rounded';
           li.innerHTML = '<p><strong>Amount:</strong> $'+b.amount+'</p><p><strong>Due:</strong> '+b.dueDate+'</p><p><strong>Status:</strong> '+(b.paid?'Paid':'Unpaid')+'</p>';
@@ -179,7 +180,23 @@
             var payBtn = document.createElement('button');
             payBtn.textContent='Mark Paid';
             payBtn.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
-            payBtn.addEventListener('click',function(){ b.paid=true; saveBills(getBills()); renderBills(); updateMetrics(); updateGrid(); });
+            payBtn.addEventListener('click',function(){
+              // Find this bill in storage, mark paid, then save
+              var allBills = getBills();
+              var billIndex = allBills.findIndex(bb => 
+                bb.customerId === b.customerId &&
+                bb.amount === b.amount &&
+                bb.dueDate === b.dueDate &&
+                bb.createdAt === b.createdAt
+              );
+              if (billIndex !== -1) {
+                allBills[billIndex].paid = true;
+                saveBills(allBills);
+                renderBills();
+                updateMetrics();
+                updateGrid();
+              }
+            });
             li.appendChild(payBtn);
           }
           listEl.appendChild(li);
@@ -214,7 +231,7 @@
         if(!amt){ alert('Enter amount'); return; }
         var due = new Date().toISOString().substring(0,10);
         var bs = getBills();
-        bs.unshift({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date() });
+        bs.unshift({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date().toISOString() });
         saveBills(bs); renderBills(); updateMetrics(); updateGrid();
         document.getElementById('invoice-amount').value='';
       });
