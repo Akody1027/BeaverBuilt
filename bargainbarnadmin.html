@@ -4,11 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Portal</title>
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (loaded but only initialized after login) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
-  <!-- Tailwind for styling -->
+  <!-- TailwindCSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --accent: #ffcccc; }
@@ -36,13 +36,13 @@
              placeholder="4-digit PIN" />
       <!-- LOGIN BUTTON -->
       <button id="pin-submit"
-              class="btn-accent text-white w-full py-4 rounded-lg text-lg font-medium">
+              class="btn-accent text-black w-full py-4 rounded-lg text-lg font-medium">
         Login
       </button>
       <p id="pin-error" class="text-red-600 mt-4"></p>
     </section>
 
-    <!-- 2) Admin Interface -->
+    <!-- 2) Admin Interface (hidden until login) -->
     <section id="admin-section" class="hidden space-y-8">
 
       <!-- Add Customer -->
@@ -72,37 +72,46 @@
     </section>
   </main>
 
-  <!-- Firebase & App Logic -->
   <script>
-    // *** CONFIGURE ***
-    const ADMIN_PIN = "1234";  // ← your 4-digit PIN
-    const firebaseConfig = {
-      // your firebaseConfig here
+    // --------- CONFIGURE ---------
+    const ADMIN_PIN = "1234";           // ← your 4-digit PIN
+    const firebaseConfig = {            // ← your Firebase config
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      // etc.
     };
-    // ******************
+    // ------------------------------
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const functions = firebase.app().functions('us-central1');
-
-    // UI refs
+    // UI references
+    const pinInput     = document.getElementById('admin-pin');
+    const loginBtn     = document.getElementById('pin-submit');
+    const pinError     = document.getElementById('pin-error');
     const pinSection   = document.getElementById('pin-section');
     const adminSection = document.getElementById('admin-section');
-    const pinError     = document.getElementById('pin-error');
 
-    // 1) Admin PIN check
-    document.getElementById('pin-submit').onclick = () => {
-      if (document.getElementById('admin-pin').value === ADMIN_PIN) {
+    let db, functions;
+
+    // Handle Login click
+    loginBtn.addEventListener('click', () => {
+      if (pinInput.value === ADMIN_PIN) {
+        // Hide PIN entry, show admin UI
         pinSection.classList.add('hidden');
         adminSection.classList.remove('hidden');
+
+        // Initialize Firebase now that PIN is correct
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        functions = firebase.app().functions('us-central1');
+
+        // Load customers
         loadCustomers();
       } else {
         pinError.textContent = 'Invalid PIN. Please try again.';
       }
-    };
+    });
 
-    // 2) Load & render customers
+    // Fetch & render customers
     async function loadCustomers() {
       const listDiv = document.getElementById('customers-list');
       listDiv.innerHTML = '';
@@ -126,13 +135,12 @@
       });
     }
 
-    // 3) Add customer
+    // Add customer
     document.getElementById('add-cust-btn').onclick = async () => {
       const name  = document.getElementById('cust-name').value.trim();
       const email = document.getElementById('cust-email').value.trim();
-      if (!name || !email) {
-        return alert('Please enter both name and email.');
-      }
+      if (!name || !email) return alert('Enter both name and email.');
+
       // generate unique 4-digit PIN
       let pin;
       do {
@@ -150,19 +158,19 @@
       loadCustomers();
     };
 
-    // 4) Add Bill for a customer
+    // Prompt & create a bill
     async function addBill(custId, custName) {
       const amount = prompt(`Amount for ${custName}:`);
       if (!amount) return;
       const desc  = prompt('Description (optional):','');
       const due   = prompt('Due Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
-      // invoice number
+
       const prefix = new Date().toISOString().slice(0,10).replace(/-/g,'');
-      const todayBills = await db.collection('bills')
-        .where('invoiceNumber','>=', prefix)
-        .where('invoiceNumber','<', (parseInt(prefix)+1).toString())
+      const todaySnap = await db.collection('bills')
+        .where('invoiceNumber','>=',prefix)
+        .where('invoiceNumber','<',(parseInt(prefix)+1).toString())
         .get();
-      const index = todayBills.size + 1;
+      const index = todaySnap.size + 1;
       const invoiceNumber = `${prefix}-${String(index).padStart(3,'0')}`;
 
       await db.collection('bills').add({
@@ -178,13 +186,12 @@
       alert(`Created invoice ${invoiceNumber}`);
     }
 
-    // 5) Send all new bills
+    // Send all new bills
     document.getElementById('send-all-btn').onclick = async () => {
       const billsSnap = await db.collection('bills').where('sent','==',false).get();
       if (billsSnap.empty) return alert('No new bills to send.');
       if (!confirm(`Send ${billsSnap.size} emails now?`)) return;
 
-      // build payload
       const payload = [];
       for (let doc of billsSnap.docs) {
         const b = doc.data();
@@ -197,11 +204,9 @@
         });
       }
 
-      // call Cloud Function
       const sendFn = functions.httpsCallable('sendNewBills');
       await sendFn({ bills: payload });
 
-      // mark sent
       const batch = db.batch();
       billsSnap.docs.forEach(doc => batch.update(doc.ref, { sent: true }));
       await batch.commit();
