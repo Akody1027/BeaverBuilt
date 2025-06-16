@@ -5,21 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard</title>
 
-  <!-- TailwindCSS -->
+  <!-- Tailwind CSS for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root { --accent: #ffcccc; }
-    .btn-accent { @apply bg-[var(--accent)] hover:bg-red-200 transition-transform hover:scale-105; }
     .card { @apply bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow; }
     .nav-link.active { @apply font-bold text-[var(--accent)]; }
   </style>
 
-  <!-- Firebase SDKs (init after login) -->
+  <!-- Firebase SDKs (will initialize after login) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js"></script>
 
-  <!-- Chart.js -->
+  <!-- Chart.js for charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden">
@@ -32,7 +31,7 @@
              class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-[var(--accent)]"
              placeholder="4-digit PIN" />
       <button id="login-btn"
-              class="btn-accent text-black w-full py-4 rounded-lg text-lg font-medium">
+              class="w-full bg-[var(--accent)] text-black font-medium text-lg py-4 rounded-lg hover:bg-red-200 transition-transform hover:scale-105">
         Login
       </button>
       <p id="pin-error" class="text-red-600 mt-4"></p>
@@ -40,15 +39,15 @@
   </div>
 
   <!-- SIDEBAR NAVIGATION -->
-  <nav id="sidebar" class="hidden flex-shrink-0 w-64 bg-white shadow-lg p-6 flex flex-col">
+  <nav id="sidebar" class="hidden w-64 bg-white shadow-lg p-6 flex flex-col">
     <h1 class="text-2xl font-bold mb-8 text-gray-800">Lylia’s Admin</h1>
     <ul class="space-y-4">
-      <li><a href="#" data-target="dashboard-section" class="nav-link block">📊 Dashboard</a></li>
-      <li><a href="#" data-target="customers-section" class="nav-link block">👥 Customers</a></li>
+      <li><a href="#" data-target="dashboard-section" class="nav-link block text-gray-700">📊 Dashboard</a></li>
+      <li><a href="#" data-target="customers-section" class="nav-link block text-gray-700">👥 Customers</a></li>
     </ul>
   </nav>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN CONTENT AREA -->
   <div id="main" class="hidden flex-1 flex flex-col overflow-auto">
 
     <!-- TOPBAR -->
@@ -58,12 +57,11 @@
       </div>
     </header>
 
-    <!-- PAGES -->
+    <!-- PAGE SECTIONS -->
     <main class="flex-1 overflow-auto p-6 space-y-6">
 
       <!-- DASHBOARD SECTION -->
       <section id="dashboard-section" class="space-y-6">
-
         <!-- KPI CARDS -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="card">
@@ -87,11 +85,11 @@
         <!-- QUICK ACTIONS -->
         <div class="card flex space-x-4">
           <button id="quick-add-customer"
-                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium">
+                  class="bg-[var(--accent)] text-black font-medium text-base px-6 py-3 rounded-lg hover:bg-red-200 transition-transform hover:scale-105">
             + New Customer
           </button>
           <button id="quick-send-all"
-                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium">
+                  class="bg-[var(--accent)] text-black font-medium text-base px-6 py-3 rounded-lg hover:bg-red-200 transition-transform hover:scale-105">
             Send All New Bills
           </button>
         </div>
@@ -102,17 +100,15 @@
           <canvas id="statusChart" height="200"></canvas>
         </div>
 
-        <!-- RECENT ACTIVITY -->
+        <!-- RECENT ACTIVITY FEED -->
         <div class="card">
           <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
           <ul id="activity-feed" class="space-y-2 text-gray-700"></ul>
         </div>
-
       </section>
 
       <!-- CUSTOMERS SECTION -->
       <section id="customers-section" class="hidden space-y-8">
-
         <!-- ADD CUSTOMER FORM -->
         <div class="card">
           <h3 class="text-xl font-semibold mb-4">+ Add Customer</h3>
@@ -122,31 +118,32 @@
           <input id="cust-email" type="email"
                  class="w-full p-4 border rounded-lg mb-4 text-lg"
                  placeholder="Customer Email" />
+          <!-- Add Customer Button -->
           <button id="add-cust-btn"
-                  class="btn-accent text-white px-6 py-3 rounded-lg font-medium w-full">
+                  class="w-full bg-[var(--accent)] text-black font-medium text-base px-6 py-3 rounded-lg hover:bg-red-200 transition-transform hover:scale-105">
             Add Customer
           </button>
         </div>
 
         <!-- CUSTOMER LIST -->
-        <div class="space-y-4" id="customers-list"></div>
+        <div id="customers-list" class="space-y-4"></div>
       </section>
 
     </main>
   </div>
 
-  <!-- APP LOGIC -->
+  <!-- APPLICATION LOGIC -->
   <script>
-    // —— CONFIG ——
+    // CONFIGURATION
     const ADMIN_PIN = "1234";
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
       projectId: "YOUR_PROJECT_ID",
-      // ...other Firebase config
+      // ... other config options
     };
 
-    // UI references
+    // UI element references
     const overlay = document.getElementById('login-overlay');
     const loginBtn = document.getElementById('login-btn');
     const pinInput = document.getElementById('admin-pin');
@@ -162,7 +159,7 @@
 
     let db, functions;
 
-    // LOGIN handler
+    // Handle admin login
     loginBtn.addEventListener('click', () => {
       if (pinInput.value === ADMIN_PIN) {
         overlay.classList.add('hidden');
@@ -174,7 +171,7 @@
         db = firebase.firestore();
         functions = firebase.app().functions('us-central1');
 
-        // Show default section
+        // Show default dashboard
         showSection('dashboard');
         loadMetrics();
         loadActivity();
@@ -183,13 +180,15 @@
       }
     });
 
-    // Navigation logic
+    // Sidebar navigation handler
     navLinks.forEach(link => {
       link.addEventListener('click', e => {
         e.preventDefault();
-        showSection(link.dataset.target.replace('-section',''));
+        const target = link.dataset.target.replace('-section','');
+        showSection(target);
       });
     });
+
     function showSection(name) {
       navLinks.forEach(l => l.classList.remove('active'));
       document.querySelector(`[data-target="${name}-section"]`).classList.add('active');
@@ -200,14 +199,12 @@
       if (name === 'customers') loadCustomers();
     }
 
-    // Load and display metrics
+    // Load dashboard metrics
     async function loadMetrics() {
       const custSnap = await db.collection('customers').get();
       const totalCustomers = custSnap.size;
-
       const unpaidSnap = await db.collection('bills').where('paid','==',false).get();
       const unpaidCount = unpaidSnap.size;
-
       const today = new Date().toISOString().slice(0,10);
       const overdueSnap = await db.collection('bills')
         .where('paid','==',false)
@@ -228,11 +225,10 @@
       document.getElementById('outstandingCount').innerText = unpaidCount;
       document.getElementById('overdueAmount').innerText = `$${overdueAmount.toFixed(2)}`;
       document.getElementById('revenueCount').innerText = `$${revenue.toFixed(2)}`;
-
       drawStatusChart(paidSnap.size, unpaidCount);
     }
 
-    // Draw invoice status chart
+    // Draw doughnut chart for invoice status
     function drawStatusChart(paid, unpaid) {
       const ctx = document.getElementById('statusChart').getContext('2d');
       if (window.statusChart) window.statusChart.destroy();
@@ -246,7 +242,7 @@
       });
     }
 
-    // Load recent activity
+    // Load recent activity feed
     async function loadActivity() {
       const feed = document.getElementById('activity-feed');
       feed.innerHTML = '';
@@ -257,17 +253,16 @@
       snap.forEach(doc => {
         const { desc, timestamp } = doc.data();
         const li = document.createElement('li');
-        const time = timestamp.toDate().toLocaleString();
-        li.textContent = `${time} — ${desc}`;
+        li.textContent = `${timestamp.toDate().toLocaleString()} — ${desc}`;
         feed.appendChild(li);
       });
     }
 
-    // Quick actions
+    // Quick actions bindings
     document.getElementById('quick-add-customer').addEventListener('click', () => showSection('customers'));
     document.getElementById('quick-send-all').addEventListener('click', () => sendAllBills());
 
-    // Add customer
+    // Add customer function
     document.getElementById('add-cust-btn').addEventListener('click', async () => {
       const name = document.getElementById('cust-name').value.trim();
       const email = document.getElementById('cust-email').value.trim();
@@ -296,12 +291,11 @@
         card.className = 'card flex justify-between items-center';
         card.innerHTML = `
           <div>
-            <p class=\"font-semibold text-lg\">${name}</p>
-            <p class=\"text-gray-600\">${email}</p>
-            <p class=\"text-sm\">PIN: <span class=\"font-mono\">${pin}</span></p>
+            <p class="font-semibold text-lg">${name}</p>
+            <p class="text-gray-600">${email}</p>
+            <p class="text-sm">PIN: <span class="font-mono">${pin}</span></p>
           </div>
-          <button class=\"btn-accent text-white px-5 py-3 rounded-lg font-medium\"
-                  onclick=\"addBill('${doc.id}','${name}')\">
+          <button class="bg-[var(--accent)] text-black font-medium text-base px-5 py-3 rounded-lg hover:bg-red-200 transition-transform hover:scale-105" onclick="addBill('${doc.id}','${name}')">
             Add Bill
           </button>
         `;
@@ -309,7 +303,7 @@
       });
     }
 
-    // Add a bill for a customer
+    // Add bill function
     async function addBill(custId, custName) {
       const amount = prompt(`Amount for ${custName}:`);
       if (!amount) return;
@@ -322,40 +316,24 @@
         .get();
       const count = todaySnap.size + 1;
       const invoiceNumber = `${prefix}-${String(count).padStart(3,'0')}`;
-      await db.collection('bills').add({
-        customerId: custId,
-        invoiceNumber,
-        dueDate,
-        amount: parseFloat(amount),
-        description,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        sent: false,
-        paid: false
-      });
+      await db.collection('bills').add({ customerId: custId, invoiceNumber, dueDate, amount: parseFloat(amount), description, createdAt: firebase.firestore.FieldValue.serverTimestamp(), sent: false, paid: false });
       await db.collection('actions').add({ desc: `Invoice ${invoiceNumber} created for ${custName}`, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
       loadMetrics();
       loadActivity();
       alert(`Created invoice ${invoiceNumber}`);
     }
 
-    // Send all new bills via Cloud Function
+    // Send all new bills function
     async function sendAllBills() {
       const billsSnap = await db.collection('bills').where('sent','==',false).get();
       if (billsSnap.empty) return alert('No new bills to send.');
       if (!confirm(`Send ${billsSnap.size} emails now?`)) return;
       const payload = await Promise.all(billsSnap.docs.map(async doc => {
         const b = doc.data();
-        const custDoc = await db.collection('customers').doc(b.customerId).get();
-        const cust = custDoc.data();
-        return {
-          id: doc.id,
-          email: cust.email,
-          invoiceNumber: b.invoiceNumber,
-          link: `${location.origin}/checkout.html?pin=${cust.pin}`
-        };
+        const cust = (await db.collection('customers').doc(b.customerId).get()).data();
+        return { id: doc.id, email: cust.email, invoiceNumber: b.invoiceNumber, link: `${location.origin}/checkout.html?pin=${cust.pin}` };
       }));
-      const fn = functions.httpsCallable('sendNewBills');
-      await fn({ bills: payload });
+      await functions.httpsCallable('sendNewBills')({ bills: payload });
       const batch = db.batch();
       billsSnap.docs.forEach(doc => batch.update(doc.ref, { sent: true }));
       await batch.commit();
