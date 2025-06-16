@@ -149,22 +149,6 @@
         });
       });
 
-      // --- Login Handler ---
-      loginBtn.addEventListener('click', function(){
-        if(pinInput.value==='1234'){
-          loginOverlay.style.display='none';
-          sidebar.style.display='flex';
-          main.style.display='flex';
-          populateSidebar();
-          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-          showSection('dashboard');
-          updateMetrics();
-          updateGrid();
-        } else {
-          pinError.textContent = 'Invalid PIN';
-        }
-      });
-
       // --- Sidebar Population ---
       function populateSidebar(){
         sidebarCustomerList.innerHTML='';
@@ -281,10 +265,21 @@
         });
       }
 
-      // --- INITIALIZE ---
-      // Only after login, for privacy
-      // populateSidebar(); updateMetrics(); updateGrid();
-
+      // --- INITIALIZE AFTER LOGIN ---
+      loginBtn.addEventListener('click', function(){
+        if(pinInput.value==='1234'){
+          loginOverlay.style.display='none';
+          sidebar.style.display='flex';
+          main.style.display='flex';
+          populateSidebar();
+          updateMetrics();
+          updateGrid();
+          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+          showSection('dashboard');
+        } else {
+          pinError.textContent = 'Invalid PIN';
+        }
+      });
     });
   </script>
 </body>
