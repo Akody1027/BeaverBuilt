@@ -13,16 +13,29 @@
     .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative;}
     .modal .close-modal { position:absolute;top:8px;right:18px;cursor:pointer;font-size:1.7rem;color:#e11d48;font-weight:700;}
     .modal .close-modal:hover { color:#b91c1c; }
-    .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer;}
     .paid-badge { background: #bbf7d0; color: #166534; border-radius: 4px; font-size: 0.85rem; padding: 2px 8px;}
     .unpaid-badge { background: #fecaca; color: #b91c1c; border-radius: 4px; font-size: 0.85rem; padding: 2px 8px;}
+    .sidebar-nav { width: 240px; min-width: 180px; background: #fff; box-shadow: 2px 0 16px #0001; }
+    .sidebar-link { display: flex; align-items: center; gap: 0.75em; padding: 0.7em 1.2em; border-radius: 0.8em; font-weight: 500; color: #334155; }
+    .sidebar-link.active, .sidebar-link:hover { background: #f3f4f6; color: #db2777; }
+    .sidebar-title { font-size: 1.35rem; font-weight: 700; padding: 1em 1.2em 0.5em 1.2em; }
+    .sidebar-divider { width: 80%; margin: 1.1em auto 0.8em auto; border-bottom: 2px solid #e5e7eb; border-radius: 6px; }
+    .customer-sidebar-list { padding-left: 0.5em; padding-right: 0.5em; }
+    .customer-btn { width: 100%; text-align: left; padding: 0.5em 0.8em; border-radius: 0.5em; background: none; color: #555; margin-bottom: 2px; }
+    .customer-btn.active, .customer-btn:focus { background: #e5e7eb; color: #111; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
+    .grid-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; border: 1px solid #CBD5E0; border-radius: 0.25rem; background: #fff; color: #1A202C; font-size: 0.75rem; }
+    .grid-cell.unpaid { background-color: #fecaca; border-color: #fecaca; color: #b91c1c; }
+    .grid-cell.paid   { background-color: #bbf7d0; border-color: #bbf7d0; color: #166534; }
+    .grid-cell.pending { background-color: #fef9c3; border-color: #fef9c3; color: #b45309; }
+    @media (max-width: 1024px) { .sidebar-nav { width: 180px; } }
   </style>
 </head>
-<body class="h-screen flex flex-col">
+<body class="bg-gray-50 flex h-screen">
 
   <!-- Login Overlay -->
-  <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-    <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
+  <div id="login-overlay" class="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-30">
+    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Enter Admin PIN</h2>
       <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
       <button id="login-btn" class="w-full bg-gray-200 text-black py-4 rounded-lg hover:bg-gray-300">Login</button>
@@ -30,16 +43,29 @@
     </div>
   </div>
 
-  <!-- Main Layout -->
-  <div id="main" class="hidden flex-1 flex flex-col">
+  <!-- Sidebar -->
+  <nav id="sidebar" class="sidebar-nav flex flex-col">
+    <div class="sidebar-title">Admin</div>
+    <button data-target="dashboard" class="sidebar-link nav-link active" id="nav-dashboard">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z" /></svg>
+      Dashboard
+    </button>
+    <div class="sidebar-divider"></div>
+    <div class="flex items-center justify-between px-5 py-2 font-semibold text-gray-700">
+      <span>Customers</span>
+      <button id="add-cust-icon" class="px-2 py-1 bg-gray-200 rounded text-lg font-bold ml-2">+</button>
+    </div>
+    <ul id="sidebar-customer-list" class="customer-sidebar-list space-y-1 text-gray-600"></ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div id="main" class="flex-1 flex flex-col">
     <header class="bg-white shadow-md">
-      <div class="px-4 py-3 flex items-center">
-        <h2 class="text-xl font-semibold text-gray-900">Admin</h2>
-      </div>
+      <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
-    <main class="flex-1 max-w-3xl w-full mx-auto p-6 space-y-10">
+    <main class="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
       <!-- Dashboard Stats -->
-      <section>
+      <section id="dashboard" class="space-y-6">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="dashboard-card p-6">
             <p class="text-sm text-gray-500">Total Customers</p>
@@ -58,18 +84,44 @@
             <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
           </div>
         </div>
+        <div class="dashboard-card p-6">
+          <h3 class="text-lg font-semibold mb-4">Invoice Tracking Calendar</h3>
+          <div id="invoice-grid" class="calendar-grid"></div>
+        </div>
+        <!-- Pending Manual Payments Section -->
+        <div id="pending-section" class="dashboard-card p-6">
+          <h3 class="text-lg font-semibold mb-4">Pending Manual Payments</h3>
+          <div id="pending-list" class="space-y-4"></div>
+        </div>
       </section>
 
-      <!-- Pending Manual Payments -->
-      <section>
-        <h3 class="text-lg font-bold mb-4">Pending Manual Payments</h3>
-        <div id="pending-list" class="space-y-4"></div>
+      <!-- Add Customer Form -->
+      <section id="customers" class="hidden space-y-8">
+        <div class="dashboard-card p-6 max-w-md mx-auto">
+          <h3 class="text-xl font-semibold mb-4">+ Add Customer</h3>
+          <input id="cust-name" placeholder="Customer Name" class="w-full p-4 border rounded-lg mb-4">
+          <input id="cust-email" type="email" placeholder="Customer Email" class="w-full p-4 border rounded-lg mb-4">
+          <input id="cust-phone" type="tel" placeholder="Phone Number" class="w-full p-4 border rounded-lg mb-4">
+          <input id="cust-address" placeholder="Address" class="w-full p-4 border rounded-lg mb-4">
+          <input id="cust-id" placeholder="Customer ID" class="w-full p-4 border rounded-lg mb-4">
+          <button id="add-cust-btn" class="w-full bg-pink-200 text-black py-3 rounded-lg hover:bg-pink-300">Add Customer</button>
+        </div>
       </section>
 
-      <!-- All Customers & Invoices -->
-      <section>
-        <h3 class="text-lg font-bold mb-4">All Customers</h3>
-        <div id="all-customers-list" class="space-y-8"></div>
+      <!-- Customer Profile -->
+      <section id="profile" class="hidden space-y-6">
+        <div class="dashboard-card p-6 max-w-md mx-auto space-y-4">
+          <h3 class="text-xl font-semibold">Customer Profile</h3>
+          <p><strong>ID:</strong> <span id="profile-id"></span></p>
+          <p><strong>Name:</strong> <span id="profile-name"></span></p>
+          <p><strong>Email:</strong> <span id="profile-email"></span></p>
+          <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
+          <p><strong>Address:</strong> <span id="profile-address"></span></p>
+          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="w-full p-2 border rounded-lg mb-2">
+          <button id="add-invoice-btn" class="w-full bg-pink-200 text-black py-2 rounded-lg hover:bg-pink-300">Add Invoice</button>
+          <ul id="profile-bills-list" class="mt-4 space-y-2"></ul>
+          <button id="delete-cust-btn" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 mt-4">Delete Customer</button>
+        </div>
       </section>
     </main>
   </div>
@@ -88,79 +140,207 @@
   </div>
 
   <script>
-    // DEMO DATA (sync with customer.html for testing)
-    function getCustomers() {
-      return JSON.parse(localStorage.getItem('customers') || '[]');
-    }
-    function getBills() {
-      return JSON.parse(localStorage.getItem('bills') || '[]');
-    }
-    function saveCustomers(cs) {
-      localStorage.setItem('customers', JSON.stringify(cs));
-    }
-    function saveBills(bs) {
-      localStorage.setItem('bills', JSON.stringify(bs));
-    }
+    // Storage helpers
+    const getCustomers = () => JSON.parse(localStorage.getItem('customers') || '[]');
+    const saveCustomers = arr => localStorage.setItem('customers', JSON.stringify(arr));
+    const getBills = () => JSON.parse(localStorage.getItem('bills') || '[]');
+    const saveBills = arr => localStorage.setItem('bills', JSON.stringify(arr));
 
-    // Login
-    const loginOverlay = document.getElementById('login-overlay');
+    // UI references
     const loginBtn = document.getElementById('login-btn');
-    const adminPin = document.getElementById('admin-pin');
+    const pinInput = document.getElementById('admin-pin');
     const pinError = document.getElementById('pin-error');
-    const main = document.getElementById('main');
+    const sidebar = document.getElementById('sidebar');
+    const mainDiv = document.getElementById('main');
+    const sections = {
+      dashboard: document.getElementById('dashboard'),
+      customers: document.getElementById('customers'),
+      profile: document.getElementById('profile')
+    };
+    const sidebarList = document.getElementById('sidebar-customer-list');
+    const addCustIcon = document.getElementById('add-cust-icon');
+    const addCustBtn = document.getElementById('add-cust-btn');
+    const addInvoiceBtn = document.getElementById('add-invoice-btn');
+    const deleteCustBtn = document.getElementById('delete-cust-btn');
+    const grid = document.getElementById('invoice-grid');
+    const navLinks = document.querySelectorAll('.nav-link');
+    let activeCustomer = null;
 
-    loginBtn.onclick = function() {
-      pinError.textContent = '';
-      if (adminPin.value.trim() === '1234') {
-        loginOverlay.classList.add('hidden');
-        main.classList.remove('hidden');
-        renderDashboard();
+    // Section toggling
+    function showSection(key) {
+      Object.values(sections).forEach(s => s.classList.add('hidden'));
+      sections[key].classList.remove('hidden');
+      document.getElementById('page-title').textContent = key.charAt(0).toUpperCase() + key.slice(1);
+      if (key !== 'profile') document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
+    }
+    navLinks.forEach(link => link.addEventListener('click', e => {
+      e.preventDefault();
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      showSection(link.getAttribute('data-target'));
+    }));
+
+    // Login logic
+    loginBtn.addEventListener('click', () => {
+      if (pinInput.value === '1234') {
+        document.getElementById('login-overlay').classList.add('hidden');
+        sidebar.classList.remove('hidden');
+        mainDiv.classList.remove('hidden');
+        populateSidebar();
+        navLinks.forEach(l => l.classList.remove('active'));
+        document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+        showSection('dashboard');
+        updateMetrics();
+        updateGrid();
+        renderPendingManuals();
       } else {
         pinError.textContent = 'Invalid PIN';
       }
-    };
+    });
 
-    // Confirm modal logic
-    const confirmModalBg = document.getElementById('confirm-modal-bg');
-    const confirmModalTitle = document.getElementById('confirm-modal-title');
-    const confirmModalMsg = document.getElementById('confirm-modal-msg');
-    const confirmModalYes = document.getElementById('confirm-modal-yes');
-    const confirmModalNo = document.getElementById('confirm-modal-no');
-    const closeConfirmModal = document.getElementById('close-confirm-modal');
-    let confirmAction = null;
-
-    function showConfirmModal(title, msg, yesAction) {
-      confirmModalTitle.textContent = title;
-      confirmModalMsg.textContent = msg;
-      confirmModalBg.style.display = 'flex';
-      confirmAction = yesAction;
+    // Populate sidebar customers
+    function populateSidebar() {
+      sidebarList.innerHTML = '';
+      getCustomers().forEach(c => {
+        const btn = document.createElement('button');
+        btn.textContent = c.id + " - " + c.name;
+        btn.className = 'customer-btn w-full text-left px-2 py-1';
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          openCustomer(c.id);
+        });
+        const li = document.createElement('li'); li.appendChild(btn);
+        sidebarList.appendChild(li);
+      });
     }
-    confirmModalYes.onclick = function() {
-      if (confirmAction) confirmAction();
-      confirmModalBg.style.display = 'none';
-    };
-    confirmModalNo.onclick = function() {
-      confirmModalBg.style.display = 'none';
-    };
-    closeConfirmModal.onclick = function() {
-      confirmModalBg.style.display = 'none';
-    };
 
-    // Dashboard rendering
-    function renderDashboard() {
+    // Add customer form
+    addCustIcon.addEventListener('click', () => {
+      navLinks.forEach(l => l.classList.remove('active'));
+      showSection('customers');
+    });
+    addCustBtn.addEventListener('click', () => {
+      const [id,name,email,phone,address] = ['cust-id','cust-name','cust-email','cust-phone','cust-address']
+        .map(i => document.getElementById(i).value.trim());
+      if (!id || !name) { alert('ID and name required'); return; }
+      const list = getCustomers(); list.push({id,name,email,phone,address}); saveCustomers(list);
+      ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(i => document.getElementById(i).value = '');
+      populateSidebar(); updateMetrics(); updateGrid(); renderPendingManuals();
+      navLinks.forEach(l => l.classList.remove('active'));
+      document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+      showSection('dashboard');
+    });
+
+    // Open profile
+    function openCustomer(id) {
+      activeCustomer = getCustomers().find(c => c.id === id);
+      if (!activeCustomer) return;
+      ['profile-id','profile-name','profile-email','profile-phone','profile-address'].forEach(f => {
+        document.getElementById(f).textContent = activeCustomer[f.split('-')[1]];
+      });
+      renderBills();
+      navLinks.forEach(l => l.classList.remove('active'));
+      showSection('profile');
+    }
+
+    // Render bills
+    function renderBills() {
+      const list = document.getElementById('profile-bills-list');
+      if (!list) return;
+      list.innerHTML = '';
+      getBills().filter(b => b.customerId === activeCustomer.id).forEach((b, i) => {
+        const li = document.createElement('li'); li.className = 'p-4 bg-gray-100 rounded';
+        let status = b.status === "pending" ? `<span class="pending-badge ml-2">Pending</span>`
+          : b.paid ? `<span class="paid-badge ml-2">Paid</span>`
+          : `<span class="unpaid-badge ml-2">Unpaid</span>`;
+        li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
+          <p><strong>Due:</strong> ${b.dueDate}</p>
+          <p><strong>Status:</strong> ${status}</p>`;
+        if (!b.paid && b.status !== "pending") {
+          const pay = document.createElement('button');
+          pay.textContent = 'Mark Paid';
+          pay.className = 'mt-2 bg-green-400 text-white px-3 py-1 rounded';
+          pay.addEventListener('click', () => {
+            b.paid = true; b.status = undefined;
+            saveBills(getBills()); renderBills(); updateMetrics(); updateGrid(); renderPendingManuals();
+          });
+          li.appendChild(pay);
+        }
+        list.appendChild(li);
+      });
+    }
+
+    // Add invoice
+    addInvoiceBtn.addEventListener('click', () => {
+      if (!activeCustomer) { alert('Select a customer'); return; }
+      const amt = document.getElementById('invoice-amount').value.trim(); if (!amt) { alert('Enter amount'); return; }
+      const due = new Date().toISOString().slice(0,10);
+      const bills = getBills(); bills.push({customerId:activeCustomer.id,amount:parseFloat(amt),dueDate:due,paid:false,createdAt:new Date()});
+      saveBills(bills);
+      renderBills(); updateMetrics(); updateGrid(); renderPendingManuals();
+      document.getElementById('invoice-amount').value = '';
+    });
+
+    // Delete customer
+    deleteCustBtn.addEventListener('click', () => {
+      if (!activeCustomer) {
+        alert('Please select a customer first.');
+        return;
+      }
+      if (!confirm(`Delete customer "${activeCustomer.name}" and all their invoices?`)) {
+        return;
+      }
+      // Remove from storage
+      const remainingCustomers = getCustomers().filter(c => c.id !== activeCustomer.id);
+      saveCustomers(remainingCustomers);
+      const remainingBills = getBills().filter(b => b.customerId !== activeCustomer.id);
+      saveBills(remainingBills);
+
+      // Clear active and UI
+      activeCustomer = null;
+      document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
+      ['profile-id','profile-name','profile-email','profile-phone','profile-address']
+        .forEach(id => document.getElementById(id).textContent = '');
+      const billsList = document.getElementById('profile-bills-list');
+      if (billsList) billsList.innerHTML = '';
+
+      // Refresh everything
+      populateSidebar();
       updateMetrics();
+      updateGrid();
       renderPendingManuals();
-      renderAllCustomers();
-    }
 
+      // Return to Dashboard view
+      document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+      showSection('dashboard');
+    });
+
+    // Update metrics
     function updateMetrics() {
-      var cs = getCustomers(), bs = getBills();
+      const cs = getCustomers(), bs = getBills(), today = new Date().toISOString().slice(0,10);
       document.getElementById('customersCount').textContent = cs.length;
       document.getElementById('outstandingCount').textContent = bs.filter(b => !b.paid && !b.status).length;
-      var unpaid = bs.filter(b => !b.paid && !b.status).reduce((sum, b) => sum + Number(b.amount || 0), 0);
-      document.getElementById('unpaidAmount').textContent = '$'+unpaid.toFixed(2);
-      var start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
-      document.getElementById('revenueCount').textContent='$'+bs.filter(b => b.paid&&new Date(b.confirmedAt||b.createdAt)>=start).reduce((s,b)=>s+b.amount,0).toFixed(2);
+      document.getElementById('unpaidAmount').textContent = '$' + bs.filter(b => !b.paid && !b.status).reduce((s,b) => s + Number(b.amount||0), 0).toFixed(2);
+      const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+      document.getElementById('revenueCount').textContent = '$' + bs.filter(b => b.paid && new Date(b.createdAt) >= start).reduce((s,b) => s + b.amount, 0).toFixed(2);
+    }
+
+    // Update calendar grid
+    function updateGrid() {
+      grid.innerHTML = '';
+      getCustomers().forEach(c => {
+        const cell = document.createElement('div'); cell.className = 'grid-cell'; cell.textContent = c.id;
+        const bills = getBills().filter(b => b.customerId === c.id);
+        if (bills.length) {
+          if (bills.some(b => b.status === "pending")) cell.classList.add('pending');
+          else if (bills.some(b => !b.paid)) cell.classList.add('unpaid');
+          else cell.classList.add('paid');
+        } else {
+          cell.classList.add('paid');
+        }
+        grid.appendChild(cell);
+      });
     }
 
     // Pending manual payments
@@ -171,13 +351,13 @@
       const cs = getCustomers();
       let pending = bills.filter(b => b.status === "pending");
       if (!pending.length) {
-        pendingList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No pending manual payments.</div>`;
+        pendingList.innerHTML = `<div class="text-gray-500">No pending manual payments.</div>`;
         return;
       }
       pending.forEach((bill, idx) => {
         const cust = cs.find(c => c.id === bill.customerId);
         let div = document.createElement('div');
-        div.className = 'dashboard-card p-4 flex flex-col gap-2 border-l-4 border-yellow-400';
+        div.className = 'p-4 bg-yellow-50 rounded shadow flex flex-col gap-2 border-l-4 border-yellow-400';
         div.innerHTML = `
           <div class="flex justify-between items-center mb-1">
             <span>
@@ -205,7 +385,7 @@
               bill.status = undefined;
               bill.confirmedAt = (new Date()).toISOString().slice(0,16).replace('T',' ');
               saveBills(bills);
-              renderDashboard();
+              renderPendingManuals(); updateMetrics(); updateGrid(); renderBills();
             }
           );
         };
@@ -221,7 +401,7 @@
               bill.paymentMethod = undefined;
               bill.manualNote = undefined;
               saveBills(bills);
-              renderDashboard();
+              renderPendingManuals(); updateMetrics(); updateGrid(); renderBills();
             }
           );
         };
@@ -232,49 +412,33 @@
       });
     }
 
-    // All customers & invoices
-    function renderAllCustomers() {
-      const list = document.getElementById('all-customers-list');
-      list.innerHTML = '';
-      const cs = getCustomers();
-      const bills = getBills();
-      if (!cs.length) {
-        list.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No customers found.</div>`;
-        return;
-      }
-      cs.forEach(c => {
-        let div = document.createElement('div');
-        div.className = 'dashboard-card p-6';
-        div.innerHTML = `<div class="font-bold mb-1">${c.name} <span class="text-xs text-gray-500">(ID: ${c.id})</span></div>
-          <div class="text-gray-700 mb-2">Email: ${c.email || "-"} | Phone: ${c.phone || "-"}</div>`;
-        // Invoices
-        let billList = document.createElement('div');
-        billList.className = "flex flex-col gap-1";
-        let customerBills = bills.filter(b => b.customerId === c.id);
-        if (!customerBills.length) {
-          billList.innerHTML = `<div class="text-gray-400 text-sm">No invoices.</div>`;
-        } else {
-          customerBills.forEach((b, idx) => {
-            let badge = b.status === "pending"
-              ? '<span class="pending-badge ml-2">Pending</span>'
-              : b.paid
-              ? '<span class="paid-badge ml-2">Paid</span>'
-              : '<span class="unpaid-badge ml-2">Unpaid</span>';
-            billList.innerHTML += `<div>
-              <span class="font-semibold">Invoice #${idx + 1}:</span>
-              <span>$${b.amount} — Due: ${b.dueDate}</span>
-              ${b.paymentMethod ? `<span class="ml-2 text-gray-700 text-xs">(${b.paymentMethod}${b.manualNote ? ": "+b.manualNote : ""})</span>` : ""}
-              ${b.confirmedAt ? `<span class="ml-2 text-gray-600 text-xs">Confirmed: ${b.confirmedAt}</span>` : ""}
-              ${badge}
-            </div>`;
-          });
-        }
-        div.appendChild(billList);
-        list.appendChild(div);
-      });
-    }
+    // Confirm modal logic
+    const confirmModalBg = document.getElementById('confirm-modal-bg');
+    const confirmModalTitle = document.getElementById('confirm-modal-title');
+    const confirmModalMsg = document.getElementById('confirm-modal-msg');
+    const confirmModalYes = document.getElementById('confirm-modal-yes');
+    const confirmModalNo = document.getElementById('confirm-modal-no');
+    const closeConfirmModal = document.getElementById('close-confirm-modal');
+    let confirmAction = null;
 
-    // Autofill demo data if empty (same as customer.html)
+    function showConfirmModal(title, msg, yesAction) {
+      confirmModalTitle.textContent = title;
+      confirmModalMsg.textContent = msg;
+      confirmModalBg.style.display = 'flex';
+      confirmAction = yesAction;
+    }
+    confirmModalYes.onclick = function() {
+      if (confirmAction) confirmAction();
+      confirmModalBg.style.display = 'none';
+    };
+    confirmModalNo.onclick = function() {
+      confirmModalBg.style.display = 'none';
+    };
+    closeConfirmModal.onclick = function() {
+      confirmModalBg.style.display = 'none';
+    };
+
+    // Autofill demo data if empty (same as before)
     (function demoAutofill() {
       let cs = getCustomers();
       if (!cs.length) {
