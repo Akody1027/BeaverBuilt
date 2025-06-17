@@ -6,7 +6,6 @@
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* --- (ALL ORIGINAL STYLES UNCHANGED) --- */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -106,61 +105,6 @@
     .customer-id-label { font-weight: bold; margin-right: 3px; }
     .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
     .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
-    /* --- (ADDED STYLE FOR THE NEW SECTION) --- */
-    .pending-payments-section {
-      background: #fef08a;
-      border: 2px solid #facc15;
-      border-radius: 1rem;
-      padding: 1.5rem 1.5rem 1rem 1.5rem;
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-      box-shadow: 0 2px 14px #facc1540;
-      font-size: 1rem;
-    }
-    .pending-payment-item {
-      background: #fde68a;
-      border: 1px solid #f59e42;
-      border-radius: .5rem;
-      padding: .7rem 1rem;
-      margin-bottom: .8rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .pending-payments-section h4 {
-      font-weight: bold;
-      color: #ca8a04;
-      margin-bottom: 1rem;
-      font-size: 1.1rem;
-      letter-spacing: 0.03em;
-    }
-    .pending-payment-item .actions button {
-      margin-left: 1rem;
-    }
-    .pending-payment-item .actions button.approve {
-      background: #4ade80; color: #065f46;
-      border: none;
-      border-radius: .375rem;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background .12s;
-    }
-    .pending-payment-item .actions button.approve:hover {
-      background: #22c55e;
-    }
-    .pending-payment-item .actions button.deny {
-      background: #f87171; color: #fff;
-      border: none;
-      border-radius: .375rem;
-      padding: 0.5rem 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background .12s;
-    }
-    .pending-payment-item .actions button.deny:hover {
-      background: #ef4444;
-    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -268,13 +212,6 @@ Admin</textarea>
             <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
         </div>
-        <!-- ===========================
-            Pending Payment Confirmation Section (ADDED)
-        ============================ -->
-        <div id="pending-payments-section" class="pending-payments-section" style="display:none"></div>
-        <!-- ===========================
-            END Pending Payment Section
-        ============================ -->
       </section>
 
       <!-- Add Customer -->
@@ -316,7 +253,6 @@ Admin</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      /* --- ORIGINAL CODE (unchanged) --- */
       function getCustomers() { 
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
         catch(e) { return []; }
@@ -393,7 +329,6 @@ Admin</textarea>
         });
         document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
         if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
-        if(id==='dashboard') updatePendingPaymentsSection();
       }
 
       navLinks.forEach(function(link){
@@ -649,12 +584,24 @@ Admin</textarea>
       emailModalBg.addEventListener('click', function(e){
         if (e.target === emailModalBg) emailModalBg.classList.remove('show');
       });
+
+      // === KEY CHANGE: email log checkmark auto-disappear after 5 seconds ===
       massEmailForm.addEventListener('submit', function(e){
         e.preventDefault();
         let log = getEmailLog();
         let now = new Date();
         selectedCustomerIds.forEach(function(cid) {
           log[cid] = now.toLocaleString();
+          // Schedule removal after 5 seconds
+          setTimeout(function() {
+            let curLog = getEmailLog();
+            if (curLog[cid]) {
+              delete curLog[cid];
+              saveEmailLog(curLog);
+              populateSidebar();
+              if (activeCustomer && activeCustomer.id === cid) renderEmailLog();
+            }
+          }, 5000);
         });
         saveEmailLog(log);
         populateSidebar();
@@ -662,6 +609,7 @@ Admin</textarea>
         emailModalFeedback.textContent = `Emails sent to ${selectedCustomerIds.length} customer(s)!`;
         setTimeout(()=>{ emailModalBg.classList.remove('show'); }, 1300);
       });
+      // === END KEY CHANGE ===
 
       var grid = document.getElementById('invoice-grid');
       var gridHoldTimeout = null, lastGridHoldCell = null;
@@ -780,72 +728,10 @@ Admin</textarea>
           pinError.textContent = 'Invalid PIN';
         }
       });
-
-      /* ============= NEW CODE FOR MANUAL PAYMENT CONFIRMATION SECTION ============= */
-      function getManualPayments() {
-        // Simulate a storage array of manual payment objects: {id, customerId, amount, date}
-        // Example manualPayments = [{id:1,customerId:'001',amount:100.00,date:'2024-06-15'}]
-        try { return JSON.parse(localStorage.getItem('manualPayments') || '[]'); }
-        catch(e){ return []; }
-      }
-      function saveManualPayments(arr) {
-        try { localStorage.setItem('manualPayments', JSON.stringify(arr)); }
-        catch(e){}
-      }
-      function updatePendingPaymentsSection() {
-        var section = document.getElementById('pending-payments-section');
-        var payments = getManualPayments();
-        section.innerHTML = '';
-        if (payments.length === 0) {
-          section.style.display = 'block';
-          section.innerHTML = '<h4>Pending Payment Confirmation</h4><div>0 pending payments</div>';
-          return;
-        }
-        section.style.display = 'block';
-        section.innerHTML = '<h4>Pending Payment Confirmation</h4>';
-        payments.forEach(function(p) {
-          var customer = getCustomers().find(c => c.id === p.customerId) || {};
-          var item = document.createElement('div');
-          item.className = 'pending-payment-item';
-          item.innerHTML = `
-            <div>
-              <b>${customer.id || p.customerId} - ${customer.name || 'Unknown'}</b> 
-              owes <b>$${Number(p.amount).toFixed(2)}</b> 
-              <span style="font-size:0.92em;color:#b45309;">(${p.date||''})</span>
-            </div>
-            <div class="actions">
-              <button class="approve">Approve</button>
-              <button class="deny">Deny</button>
-            </div>
-          `;
-          item.querySelector('.approve').onclick = function(){
-            if (confirm('Approve this payment?')) {
-              saveManualPayments(getManualPayments().filter(m => m.id !== p.id));
-              updatePendingPaymentsSection();
-            }
-          };
-          item.querySelector('.deny').onclick = function(){
-            if (confirm('Deny this payment?')) {
-              saveManualPayments(getManualPayments().filter(m => m.id !== p.id));
-              updatePendingPaymentsSection();
-            }
-          };
-          section.appendChild(item);
-        });
-      }
-      // Make sure it updates on dashboard load/return:
-      updatePendingPaymentsSection();
-      // For demonstration, allow this in console to add a manual payment quickly:
-      window.demoAddManualPayment = function(customerId, amount){
-        var arr = getManualPayments();
-        var id = Date.now() + Math.floor(Math.random()*999);
-        arr.push({id:id,customerId:String(customerId),amount:amount,date:new Date().toISOString().substring(0,10)});
-        saveManualPayments(arr);
-        updatePendingPaymentsSection();
-      };
-      // Triple safety: Update the section whenever the dashboard is shown
-      // (already handled above in showSection('dashboard'))
-      /* ============= END MANUAL PAYMENT CONFIRMATION SECTION ============= */
+      // Initial load
+      populateSidebar();
+      updateMetrics();
+      updateGrid();
     });
   </script>
 </body>
