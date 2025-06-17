@@ -10,6 +10,19 @@
     .grid-cell { aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E0; border-radius:.25rem; background:#fff; color:#1A202C; font-size:.75rem; }
     .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; } /* pastel red */
     .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; } /* pastel green */
+    .customer-warning {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 0.5rem;
+      background: #f87171;
+      color: #fff;
+      border-radius: 50%;
+      width: 1.1em;
+      height: 1.1em;
+      justify-content: center;
+      font-size: 0.8em;
+      box-shadow: 0 0 2px #b91c1c88;
+    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -59,9 +72,9 @@
           <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
           <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
           <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-email" type="email" placeholder="Customer Email" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-address" placeholder="Address" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
           <button id="add-cust-btn" class="w-full rounded-lg bg-pink-200 py-3 text-black hover:bg-pink-300">Add Customer</button>
         </div>
       </section>
@@ -149,12 +162,21 @@
       });
 
       // --- Sidebar Population ---
+      function customerHasMissingInfo(c) {
+        // Check for missing optional info: email, phone, or address
+        return !(c.email && c.email.trim()) || !(c.phone && c.phone.trim()) || !(c.address && c.address.trim());
+      }
       function populateSidebar(){
         sidebarCustomerList.innerHTML='';
         getCustomers().forEach(function(c){
           var btn = document.createElement('button');
-          btn.textContent = c.name;
-          btn.className = 'customer-btn w-full text-left px-2 py-1';
+          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          btn.style.position = "relative";
+          btn.innerHTML = `<span>${c.name}</span>`;
+          // Add warning icon if missing info
+          if (customerHasMissingInfo(c)) {
+            btn.innerHTML += `<span class="customer-warning" title="Missing info">!</span>`;
+          }
           btn.addEventListener('click', function(){
             document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
             btn.classList.add('active');
@@ -226,7 +248,7 @@
         var email = document.getElementById('cust-email').value.trim();
         var phone = document.getElementById('cust-phone').value.trim();
         var address = document.getElementById('cust-address').value.trim();
-        if(!id||!name||!email){ alert('ID, name, email required'); return; }
+        if(!id||!name){ alert('ID and name required'); return; }
         var cs = getCustomers();
         // Generate unique 4-digit PIN
         var existingPins = cs.map(c => c.pin);
