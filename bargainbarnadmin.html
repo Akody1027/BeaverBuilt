@@ -6,455 +6,736 @@
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background: #fafafa; }
-    .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
-    .pending-badge { background: #fef9c3; color: #b45309; border: 1px solid #facc15; border-radius: 4px; font-size: 0.85rem; padding: 2px 8px; }
-    .modal-bg { position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(31,41,55,0.7);}
-    .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative;}
-    .modal .close-modal { position:absolute;top:8px;right:18px;cursor:pointer;font-size:1.7rem;color:#e11d48;font-weight:700;}
-    .modal .close-modal:hover { color:#b91c1c; }
-    .paid-badge { background: #bbf7d0; color: #166534; border-radius: 4px; font-size: 0.85rem; padding: 2px 8px;}
-    .unpaid-badge { background: #fecaca; color: #b91c1c; border-radius: 4px; font-size: 0.85rem; padding: 2px 8px;}
-    .sidebar-nav { width: 240px; min-width: 180px; background: #fff; box-shadow: 2px 0 16px #0001; }
-    .sidebar-link { display: flex; align-items: center; gap: 0.75em; padding: 0.7em 1.2em; border-radius: 0.8em; font-weight: 500; color: #334155; }
-    .sidebar-link.active, .sidebar-link:hover { background: #f3f4f6; color: #db2777; }
-    .sidebar-title { font-size: 1.35rem; font-weight: 700; padding: 1em 1.2em 0.5em 1.2em; }
-    .sidebar-divider { width: 80%; margin: 1.1em auto 0.8em auto; border-bottom: 2px solid #e5e7eb; border-radius: 6px; }
-    .customer-sidebar-list { padding-left: 0.5em; padding-right: 0.5em; }
-    .customer-btn { width: 100%; text-align: left; padding: 0.5em 0.8em; border-radius: 0.5em; background: none; color: #555; margin-bottom: 2px; }
-    .customer-btn.active, .customer-btn:focus { background: #e5e7eb; color: #111; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; }
-    .grid-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; border: 1px solid #CBD5E0; border-radius: 0.25rem; background: #fff; color: #1A202C; font-size: 0.75rem; }
-    .grid-cell.unpaid { background-color: #fecaca; border-color: #fecaca; color: #b91c1c; }
-    .grid-cell.paid   { background-color: #bbf7d0; border-color: #bbf7d0; color: #166534; }
-    .grid-cell.pending { background-color: #fef9c3; border-color: #fef9c3; color: #b45309; }
-    @media (max-width: 1024px) { .sidebar-nav { width: 180px; } }
+    #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
+    .grid-cell {
+      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
+      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
+      position: relative;
+    }
+    .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
+    .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
+    .grid-cell.selected { outline: 3px solid #000; z-index:2; }
+    .customer-warning {
+      display: inline-flex; align-items: center; margin-left: 0.5rem;
+      background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em;
+      justify-content: center; font-size: 0.8em; box-shadow: 0 0 2px #b91c1c88;
+    }
+    .customer-btn.active, #sidebar .customer-btn.active {
+      background: #E5E7EB !important;
+      border-radius: .375rem;
+    }
+    .update-fields { margin-top: 1rem; }
+    .update-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    #batch-bar {
+      display:none;
+      position:relative;
+      margin-top:1rem;
+      background:#f3f4f6;
+      border:2px solid #000;
+      border-radius: .5rem;
+      padding:1rem;
+      box-shadow:0 4px 24px #3332;
+      text-align:center;
+      font-weight:600;
+      color:#333;
+      z-index:30;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+    }
+    #batch-bar.show { display:flex; }
+    #batch-bar .bar-actions {display:flex; gap:1.5rem; justify-content:center;}
+    #batch-bar .bar-actions button {min-width:120px;}
+    /* Sidebar fine-tuning for max auto-narrowness */
+    #sidebar {
+      width: auto !important;
+      min-width: 0;
+      max-width: 240px;
+      padding-right: 18px !important;
+      padding-left: 13px !important;
+    }
+    #sidebar .customer-btn { white-space: nowrap; }
+    #sidebar h1 { white-space: nowrap; }
+    .sidebar-divider {
+      width: 80%; height: 2px; background: #e5e7eb; margin: 12px auto 14px auto; border-radius: 2px;
+    }
+    /* Modal styling */
+    #email-modal-bg, #batch-modal-bg {
+      display: none;
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(31,41,55,0.7);
+      justify-content:center; align-items:center;
+    }
+    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
+    #email-modal, #batch-modal {
+      background: #fff;
+      border-radius:1.2rem;
+      max-width: 80vw;
+      width: 80vw;
+      max-height:80vh;
+      min-height:380px;
+      box-shadow: 0 8px 32px #0002;
+      display:flex; flex-direction:column;
+      padding:2rem 2rem 1.2rem 2rem;
+      position:relative;
+      overflow:auto;
+      border:3px solid #000;
+    }
+    #email-modal .close-modal, #batch-modal .close-modal {
+      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem; font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
+      z-index:2000;
+    }
+    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
+    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
+    @media (max-width: 900px) {
+      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw;}
+    }
+    @media (max-width: 500px) {
+      #email-modal, #batch-modal { min-height:220px;}
+    }
+    /* Spinner */
+    .spinner {
+      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
+      border:3px solid #cbd5e1; border-top:3px solid #64748b;
+      border-radius:50%; animation:spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { 100%{transform:rotate(360deg);} }
+    /* Green check for emailed customers */
+    .email-check {
+      color: #22c55e; font-size: 1.15em; margin-left: 5px; vertical-align: middle;
+    }
+    .customer-id-label { font-weight: bold; margin-right: 3px; }
+    .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
+    .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
   </style>
 </head>
-<body class="bg-gray-50 flex h-screen">
-
+<body class="flex h-screen bg-gray-50">
   <!-- Login Overlay -->
-  <div id="login-overlay" class="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-30">
-    <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Enter Admin PIN</h2>
-      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
-      <button id="login-btn" class="w-full bg-gray-200 text-black py-4 rounded-lg hover:bg-gray-300">Login</button>
-      <p id="pin-error" class="text-red-600 mt-2"></p>
+  <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+    <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
+      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 flex justify-center items-center text-lg font-semibold transition">
+        <span id="login-btn-text">Login</span>
+        <span id="login-btn-spinner" class="spinner hidden"></span>
+      </button>
+      <p id="pin-error" class="mt-2 text-red-600"></p>
+    </div>
+  </div>
+
+  <!-- Email Modal -->
+  <div id="email-modal-bg">
+    <div id="email-modal">
+      <div class="close-modal" id="close-email-modal">&times;</div>
+      <h2 class="text-2xl mb-4 font-bold text-pink-700">Send Mass Email</h2>
+      <div id="email-modal-list" class="mb-4">
+        <strong class="mb-1 text-gray-700 block">Sending to:</strong>
+        <ul id="modal-customers-list" class="mb-3 pl-4 list-disc text-pink-700"></ul>
+      </div>
+      <form id="mass-email-form" class="flex flex-col gap-3">
+        <label class="block text-gray-600 font-semibold mb-1">From:</label>
+        <input type="email" readonly value="Laramos@cox.net" class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
+        <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
+        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin">
+        <label class="block text-gray-600 font-semibold mb-1">Message:</label>
+        <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]" placeholder="Write your message...">Dear Customer,
+
+Your personalized payment link and PIN will be provided here.
+
+Thank you,
+Admin</textarea>
+        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">Send Email</button>
+      </form>
+      <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
+    </div>
+  </div>
+
+  <!-- Batch Action Modal (Long Press) -->
+  <div id="batch-modal-bg">
+    <div id="batch-modal">
+      <div class="close-modal" id="close-batch-modal">&times;</div>
+      <div class="flex flex-col items-center justify-center">
+        <div class="text-lg font-semibold mb-4">Batch Actions</div>
+        <div id="batch-modal-list" class="mb-3"></div>
+        <div class="flex flex-col gap-4 w-full items-center">
+          <button id="batch-modal-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Mark All Paid</button>
+          <button id="batch-modal-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Send Email</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Sidebar -->
-  <nav id="sidebar" class="sidebar-nav flex flex-col">
-    <div class="sidebar-title">Admin</div>
-    <button data-target="dashboard" class="sidebar-link nav-link active" id="nav-dashboard">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z" /></svg>
-      Dashboard
+  <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
+    <h1 class="mb-4 text-2xl font-bold">Admin</h1>
+    <button data-target="dashboard" class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/></svg>Dashboard
     </button>
     <div class="sidebar-divider"></div>
-    <div class="flex items-center justify-between px-5 py-2 font-semibold text-gray-700">
-      <span>Customers</span>
-      <button id="add-cust-icon" class="px-2 py-1 bg-gray-200 rounded text-lg font-bold ml-2">+</button>
+    <div class="mb-2 flex items-center">
+      <span class="text-gray-700">👥 Customers</span>
+      <button id="add-cust-icon" class="ml-2 rounded bg-gray-200 px-2 py-1">+</button>
     </div>
-    <ul id="sidebar-customer-list" class="customer-sidebar-list space-y-1 text-gray-600"></ul>
+    <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
   </nav>
 
   <!-- Main Content -->
-  <div id="main" class="flex-1 flex flex-col">
+  <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
       <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
-    <main class="flex-1 overflow-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
-      <!-- Dashboard Stats -->
+    <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
+      <!-- Dashboard -->
       <section id="dashboard" class="space-y-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div class="dashboard-card p-6">
-            <p class="text-sm text-gray-500">Total Customers</p>
-            <p id="customersCount" class="text-3xl font-bold">0</p>
-          </div>
-          <div class="dashboard-card p-6">
-            <p class="text-sm text-gray-500">Outstanding Invoices</p>
-            <p id="outstandingCount" class="text-3xl font-bold">0</p>
-          </div>
-          <div class="dashboard-card p-6">
-            <p class="text-sm text-gray-500">Unpaid Amount Due</p>
-            <p id="unpaidAmount" class="text-3xl font-bold">$0.00</p>
-          </div>
-          <div class="dashboard-card p-6">
-            <p class="text-sm text-gray-500">Revenue This Month</p>
-            <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
-          </div>
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Total Customers</p><p id="customersCount" class="text-3xl font-bold">0</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Outstanding Invoices</p><p id="outstandingCount" class="text-3xl font-bold">0</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Unpaid Amount Due</p><p id="unpaidAmount" class="text-3xl font-bold">$0.00</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Revenue This Month</p><p id="revenueCount" class="text-3xl font-bold">$0.00</p></div>
         </div>
-        <div class="dashboard-card p-6">
-          <h3 class="text-lg font-semibold mb-4">Invoice Tracking Calendar</h3>
-          <div id="invoice-grid" class="calendar-grid"></div>
-        </div>
-        <!-- Pending Manual Payments Section -->
-        <div id="pending-section" class="dashboard-card p-6">
-          <h3 class="text-lg font-semibold mb-4">Pending Manual Payments</h3>
-          <div id="pending-list" class="space-y-4"></div>
+        <div class="rounded-2xl bg-white p-6 shadow">
+          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
+          <div id="invoice-grid"></div>
+          <div id="batch-bar">
+            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
+              <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 12H8m8 0H8m12 4.5V9.75M12 4.5L3 9.75V21a.75.75 0 00.75.75H20.25A.75.75 0 0021 21V9.75L12 4.5z"/>
+                </svg>
+                Send Email
+              </button>
+              <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Mark All Paid
+              </button>
+            </div>
+            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
+          </div>
         </div>
       </section>
 
-      <!-- Add Customer Form -->
+      <!-- Add Customer -->
       <section id="customers" class="hidden space-y-8">
-        <div class="dashboard-card p-6 max-w-md mx-auto">
-          <h3 class="text-xl font-semibold mb-4">+ Add Customer</h3>
-          <input id="cust-name" placeholder="Customer Name" class="w-full p-4 border rounded-lg mb-4">
-          <input id="cust-email" type="email" placeholder="Customer Email" class="w-full p-4 border rounded-lg mb-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number" class="w-full p-4 border rounded-lg mb-4">
-          <input id="cust-address" placeholder="Address" class="w-full p-4 border rounded-lg mb-4">
-          <input id="cust-id" placeholder="Customer ID" class="w-full p-4 border rounded-lg mb-4">
-          <button id="add-cust-btn" class="w-full bg-pink-200 text-black py-3 rounded-lg hover:bg-pink-300">Add Customer</button>
+        <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
+          <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
+          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
         </div>
       </section>
 
-      <!-- Customer Profile -->
+      <!-- Profile -->
       <section id="profile" class="hidden space-y-6">
-        <div class="dashboard-card p-6 max-w-md mx-auto space-y-4">
+        <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
           <h3 class="text-xl font-semibold">Customer Profile</h3>
           <p><strong>ID:</strong> <span id="profile-id"></span></p>
           <p><strong>Name:</strong> <span id="profile-name"></span></p>
           <p><strong>Email:</strong> <span id="profile-email"></span></p>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
-          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="w-full p-2 border rounded-lg mb-2">
-          <button id="add-invoice-btn" class="w-full bg-pink-200 text-black py-2 rounded-lg hover:bg-pink-300">Add Invoice</button>
-          <ul id="profile-bills-list" class="mt-4 space-y-2"></ul>
-          <button id="delete-cust-btn" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 mt-4">Delete Customer</button>
+          <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
+          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
+          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
+          <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
+          <div class="flex flex-row gap-2 mt-4">
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
+            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
+          </div>
+          <div id="update-fields" class="update-fields"></div>
+          <div id="profile-email-log" class="mt-4"></div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Confirm Modal -->
-  <div id="confirm-modal-bg" class="modal-bg" style="display:none;">
-    <div class="modal">
-      <div class="close-modal" id="close-confirm-modal">&times;</div>
-      <h4 class="text-lg font-bold mb-3" id="confirm-modal-title"></h4>
-      <div id="confirm-modal-msg" class="mb-4 text-gray-800"></div>
-      <div class="flex gap-4 justify-end">
-        <button id="confirm-modal-no" class="bg-gray-200 hover:bg-gray-300 text-black rounded px-4 py-2 font-semibold">Cancel</button>
-        <button id="confirm-modal-yes" class="bg-green-600 hover:bg-green-700 text-white rounded px-4 py-2 font-semibold">Confirm</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Storage helpers
-    const getCustomers = () => JSON.parse(localStorage.getItem('customers') || '[]');
-    const saveCustomers = arr => localStorage.setItem('customers', JSON.stringify(arr));
-    const getBills = () => JSON.parse(localStorage.getItem('bills') || '[]');
-    const saveBills = arr => localStorage.setItem('bills', JSON.stringify(arr));
+    document.addEventListener('DOMContentLoaded', function() {
+      function getCustomers() { 
+        try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
+        catch(e) { return []; }
+      }
+      function saveCustomers(c) {
+        try { localStorage.setItem('customers', JSON.stringify(c)); }
+        catch(e) {}
+      }
+      function getBills() { 
+        try { return JSON.parse(localStorage.getItem('bills') || '[]'); }
+        catch(e) { return []; }
+      }
+      function saveBills(b) {
+        try { localStorage.setItem('bills', JSON.stringify(b)); }
+        catch(e) {}
+      }
+      function getEmailLog() {
+        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
+        catch(e) { return {}; }
+      }
+      function saveEmailLog(log) {
+        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
+        catch(e) {}
+      }
+      function generateUniquePin(existingPins) {
+        let pin, tries = 0;
+        do {
+          pin = String(Math.floor(1000 + Math.random() * 9000));
+          tries++;
+          if (tries > 5000) throw new Error('Could not generate unique PIN');
+        } while (existingPins.includes(pin));
+        return pin;
+      }
+      var loginOverlay = document.getElementById('login-overlay');
+      var loginBtn = document.getElementById('login-btn');
+      var pinInput = document.getElementById('admin-pin');
+      var pinError = document.getElementById('pin-error');
+      var sidebar = document.getElementById('sidebar');
+      var main = document.getElementById('main');
+      var navLinks = document.querySelectorAll('.nav-link');
+      var sidebarCustomerList = document.getElementById('sidebar-customer-list');
+      var addCustIcon = document.getElementById('add-cust-icon');
+      var addCustBtn = document.getElementById('add-cust-btn');
+      var addInvoiceBtn = document.getElementById('add-invoice-btn');
+      var deleteCustBtn = document.getElementById('delete-cust-btn');
+      var updateCustBtn = document.getElementById('update-cust-btn');
+      var updateFieldsDiv = document.getElementById('update-fields');
+      var batchBar = document.getElementById('batch-bar');
+      var batchPaidBtn = document.getElementById('batch-paid');
+      var batchEmailBtn = document.getElementById('batch-email');
+      var batchCount = document.getElementById('batch-count');
+      var selectedCustomerIds = [];
+      var activeCustomer = null;
+      var emailModalBg = document.getElementById('email-modal-bg');
+      var emailModal = document.getElementById('email-modal');
+      var closeEmailModal = document.getElementById('close-email-modal');
+      var modalCustomersList = document.getElementById('modal-customers-list');
+      var emailModalFeedback = document.getElementById('email-modal-feedback');
+      var emailSubject = document.getElementById('email-subject');
+      var emailBody = document.getElementById('email-body');
+      var massEmailForm = document.getElementById('mass-email-form');
+      // For modal batch actions (long press)
+      var batchModalBg = document.getElementById('batch-modal-bg');
+      var batchModal = document.getElementById('batch-modal');
+      var closeBatchModal = document.getElementById('close-batch-modal');
+      var batchModalPaid = document.getElementById('batch-modal-paid');
+      var batchModalEmail = document.getElementById('batch-modal-email');
+      var batchModalList = document.getElementById('batch-modal-list');
+      // Login spinner logic
+      var loginBtnText = document.getElementById('login-btn-text');
+      var loginBtnSpinner = document.getElementById('login-btn-spinner');
 
-    // UI references
-    const loginBtn = document.getElementById('login-btn');
-    const pinInput = document.getElementById('admin-pin');
-    const pinError = document.getElementById('pin-error');
-    const sidebar = document.getElementById('sidebar');
-    const mainDiv = document.getElementById('main');
-    const sections = {
-      dashboard: document.getElementById('dashboard'),
-      customers: document.getElementById('customers'),
-      profile: document.getElementById('profile')
-    };
-    const sidebarList = document.getElementById('sidebar-customer-list');
-    const addCustIcon = document.getElementById('add-cust-icon');
-    const addCustBtn = document.getElementById('add-cust-btn');
-    const addInvoiceBtn = document.getElementById('add-invoice-btn');
-    const deleteCustBtn = document.getElementById('delete-cust-btn');
-    const grid = document.getElementById('invoice-grid');
-    const navLinks = document.querySelectorAll('.nav-link');
-    let activeCustomer = null;
+      function showSection(id) {
+        ['dashboard','customers','profile'].forEach(function(sec){
+          document.getElementById(sec).style.display = (sec===id?'block':'none');
+        });
+        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+      }
 
-    // Section toggling
-    function showSection(key) {
-      Object.values(sections).forEach(s => s.classList.add('hidden'));
-      sections[key].classList.remove('hidden');
-      document.getElementById('page-title').textContent = key.charAt(0).toUpperCase() + key.slice(1);
-      if (key !== 'profile') document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
-    }
-    navLinks.forEach(link => link.addEventListener('click', e => {
-      e.preventDefault();
-      navLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
-      showSection(link.getAttribute('data-target'));
-    }));
+      navLinks.forEach(function(link){
+        link.addEventListener('click', function(e){
+          e.preventDefault();
+          navLinks.forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+          showSection(link.getAttribute('data-target'));
+        });
+      });
 
-    // Login logic
-    loginBtn.addEventListener('click', () => {
-      if (pinInput.value === '1234') {
-        document.getElementById('login-overlay').classList.add('hidden');
-        sidebar.classList.remove('hidden');
-        mainDiv.classList.remove('hidden');
-        populateSidebar();
-        navLinks.forEach(l => l.classList.remove('active'));
+      function customerHasMissingInfo(c) {
+        return !(c.email && c.email.trim()) || !(c.phone && c.phone.trim()) || !(c.address && c.address.trim());
+      }
+      function populateSidebar(){
+        var emailLog = getEmailLog();
+        sidebarCustomerList.innerHTML='';
+        getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id)).forEach(function(c){
+          var btn = document.createElement('button');
+          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          btn.style.position = "relative";
+          var content = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          if (customerHasMissingInfo(c)) {
+            content += `<span class="customer-warning" title="Missing info">!</span>`;
+          }
+          if (emailLog[c.id]) {
+            content += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+          }
+          btn.innerHTML = content;
+          btn.addEventListener('click', function(){
+            document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            openCustomer(c.id);
+          });
+          var li = document.createElement('li'); li.appendChild(btn);
+          sidebarCustomerList.appendChild(li);
+        });
+      }
+
+      function openCustomer(id) {
+        activeCustomer = getCustomers().find(function(c){ return c.id===id; });
+        if(!activeCustomer) return;
+        ['id','name','email','phone','address'].forEach(function(f){
+          document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
+        });
+        document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
+        renderBills();
+        renderEmailLog();
+        document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
+        // Highlight selected in sidebar
+        document.querySelectorAll('.customer-btn').forEach(function(b){
+          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
+          else b.classList.remove('active');
+        });
+        showSection('profile');
+        updateFieldsDiv.innerHTML = '';
+      }
+      function renderEmailLog() {
+        var logDiv = document.getElementById('profile-email-log');
+        logDiv.innerHTML = '';
+        var emailLog = getEmailLog();
+        if (activeCustomer && emailLog[activeCustomer.id]) {
+          logDiv.innerHTML = `<div class="log-entry">Last emailed: <span class="dt">${emailLog[activeCustomer.id]}</span></div>`;
+        }
+      }
+      function renderBills() {
+        var listEl = document.getElementById('profile-bills-list');
+        if(!activeCustomer || !listEl) return;
+        listEl.innerHTML='';
+        var bills = getBills();
+        bills.filter(function(b){ return b.customerId===activeCustomer.id; }).forEach(function(b){
+          var li = document.createElement('li');
+          li.className = 'p-4 bg-gray-100 rounded';
+          li.innerHTML = '<p><strong>Amount:</strong> $'+b.amount+'</p><p><strong>Due:</strong> '+b.dueDate+'</p><p><strong>Status:</strong> '+(b.paid?'Paid':'Unpaid')+'</p>';
+          if(!b.paid){
+            var payBtn = document.createElement('button');
+            payBtn.textContent='Mark Paid';
+            payBtn.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
+            payBtn.addEventListener('click',function(){
+              var allBills = getBills();
+              var billIndex = allBills.findIndex(bb => 
+                bb.customerId === b.customerId &&
+                bb.amount === b.amount &&
+                bb.dueDate === b.dueDate &&
+                bb.createdAt === b.createdAt
+              );
+              if (billIndex !== -1) {
+                allBills[billIndex].paid = true;
+                saveBills(allBills);
+                renderBills();
+                updateMetrics();
+                updateGrid();
+              }
+            });
+            li.appendChild(payBtn);
+          }
+          listEl.appendChild(li);
+        });
+      }
+
+      addCustIcon.addEventListener('click',function(){
+        navLinks.forEach(function(l){ l.classList.remove('active'); });
+        showSection('customers');
+      });
+      addCustBtn.addEventListener('click',function(){
+        var id = document.getElementById('cust-id').value.trim();
+        var name = document.getElementById('cust-name').value.trim();
+        var email = document.getElementById('cust-email').value.trim();
+        var phone = document.getElementById('cust-phone').value.trim();
+        var address = document.getElementById('cust-address').value.trim();
+        if(!id||!name){ alert('ID and name required'); return; }
+        var cs = getCustomers();
+        var existingPins = cs.map(c => c.pin);
+        var pin = generateUniquePin(existingPins);
+        cs.push({ id:id, name:name, email:email, phone:phone, address:address, pin:pin });
+        saveCustomers(cs);
+        ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(function(f){ document.getElementById(f).value=''; });
+        populateSidebar(); updateMetrics(); updateGrid();
         document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
         showSection('dashboard');
-        updateMetrics();
-        updateGrid();
-        renderPendingManuals();
-      } else {
-        pinError.textContent = 'Invalid PIN';
-      }
-    });
-
-    // Populate sidebar customers
-    function populateSidebar() {
-      sidebarList.innerHTML = '';
-      getCustomers().forEach(c => {
-        const btn = document.createElement('button');
-        btn.textContent = c.id + " - " + c.name;
-        btn.className = 'customer-btn w-full text-left px-2 py-1';
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          openCustomer(c.id);
-        });
-        const li = document.createElement('li'); li.appendChild(btn);
-        sidebarList.appendChild(li);
       });
-    }
 
-    // Add customer form
-    addCustIcon.addEventListener('click', () => {
-      navLinks.forEach(l => l.classList.remove('active'));
-      showSection('customers');
-    });
-    addCustBtn.addEventListener('click', () => {
-      const [id,name,email,phone,address] = ['cust-id','cust-name','cust-email','cust-phone','cust-address']
-        .map(i => document.getElementById(i).value.trim());
-      if (!id || !name) { alert('ID and name required'); return; }
-      const list = getCustomers(); list.push({id,name,email,phone,address}); saveCustomers(list);
-      ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(i => document.getElementById(i).value = '');
-      populateSidebar(); updateMetrics(); updateGrid(); renderPendingManuals();
-      navLinks.forEach(l => l.classList.remove('active'));
-      document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-      showSection('dashboard');
-    });
-
-    // Open profile
-    function openCustomer(id) {
-      activeCustomer = getCustomers().find(c => c.id === id);
-      if (!activeCustomer) return;
-      ['profile-id','profile-name','profile-email','profile-phone','profile-address'].forEach(f => {
-        document.getElementById(f).textContent = activeCustomer[f.split('-')[1]];
+      addInvoiceBtn.addEventListener('click',function(){
+        if(!activeCustomer){ alert('Select a customer'); return; }
+        var amt = document.getElementById('invoice-amount').value.trim();
+        if(!amt){ alert('Enter amount'); return; }
+        var due = new Date().toISOString().substring(0,10);
+        var bs = getBills();
+        bs.push({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date().toISOString() });
+        saveBills(bs); renderBills(); updateMetrics(); updateGrid();
+        document.getElementById('invoice-amount').value='';
       });
-      renderBills();
-      navLinks.forEach(l => l.classList.remove('active'));
-      showSection('profile');
-    }
 
-    // Render bills
-    function renderBills() {
-      const list = document.getElementById('profile-bills-list');
-      if (!list) return;
-      list.innerHTML = '';
-      getBills().filter(b => b.customerId === activeCustomer.id).forEach((b, i) => {
-        const li = document.createElement('li'); li.className = 'p-4 bg-gray-100 rounded';
-        let status = b.status === "pending" ? `<span class="pending-badge ml-2">Pending</span>`
-          : b.paid ? `<span class="paid-badge ml-2">Paid</span>`
-          : `<span class="unpaid-badge ml-2">Unpaid</span>`;
-        li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
-          <p><strong>Due:</strong> ${b.dueDate}</p>
-          <p><strong>Status:</strong> ${status}</p>`;
-        if (!b.paid && b.status !== "pending") {
-          const pay = document.createElement('button');
-          pay.textContent = 'Mark Paid';
-          pay.className = 'mt-2 bg-green-400 text-white px-3 py-1 rounded';
-          pay.addEventListener('click', () => {
-            b.paid = true; b.status = undefined;
-            saveBills(getBills()); renderBills(); updateMetrics(); updateGrid(); renderPendingManuals();
-          });
-          li.appendChild(pay);
+      deleteCustBtn.addEventListener('click',function(){
+        if(!activeCustomer){ alert('Please select a customer first.'); return; }
+        if(!confirm('Delete customer "'+activeCustomer.name+'" and all their invoices?')) return;
+        saveCustomers(getCustomers().filter(function(c){ return c.id!==activeCustomer.id; }));
+        saveBills(getBills().filter(function(b){ return b.customerId!==activeCustomer.id; }));
+        activeCustomer=null;
+        document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin'].forEach(function(f){ document.getElementById(f).textContent=''; });
+        var billsEl=document.getElementById('profile-bills-list'); if(billsEl) billsEl.innerHTML='';
+        updateFieldsDiv.innerHTML = '';
+        populateSidebar(); updateMetrics(); updateGrid();
+        showSection('dashboard');
+        document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+      });
+
+      updateCustBtn.addEventListener('click', function() {
+        if (updateFieldsDiv.innerHTML !== '') {
+          updateFieldsDiv.innerHTML = '';
+          return;
         }
-        list.appendChild(li);
-      });
-    }
-
-    // Add invoice
-    addInvoiceBtn.addEventListener('click', () => {
-      if (!activeCustomer) { alert('Select a customer'); return; }
-      const amt = document.getElementById('invoice-amount').value.trim(); if (!amt) { alert('Enter amount'); return; }
-      const due = new Date().toISOString().slice(0,10);
-      const bills = getBills(); bills.push({customerId:activeCustomer.id,amount:parseFloat(amt),dueDate:due,paid:false,createdAt:new Date()});
-      saveBills(bills);
-      renderBills(); updateMetrics(); updateGrid(); renderPendingManuals();
-      document.getElementById('invoice-amount').value = '';
-    });
-
-    // Delete customer
-    deleteCustBtn.addEventListener('click', () => {
-      if (!activeCustomer) {
-        alert('Please select a customer first.');
-        return;
-      }
-      if (!confirm(`Delete customer "${activeCustomer.name}" and all their invoices?`)) {
-        return;
-      }
-      // Remove from storage
-      const remainingCustomers = getCustomers().filter(c => c.id !== activeCustomer.id);
-      saveCustomers(remainingCustomers);
-      const remainingBills = getBills().filter(b => b.customerId !== activeCustomer.id);
-      saveBills(remainingBills);
-
-      // Clear active and UI
-      activeCustomer = null;
-      document.querySelectorAll('.customer-btn').forEach(b => b.classList.remove('active'));
-      ['profile-id','profile-name','profile-email','profile-phone','profile-address']
-        .forEach(id => document.getElementById(id).textContent = '');
-      const billsList = document.getElementById('profile-bills-list');
-      if (billsList) billsList.innerHTML = '';
-
-      // Refresh everything
-      populateSidebar();
-      updateMetrics();
-      updateGrid();
-      renderPendingManuals();
-
-      // Return to Dashboard view
-      document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-      showSection('dashboard');
-    });
-
-    // Update metrics
-    function updateMetrics() {
-      const cs = getCustomers(), bs = getBills(), today = new Date().toISOString().slice(0,10);
-      document.getElementById('customersCount').textContent = cs.length;
-      document.getElementById('outstandingCount').textContent = bs.filter(b => !b.paid && !b.status).length;
-      document.getElementById('unpaidAmount').textContent = '$' + bs.filter(b => !b.paid && !b.status).reduce((s,b) => s + Number(b.amount||0), 0).toFixed(2);
-      const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
-      document.getElementById('revenueCount').textContent = '$' + bs.filter(b => b.paid && new Date(b.createdAt) >= start).reduce((s,b) => s + b.amount, 0).toFixed(2);
-    }
-
-    // Update calendar grid
-    function updateGrid() {
-      grid.innerHTML = '';
-      getCustomers().forEach(c => {
-        const cell = document.createElement('div'); cell.className = 'grid-cell'; cell.textContent = c.id;
-        const bills = getBills().filter(b => b.customerId === c.id);
-        if (bills.length) {
-          if (bills.some(b => b.status === "pending")) cell.classList.add('pending');
-          else if (bills.some(b => !b.paid)) cell.classList.add('unpaid');
-          else cell.classList.add('paid');
-        } else {
-          cell.classList.add('paid');
-        }
-        grid.appendChild(cell);
-      });
-    }
-
-    // Pending manual payments
-    function renderPendingManuals() {
-      const pendingList = document.getElementById('pending-list');
-      pendingList.innerHTML = '';
-      const bills = getBills();
-      const cs = getCustomers();
-      let pending = bills.filter(b => b.status === "pending");
-      if (!pending.length) {
-        pendingList.innerHTML = `<div class="text-gray-500">No pending manual payments.</div>`;
-        return;
-      }
-      pending.forEach((bill, idx) => {
-        const cust = cs.find(c => c.id === bill.customerId);
-        let div = document.createElement('div');
-        div.className = 'p-4 bg-yellow-50 rounded shadow flex flex-col gap-2 border-l-4 border-yellow-400';
-        div.innerHTML = `
-          <div class="flex justify-between items-center mb-1">
-            <span>
-              <b>Customer:</b> ${cust ? cust.name : bill.customerId} <span class="text-xs text-gray-400">ID: ${bill.customerId}</span>
-            </span>
-            <span class="pending-badge">Pending Manual</span>
-          </div>
-          <div><b>Invoice Amount:</b> $${bill.amount}</div>
-          <div><b>Due:</b> ${bill.dueDate}</div>
-          <div><b>Method:</b> ${bill.paymentMethod}</div>
-          ${bill.manualNote ? `<div><b>Note:</b> ${bill.manualNote}</div>` : ''}
-        `;
-        // Confirm/Reject
-        let row = document.createElement('div');
-        row.className = "flex gap-3 mt-2";
-        let confirmBtn = document.createElement('button');
-        confirmBtn.textContent = "Confirm Payment";
-        confirmBtn.className = "rounded bg-green-600 hover:bg-green-700 text-white px-4 py-2 font-semibold";
-        confirmBtn.onclick = function() {
-          showConfirmModal(
-            "Confirm Manual Payment?",
-            `Confirm that invoice for $${bill.amount} paid by ${cust ? cust.name : bill.customerId} (${bill.paymentMethod}) has been received?`,
-            function() {
-              bill.paid = true;
-              bill.status = undefined;
-              bill.confirmedAt = (new Date()).toISOString().slice(0,16).replace('T',' ');
-              saveBills(bills);
-              renderPendingManuals(); updateMetrics(); updateGrid(); renderBills();
-            }
-          );
-        };
-        let rejectBtn = document.createElement('button');
-        rejectBtn.textContent = "Reject";
-        rejectBtn.className = "rounded bg-red-500 hover:bg-red-600 text-white px-4 py-2 font-semibold";
-        rejectBtn.onclick = function() {
-          showConfirmModal(
-            "Reject Manual Payment?",
-            `Reject this manual payment? The customer will see invoice as unpaid again.`,
-            function() {
-              bill.status = undefined;
-              bill.paymentMethod = undefined;
-              bill.manualNote = undefined;
-              saveBills(bills);
-              renderPendingManuals(); updateMetrics(); updateGrid(); renderBills();
-            }
-          );
-        };
-        row.appendChild(confirmBtn);
-        row.appendChild(rejectBtn);
-        div.appendChild(row);
-        pendingList.appendChild(div);
-      });
-    }
-
-    // Confirm modal logic
-    const confirmModalBg = document.getElementById('confirm-modal-bg');
-    const confirmModalTitle = document.getElementById('confirm-modal-title');
-    const confirmModalMsg = document.getElementById('confirm-modal-msg');
-    const confirmModalYes = document.getElementById('confirm-modal-yes');
-    const confirmModalNo = document.getElementById('confirm-modal-no');
-    const closeConfirmModal = document.getElementById('close-confirm-modal');
-    let confirmAction = null;
-
-    function showConfirmModal(title, msg, yesAction) {
-      confirmModalTitle.textContent = title;
-      confirmModalMsg.textContent = msg;
-      confirmModalBg.style.display = 'flex';
-      confirmAction = yesAction;
-    }
-    confirmModalYes.onclick = function() {
-      if (confirmAction) confirmAction();
-      confirmModalBg.style.display = 'none';
-    };
-    confirmModalNo.onclick = function() {
-      confirmModalBg.style.display = 'none';
-    };
-    closeConfirmModal.onclick = function() {
-      confirmModalBg.style.display = 'none';
-    };
-
-    // Autofill demo data if empty (same as before)
-    (function demoAutofill() {
-      let cs = getCustomers();
-      if (!cs.length) {
-        cs = [
-          { id:"1", name:"John Doe", email:"john@email.com", phone:"123-456-7890", address:"123 Main St", pin:"1234" },
-          { id:"2", name:"Jane Smith", email:"jane@email.com", phone:"555-555-5555", address:"456 Elm St", pin:"4321" }
+        if (!activeCustomer) return;
+        const fields = [
+          { key: 'email', label: 'Email', type: 'email' },
+          { key: 'phone', label: 'Phone Number', type: 'tel' },
+          { key: 'address', label: 'Address', type: 'text' }
         ];
-        saveCustomers(cs);
-        saveBills([
-          { customerId:"1", amount:120, dueDate:"2025-06-30", paid:false, createdAt:"2025-06-15T12:00:00Z" },
-          { customerId:"1", amount:75, dueDate:"2025-05-15", paid:true, createdAt:"2025-05-01T12:00:00Z" },
-          { customerId:"2", amount:99, dueDate:"2025-06-29", paid:false, createdAt:"2025-06-12T12:00:00Z" }
-        ]);
-      }
-    })();
+        const missing = fields.filter(f => !activeCustomer[f.key] || !activeCustomer[f.key].trim());
+        if (!missing.length) {
+          updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">No missing information!</div>';
+          return;
+        }
+        updateFieldsDiv.innerHTML = '';
+        missing.forEach(f => {
+          const row = document.createElement('div');
+          row.className = 'update-row';
+          const input = document.createElement('input');
+          input.type = f.type;
+          input.placeholder = f.label;
+          input.className = 'border rounded px-2 py-1 flex-1';
+          input.style.minWidth = "0";
+          const addBtn = document.createElement('button');
+          addBtn.textContent = 'Add';
+          addBtn.className = 'bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
+          addBtn.onclick = function() {
+            const val = input.value.trim();
+            if (!val) { input.classList.add('border-red-400'); return; }
+            const cs = getCustomers();
+            const idx = cs.findIndex(c => c.id === activeCustomer.id);
+            if (idx !== -1) {
+              cs[idx][f.key] = val;
+              saveCustomers(cs);
+              activeCustomer = cs[idx];
+              document.getElementById('profile-' + f.key).textContent = val;
+              updateFieldsDiv.removeChild(row);
+              populateSidebar();
+              updateMetrics();
+              updateGrid();
+              const remaining = fields.filter(ff => !activeCustomer[ff.key] || !activeCustomer[ff.key].trim());
+              if (remaining.length === 0) {
+                updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">All information updated!</div>';
+                setTimeout(() => updateFieldsDiv.innerHTML = '', 2000);
+              }
+            }
+          };
+          row.appendChild(input);
+          row.appendChild(addBtn);
+          updateFieldsDiv.appendChild(row);
+        });
+      });
 
+      // --- Batch Selection for Calendar ---
+      function updateBatchBar() {
+        if (selectedCustomerIds.length > 0) {
+          batchBar.classList.add('show');
+          batchCount.textContent = selectedCustomerIds.length;
+        } else {
+          batchBar.classList.remove('show');
+          batchCount.textContent = '0';
+        }
+      }
+      batchPaidBtn.onclick = function() {
+        if (selectedCustomerIds.length === 0) return;
+        if (!confirm('Are you sure you want to mark all unpaid invoices for selected customers as paid?')) return;
+        let changed = false;
+        let allBills = getBills();
+        selectedCustomerIds.forEach(function(custId) {
+          allBills.forEach(function(bill) {
+            if (bill.customerId === custId && !bill.paid) {
+              bill.paid = true;
+              changed = true;
+            }
+          });
+        });
+        if (changed) saveBills(allBills);
+        selectedCustomerIds = [];
+        updateGrid();
+        updateMetrics();
+        updateBatchBar();
+      };
+      // No more clear button, only in X in batch modal
+
+      // ---- Mass Email Modal Logic ----
+      function openEmailModal(ids) {
+        // Populate list of customers
+        modalCustomersList.innerHTML = '';
+        let customerData = getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id));
+        ids.forEach(id=>{
+          let c = customerData.find(cu=>cu.id===id);
+          if (c) {
+            let li=document.createElement('li');
+            li.textContent=`${c.id} - ${c.name}${c.email ? ' — ' + c.email : ''}`;
+            modalCustomersList.appendChild(li);
+          }
+        });
+        emailModalFeedback.textContent='';
+        emailModalBg.classList.add('show');
+      }
+      batchEmailBtn.onclick = function() {
+        if (selectedCustomerIds.length === 0) return;
+        openEmailModal(selectedCustomerIds);
+      };
+      closeEmailModal.onclick = function() {
+        emailModalBg.classList.remove('show');
+      };
+      emailModalBg.addEventListener('click', function(e){
+        if (e.target === emailModalBg) emailModalBg.classList.remove('show');
+      });
+
+      // Demo send: This does not really send but gives instant feedback
+      massEmailForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        // Log send for each customer
+        let log = getEmailLog();
+        let now = new Date();
+        selectedCustomerIds.forEach(function(cid) {
+          log[cid] = now.toLocaleString();
+        });
+        saveEmailLog(log);
+        populateSidebar();
+        if (activeCustomer) renderEmailLog();
+        emailModalFeedback.textContent = `Emails sent to ${selectedCustomerIds.length} customer(s)!`;
+        setTimeout(()=>{ emailModalBg.classList.remove('show'); }, 1300);
+      });
+
+      // --- Invoice Grid Batch/Long Press ---
+      // Long press logic: on mousedown/touchstart hold for 700ms
+      var grid = document.getElementById('invoice-grid');
+      var gridHoldTimeout = null, lastGridHoldCell = null;
+      grid.addEventListener('mousedown', function(e){
+        let cell = e.target.closest('.grid-cell');
+        if (!cell) return;
+        gridHoldTimeout = setTimeout(function(){
+          showBatchModal(cell.textContent);
+        }, 700);
+        lastGridHoldCell = cell;
+      });
+      grid.addEventListener('mouseup', function(){ clearTimeout(gridHoldTimeout); });
+      grid.addEventListener('mouseleave', function(){ clearTimeout(gridHoldTimeout); });
+      // Touch events for mobile long press
+      grid.addEventListener('touchstart', function(e){
+        let cell = e.target.closest('.grid-cell');
+        if (!cell) return;
+        gridHoldTimeout = setTimeout(function(){
+          showBatchModal(cell.textContent);
+        }, 700);
+        lastGridHoldCell = cell;
+      }, {passive:true});
+      grid.addEventListener('touchend', function(){ clearTimeout(gridHoldTimeout); });
+      grid.addEventListener('touchcancel', function(){ clearTimeout(gridHoldTimeout); });
+
+      function showBatchModal(id) {
+        var cs = getCustomers();
+        var c = cs.find(cu => cu.id == id);
+        if (!c) return;
+        batchModalList.innerHTML = `<strong class="mb-1">${c.id} - ${c.name}</strong>`;
+        batchModalBg.classList.add('show');
+        // Email/paid logic
+        batchModalPaid.onclick = function(){
+          if (!confirm('Mark all invoices for this customer as paid?')) return;
+          let allBills = getBills();
+          let changed = false;
+          allBills.forEach(function(b){
+            if (b.customerId === c.id && !b.paid) {
+              b.paid = true; changed = true;
+            }
+          });
+          if (changed) saveBills(allBills);
+          updateGrid(); updateMetrics();
+          batchModalBg.classList.remove('show');
+        };
+        batchModalEmail.onclick = function(){
+          openEmailModal([c.id]);
+          batchModalBg.classList.remove('show');
+        };
+      }
+      closeBatchModal.onclick = function(){ batchModalBg.classList.remove('show'); };
+      batchModalBg.addEventListener('click',function(e){
+        if(e.target===batchModalBg) batchModalBg.classList.remove('show');
+      });
+
+      // --- Metrics & Calendar Grid ---
+      function updateMetrics(){
+        var cs = getCustomers();
+        var bs = getBills();
+        document.getElementById('customersCount').textContent = cs.length;
+        document.getElementById('outstandingCount').textContent = bs.filter(function(b){ return !b.paid; }).length;
+        var unpaid = bs.filter(function(b){ return !b.paid; }).reduce(function(sum, b){
+          return sum + Number(b.amount || 0);
+        }, 0);
+        document.getElementById('unpaidAmount').textContent = '$'+unpaid.toFixed(2);
+        var start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
+        document.getElementById('revenueCount').textContent='$'+bs.filter(function(b){ return b.paid&&new Date(b.createdAt)>=start; }).reduce(function(s,b){ return s+b.amount; },0).toFixed(2);
+      }
+      function updateGrid(){
+        var grid=document.getElementById('invoice-grid'); grid.innerHTML='';
+        var cs = getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id));
+        cs.forEach(function(c){
+          var cell=document.createElement('div');
+          cell.className='grid-cell';
+          cell.textContent=c.id;
+          var bills=getBills().filter(function(b){ return b.customerId===c.id; });
+          if(bills.some(function(b){ return !b.paid; })) {
+            cell.classList.add('unpaid');
+          } else {
+            cell.classList.add('paid');
+          }
+          if (selectedCustomerIds.includes(c.id)) cell.classList.add('selected');
+          cell.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (selectedCustomerIds.includes(c.id)) {
+              selectedCustomerIds = selectedCustomerIds.filter(cid => cid !== c.id);
+            } else {
+              selectedCustomerIds.push(c.id);
+            }
+            updateGrid();
+            updateBatchBar();
+          });
+        grid.appendChild(cell);
+        });
+        updateBatchBar();
+      }
+
+      // --- Login Spinner with 2s wait ---
+      loginBtn.addEventListener('click', function(){
+        pinError.textContent = '';
+        if(pinInput.value==='1234'){
+          loginBtnText.classList.add('hidden');
+          loginBtnSpinner.classList.remove('hidden');
+          loginBtn.disabled = true;
+          setTimeout(function(){
+            loginOverlay.style.display='none';
+            sidebar.style.display='flex';
+            main.style.display='flex';
+            populateSidebar();
+            updateMetrics();
+            updateGrid();
+            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+            showSection('dashboard');
+            loginBtnText.classList.remove('hidden');
+            loginBtnSpinner.classList.add('hidden');
+            loginBtn.disabled = false;
+            pinInput.value = '';
+          }, 2000);
+        } else {
+          pinError.textContent = 'Invalid PIN';
+        }
+      });
+    });
   </script>
 </body>
 </html>
