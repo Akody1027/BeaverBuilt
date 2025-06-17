@@ -7,24 +7,37 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
-    .grid-cell { aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E0; border-radius:.25rem; background:#fff; color:#1A202C; font-size:.75rem; }
+    .grid-cell {
+      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
+      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
+      position: relative;
+    }
     .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
     .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
+    .grid-cell.selected { outline: 3px solid #c026d3; z-index:2; }
     .customer-warning {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 0.5rem;
-      background: #f87171;
-      color: #fff;
-      border-radius: 50%;
-      width: 1.1em;
-      height: 1.1em;
-      justify-content: center;
-      font-size: 0.8em;
-      box-shadow: 0 0 2px #b91c1c88;
+      display: inline-flex; align-items: center; margin-left: 0.5rem;
+      background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em;
+      justify-content: center; font-size: 0.8em; box-shadow: 0 0 2px #b91c1c88;
     }
     .update-fields { margin-top: 1rem; }
     .update-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    #batch-bar {
+      display:none;
+      position:relative;
+      margin-top:1rem;
+      background:#fef3c7;
+      border:1px solid #fde68a;
+      border-radius: .5rem;
+      padding:1rem;
+      box-shadow:0 4px 24px #fbbf24a8;
+      text-align:center;
+      font-weight:600;
+      color:#92400e;
+      z-index:30;
+    }
+    #batch-bar.show { display:block; }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -65,7 +78,15 @@
           <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Unpaid Amount Due</p><p id="unpaidAmount" class="text-3xl font-bold">$0.00</p></div>
           <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Revenue This Month</p><p id="revenueCount" class="text-3xl font-bold">$0.00</p></div>
         </div>
-        <div class="rounded-2xl bg-white p-6 shadow"><h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3><div id="invoice-grid"></div></div>
+        <div class="rounded-2xl bg-white p-6 shadow">
+          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
+          <div id="invoice-grid"></div>
+          <div id="batch-bar">
+            <span id="batch-count">0</span> selected. 
+            <button id="batch-paid" class="ml-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded shadow inline-flex items-center"><svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Mark All Paid</button>
+            <button id="batch-clear" class="ml-2 bg-pink-100 hover:bg-pink-200 text-black px-4 py-1 rounded shadow">Clear</button>
+          </div>
+        </div>
       </section>
 
       <!-- Add Customer -->
@@ -106,7 +127,6 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // --- Local Storage Helpers ---
       function getCustomers() { 
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
         catch(e) { return []; }
@@ -124,8 +144,7 @@
         catch(e) {}
       }
       function generateUniquePin(existingPins) {
-        let pin;
-        let tries = 0;
+        let pin, tries = 0;
         do {
           pin = String(Math.floor(1000 + Math.random() * 9000));
           tries++;
@@ -134,7 +153,6 @@
         return pin;
       }
 
-      // --- DOM Refs ---
       var loginOverlay = document.getElementById('login-overlay');
       var loginBtn = document.getElementById('login-btn');
       var pinInput = document.getElementById('admin-pin');
@@ -149,9 +167,13 @@
       var deleteCustBtn = document.getElementById('delete-cust-btn');
       var updateCustBtn = document.getElementById('update-cust-btn');
       var updateFieldsDiv = document.getElementById('update-fields');
+      var batchBar = document.getElementById('batch-bar');
+      var batchPaidBtn = document.getElementById('batch-paid');
+      var batchClearBtn = document.getElementById('batch-clear');
+      var batchCount = document.getElementById('batch-count');
+      var selectedCustomerIds = [];
       var activeCustomer = null;
 
-      // --- Section Display ---
       function showSection(id) {
         ['dashboard','customers','profile'].forEach(function(sec){
           document.getElementById(sec).style.display = (sec===id?'block':'none');
@@ -169,19 +191,16 @@
         });
       });
 
-      // --- Sidebar Population ---
       function customerHasMissingInfo(c) {
-        // Check for missing optional info: email, phone, or address
         return !(c.email && c.email.trim()) || !(c.phone && c.phone.trim()) || !(c.address && c.address.trim());
       }
       function populateSidebar(){
         sidebarCustomerList.innerHTML='';
-        getCustomers().forEach(function(c){
+        getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id)).forEach(function(c){
           var btn = document.createElement('button');
           btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
           btn.style.position = "relative";
           btn.innerHTML = `<span>${c.name}</span>`;
-          // Add warning icon if missing info
           if (customerHasMissingInfo(c)) {
             btn.innerHTML += `<span class="customer-warning" title="Missing info">!</span>`;
           }
@@ -195,7 +214,6 @@
         });
       }
 
-      // --- Profile Display ---
       function openCustomer(id) {
         activeCustomer = getCustomers().find(function(c){ return c.id===id; });
         if(!activeCustomer) return;
@@ -206,10 +224,9 @@
         renderBills();
         document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
         showSection('profile');
-        updateFieldsDiv.innerHTML = ''; // clear update fields
+        updateFieldsDiv.innerHTML = '';
       }
 
-      // --- Bills for Profile ---
       function renderBills() {
         var listEl = document.getElementById('profile-bills-list');
         if(!activeCustomer || !listEl) return;
@@ -245,7 +262,6 @@
         });
       }
 
-      // --- Add Customer ---
       addCustIcon.addEventListener('click',function(){
         navLinks.forEach(function(l){ l.classList.remove('active'); });
         showSection('customers');
@@ -258,10 +274,9 @@
         var address = document.getElementById('cust-address').value.trim();
         if(!id||!name){ alert('ID and name required'); return; }
         var cs = getCustomers();
-        // Generate unique 4-digit PIN
         var existingPins = cs.map(c => c.pin);
         var pin = generateUniquePin(existingPins);
-        cs.unshift({ id:id, name:name, email:email, phone:phone, address:address, pin:pin });
+        cs.push({ id:id, name:name, email:email, phone:phone, address:address, pin:pin });
         saveCustomers(cs);
         ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(function(f){ document.getElementById(f).value=''; });
         populateSidebar(); updateMetrics(); updateGrid();
@@ -269,19 +284,17 @@
         showSection('dashboard');
       });
 
-      // --- Add Invoice ---
       addInvoiceBtn.addEventListener('click',function(){
         if(!activeCustomer){ alert('Select a customer'); return; }
         var amt = document.getElementById('invoice-amount').value.trim();
         if(!amt){ alert('Enter amount'); return; }
         var due = new Date().toISOString().substring(0,10);
         var bs = getBills();
-        bs.unshift({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date().toISOString() });
+        bs.push({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date().toISOString() });
         saveBills(bs); renderBills(); updateMetrics(); updateGrid();
         document.getElementById('invoice-amount').value='';
       });
 
-      // --- Delete Customer ---
       deleteCustBtn.addEventListener('click',function(){
         if(!activeCustomer){ alert('Please select a customer first.'); return; }
         if(!confirm('Delete customer "'+activeCustomer.name+'" and all their invoices?')) return;
@@ -297,16 +310,12 @@
         document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
       });
 
-      // --- Update Customer (NEW FEATURE) ---
       updateCustBtn.addEventListener('click', function() {
-        // If update fields are visible, hide them
         if (updateFieldsDiv.innerHTML !== '') {
           updateFieldsDiv.innerHTML = '';
           return;
         }
         if (!activeCustomer) return;
-
-        // Gather missing fields
         const fields = [
           { key: 'email', label: 'Email', type: 'email' },
           { key: 'phone', label: 'Phone Number', type: 'tel' },
@@ -317,7 +326,6 @@
           updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">No missing information!</div>';
           return;
         }
-        // Render input for each missing field + add button
         updateFieldsDiv.innerHTML = '';
         missing.forEach(f => {
           const row = document.createElement('div');
@@ -333,20 +341,17 @@
           addBtn.onclick = function() {
             const val = input.value.trim();
             if (!val) { input.classList.add('border-red-400'); return; }
-            // Update storage
             const cs = getCustomers();
             const idx = cs.findIndex(c => c.id === activeCustomer.id);
             if (idx !== -1) {
               cs[idx][f.key] = val;
               saveCustomers(cs);
               activeCustomer = cs[idx];
-              // Update UI
               document.getElementById('profile-' + f.key).textContent = val;
               updateFieldsDiv.removeChild(row);
               populateSidebar();
               updateMetrics();
               updateGrid();
-              // If no more fields remain, hide area
               const remaining = fields.filter(ff => !activeCustomer[ff.key] || !activeCustomer[ff.key].trim());
               if (remaining.length === 0) {
                 updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">All information updated!</div>';
@@ -359,6 +364,39 @@
           updateFieldsDiv.appendChild(row);
         });
       });
+
+      // --- Batch Selection for Calendar ---
+      function updateBatchBar() {
+        if (selectedCustomerIds.length > 0) {
+          batchBar.classList.add('show');
+          batchCount.textContent = selectedCustomerIds.length;
+        } else {
+          batchBar.classList.remove('show');
+          batchCount.textContent = '0';
+        }
+      }
+      batchPaidBtn.onclick = function() {
+        let changed = false;
+        let allBills = getBills();
+        selectedCustomerIds.forEach(function(custId) {
+          allBills.forEach(function(bill) {
+            if (bill.customerId === custId && !bill.paid) {
+              bill.paid = true;
+              changed = true;
+            }
+          });
+        });
+        if (changed) saveBills(allBills);
+        selectedCustomerIds = [];
+        updateGrid();
+        updateMetrics();
+        updateBatchBar();
+      };
+      batchClearBtn.onclick = function() {
+        selectedCustomerIds = [];
+        updateGrid();
+        updateBatchBar();
+      };
 
       // --- Metrics & Calendar Grid ---
       function updateMetrics(){
@@ -375,16 +413,32 @@
       }
       function updateGrid(){
         var grid=document.getElementById('invoice-grid'); grid.innerHTML='';
-        getCustomers().forEach(function(c){
-          var cell=document.createElement('div'); cell.className='grid-cell'; cell.textContent=c.id;
+        var cs = getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id));
+        cs.forEach(function(c){
+          var cell=document.createElement('div');
+          cell.className='grid-cell';
+          cell.textContent=c.id;
           var bills=getBills().filter(function(b){ return b.customerId===c.id; });
           if(bills.some(function(b){ return !b.paid; })) {
             cell.classList.add('unpaid');
           } else {
             cell.classList.add('paid');
           }
+          if (selectedCustomerIds.includes(c.id)) cell.classList.add('selected');
+          cell.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Toggle selection
+            if (selectedCustomerIds.includes(c.id)) {
+              selectedCustomerIds = selectedCustomerIds.filter(cid => cid !== c.id);
+            } else {
+              selectedCustomerIds.push(c.id);
+            }
+            updateGrid();
+            updateBatchBar();
+          });
           grid.appendChild(cell);
         });
+        updateBatchBar();
       }
 
       // --- LOGIN ---
