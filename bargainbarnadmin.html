@@ -1,4 +1,3 @@
-<!-- FULL ADMIN PAGE: Only pending payments section/logic changed for syncing and styling. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,14 +105,14 @@
     .customer-id-label { font-weight: bold; margin-right: 3px; }
     .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
     .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
-    /* Pending payments section background logic */
+    /* Pending payments section styles */
     .pending-payments-section {
       border-radius: 1rem;
       margin-top: 1.5rem;
       margin-bottom: 0.5rem;
       font-size: 1rem;
       padding: 1.5rem 1.5rem 1rem 1.5rem;
-      background: #fff; /* Default white */
+      background: #fff;
       border: 2px solid #e5e7eb;
       box-shadow: 0 2px 14px #0000000a;
     }
@@ -169,7 +168,7 @@
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
-  <!-- ...everything before main left untouched... -->
+  <!-- ...all previous page content remains unchanged... -->
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
@@ -190,35 +189,27 @@
           <div id="batch-bar">
             <div class="bar-actions w-full flex flex-row gap-4 justify-center">
               <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
-                <!-- ...icon... -->
                 Send Email
               </button>
               <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
-                <!-- ...icon... -->
                 Mark All Paid
               </button>
             </div>
             <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
         </div>
-        <!-- ===========================
-            Pending Payment Confirmation Section (UPDATED)
-        ============================ -->
+        <!-- ======== Pending Payment Section (updated only) ======== -->
         <div id="pending-payments-section" class="pending-payments-section"></div>
-        <!-- ===========================
-            END Pending Payment Section
-        ============================ -->
+        <!-- ======================================================== -->
       </section>
-      <!-- ...rest of HTML untouched... -->
+      <!-- ...the rest of your page code remains unchanged... -->
     </main>
   </div>
-
-  <!-- ...all other modal, sidebar, scripts unchanged... -->
-
+  <!-- ...all remaining HTML, modals, sidebar, and scripts are unchanged... -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // ... your ENTIRE original code is left here (unchanged), EXCEPT:
-      // Only this function is replaced:
+      // ... your original admin page code, unchanged, until here ...
+      // Only the following function is replaced for correct pending payment syncing and color logic:
 
       function getCustomers() { 
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
@@ -233,7 +224,6 @@
         catch(e) {}
       }
 
-      // The only function changed for pending payment handling and visual
       function updatePendingPaymentsSection() {
         var section = document.getElementById('pending-payments-section');
         var bills = getBills();
@@ -246,7 +236,7 @@
         }
         section.classList.add('active');
         section.innerHTML = '<h4>Pending Payment Confirmation</h4>';
-        pendingBills.forEach(function(p, idx) {
+        pendingBills.forEach(function(p) {
           var customer = getCustomers().find(c => c.id === p.customerId) || {};
           var item = document.createElement('div');
           item.className = 'pending-payment-item';
@@ -304,7 +294,8 @@
           section.appendChild(item);
         });
       }
-      // -- call updatePendingPaymentsSection at the right times --
+
+      // Make sure to call updatePendingPaymentsSection() at startup and when dashboard is shown
       function showSection(id) {
         ['dashboard','customers','profile'].forEach(function(sec){
           document.getElementById(sec).style.display = (sec===id?'block':'none');
@@ -313,10 +304,9 @@
         if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
         if(id==='dashboard') updatePendingPaymentsSection();
       }
-      // --- and at startup ---
       updatePendingPaymentsSection();
 
-      // ...everything else is original, unchanged code...
+      // ...the rest of your script remains unchanged...
     });
   </script>
 </body>
