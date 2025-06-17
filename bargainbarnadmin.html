@@ -6,7 +6,6 @@
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* All your styles unchanged (omitted here for brevity, use your own) */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -26,14 +25,90 @@
       background: #E5E7EB !important;
       border-radius: .375rem;
     }
-    .customer-pending {
-      background: #fde68a !important;
-      color: #b45309 !important;
-      border-radius: 50%;
-      width: 1.1em; height: 1.1em; display: inline-flex; align-items: center; justify-content: center;
-      font-size: 0.9em; margin-left: 5px; border: 1px solid #b45309;
+    .update-fields { margin-top: 1rem; }
+    .update-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    #batch-bar {
+      display:none;
+      position:relative;
+      margin-top:1rem;
+      background:#f3f4f6;
+      border:2px solid #000;
+      border-radius: .5rem;
+      padding:1rem;
+      box-shadow:0 4px 24px #3332;
+      text-align:center;
+      font-weight:600;
+      color:#333;
+      z-index:30;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
     }
-    /* Other styles unchanged */
+    #batch-bar.show { display:flex; }
+    #batch-bar .bar-actions {display:flex; gap:1.5rem; justify-content:center;}
+    #batch-bar .bar-actions button {min-width:120px;}
+    /* Sidebar fine-tuning for max auto-narrowness */
+    #sidebar {
+      width: auto !important;
+      min-width: 0;
+      max-width: 240px;
+      padding-right: 18px !important;
+      padding-left: 13px !important;
+    }
+    #sidebar .customer-btn { white-space: nowrap; }
+    #sidebar h1 { white-space: nowrap; }
+    .sidebar-divider {
+      width: 80%; height: 2px; background: #e5e7eb; margin: 12px auto 14px auto; border-radius: 2px;
+    }
+    /* Modal styling */
+    #email-modal-bg, #batch-modal-bg {
+      display: none;
+      position:fixed; inset:0; z-index:1000;
+      background:rgba(31,41,55,0.7);
+      justify-content:center; align-items:center;
+    }
+    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
+    #email-modal, #batch-modal {
+      background: #fff;
+      border-radius:1.2rem;
+      max-width: 80vw;
+      width: 80vw;
+      max-height:80vh;
+      min-height:380px;
+      box-shadow: 0 8px 32px #0002;
+      display:flex; flex-direction:column;
+      padding:2rem 2rem 1.2rem 2rem;
+      position:relative;
+      overflow:auto;
+      border:3px solid #000;
+    }
+    #email-modal .close-modal, #batch-modal .close-modal {
+      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem; font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
+      z-index:2000;
+    }
+    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
+    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
+    @media (max-width: 900px) {
+      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw;}
+    }
+    @media (max-width: 500px) {
+      #email-modal, #batch-modal { min-height:220px;}
+    }
+    /* Spinner */
+    .spinner {
+      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
+      border:3px solid #cbd5e1; border-top:3px solid #64748b;
+      border-radius:50%; animation:spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { 100%{transform:rotate(360deg);} }
+    /* Green check for emailed customers */
+    .email-check {
+      color: #22c55e; font-size: 1.15em; margin-left: 5px; vertical-align: middle;
+    }
+    .customer-id-label { font-weight: bold; margin-right: 3px; }
+    .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
+    .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -49,7 +124,49 @@
       <p id="pin-error" class="mt-2 text-red-600"></p>
     </div>
   </div>
-  <!-- (Everything else is your original code except manual payment additions) -->
+
+  <!-- Email Modal -->
+  <div id="email-modal-bg">
+    <div id="email-modal">
+      <div class="close-modal" id="close-email-modal">&times;</div>
+      <h2 class="text-2xl mb-4 font-bold text-pink-700">Send Mass Email</h2>
+      <div id="email-modal-list" class="mb-4">
+        <strong class="mb-1 text-gray-700 block">Sending to:</strong>
+        <ul id="modal-customers-list" class="mb-3 pl-4 list-disc text-pink-700"></ul>
+      </div>
+      <form id="mass-email-form" class="flex flex-col gap-3">
+        <label class="block text-gray-600 font-semibold mb-1">From:</label>
+        <input type="email" readonly value="Laramos@cox.net" class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
+        <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
+        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin">
+        <label class="block text-gray-600 font-semibold mb-1">Message:</label>
+        <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]" placeholder="Write your message...">Dear Customer,
+
+Your personalized payment link and PIN will be provided here.
+
+Thank you,
+Admin</textarea>
+        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">Send Email</button>
+      </form>
+      <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
+    </div>
+  </div>
+
+  <!-- Batch Action Modal (Long Press) -->
+  <div id="batch-modal-bg">
+    <div id="batch-modal">
+      <div class="close-modal" id="close-batch-modal">&times;</div>
+      <div class="flex flex-col items-center justify-center">
+        <div class="text-lg font-semibold mb-4">Batch Actions</div>
+        <div id="batch-modal-list" class="mb-3"></div>
+        <div class="flex flex-col gap-4 w-full items-center">
+          <button id="batch-modal-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Mark All Paid</button>
+          <button id="batch-modal-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Send Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
@@ -63,13 +180,58 @@
     </div>
     <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
   </nav>
+
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
       <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard, Customers, Profile Sections as in your original -->
+      <!-- Dashboard -->
+      <section id="dashboard" class="space-y-6">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Total Customers</p><p id="customersCount" class="text-3xl font-bold">0</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Outstanding Invoices</p><p id="outstandingCount" class="text-3xl font-bold">0</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Unpaid Amount Due</p><p id="unpaidAmount" class="text-3xl font-bold">$0.00</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Revenue This Month</p><p id="revenueCount" class="text-3xl font-bold">$0.00</p></div>
+        </div>
+        <div class="rounded-2xl bg-white p-6 shadow">
+          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
+          <div id="invoice-grid"></div>
+          <div id="batch-bar">
+            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
+              <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 12H8m8 0H8m12 4.5V9.75M12 4.5L3 9.75V21a.75.75 0 00.75.75H20.25A.75.75 0 0021 21V9.75L12 4.5z"/>
+                </svg>
+                Send Email
+              </button>
+              <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Mark All Paid
+              </button>
+            </div>
+            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add Customer -->
+      <section id="customers" class="hidden space-y-8">
+        <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
+          <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
+          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
+        </div>
+      </section>
+
+      <!-- Profile -->
       <section id="profile" class="hidden space-y-6">
         <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
           <h3 class="text-xl font-semibold">Customer Profile</h3>
@@ -82,7 +244,6 @@
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
-          <div id="manual-payment-review" class="mt-4"></div>
           <div class="flex flex-row gap-2 mt-4">
             <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
             <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
@@ -93,200 +254,137 @@
       </section>
     </main>
   </div>
+
   <script>
-    // Manual payment review logic (add at the top)
-    function getManualPayments() {
-      try { return JSON.parse(localStorage.getItem('manualPayments') || '{}'); } catch(e){ return {}; }
-    }
-    function saveManualPayments(obj) {
-      try { localStorage.setItem('manualPayments', JSON.stringify(obj)); } catch(e){}
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+      function getCustomers() { 
+        try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
+        catch(e) { return []; }
+      }
+      function saveCustomers(c) {
+        try { localStorage.setItem('customers', JSON.stringify(c)); }
+        catch(e) {}
+      }
+      function getBills() { 
+        try { return JSON.parse(localStorage.getItem('bills') || '[]'); }
+        catch(e) { return []; }
+      }
+      function saveBills(b) {
+        try { localStorage.setItem('bills', JSON.stringify(b)); }
+        catch(e) {}
+      }
+      function getEmailLog() {
+        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
+        catch(e) { return {}; }
+      }
+      function saveEmailLog(log) {
+        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
+        catch(e) {}
+      }
+      function generateUniquePin(existingPins) {
+        let pin, tries = 0;
+        do {
+          pin = String(Math.floor(1000 + Math.random() * 9000));
+          tries++;
+          if (tries > 5000) throw new Error('Could not generate unique PIN');
+        } while (existingPins.includes(pin));
+        return pin;
+      }
+      var loginOverlay = document.getElementById('login-overlay');
+      var loginBtn = document.getElementById('login-btn');
+      var pinInput = document.getElementById('admin-pin');
+      var pinError = document.getElementById('pin-error');
+      var sidebar = document.getElementById('sidebar');
+      var main = document.getElementById('main');
+      var navLinks = document.querySelectorAll('.nav-link');
+      var sidebarCustomerList = document.getElementById('sidebar-customer-list');
+      var addCustIcon = document.getElementById('add-cust-icon');
+      var addCustBtn = document.getElementById('add-cust-btn');
+      var addInvoiceBtn = document.getElementById('add-invoice-btn');
+      var deleteCustBtn = document.getElementById('delete-cust-btn');
+      var updateCustBtn = document.getElementById('update-cust-btn');
+      var updateFieldsDiv = document.getElementById('update-fields');
+      var batchBar = document.getElementById('batch-bar');
+      var batchPaidBtn = document.getElementById('batch-paid');
+      var batchEmailBtn = document.getElementById('batch-email');
+      var batchCount = document.getElementById('batch-count');
+      var selectedCustomerIds = [];
+      var activeCustomer = null;
+      var emailModalBg = document.getElementById('email-modal-bg');
+      var emailModal = document.getElementById('email-modal');
+      var closeEmailModal = document.getElementById('close-email-modal');
+      var modalCustomersList = document.getElementById('modal-customers-list');
+      var emailModalFeedback = document.getElementById('email-modal-feedback');
+      var emailSubject = document.getElementById('email-subject');
+      var emailBody = document.getElementById('email-body');
+      var massEmailForm = document.getElementById('mass-email-form');
+      // For modal batch actions (long press)
+      var batchModalBg = document.getElementById('batch-modal-bg');
+      var batchModal = document.getElementById('batch-modal');
+      var closeBatchModal = document.getElementById('close-batch-modal');
+      var batchModalPaid = document.getElementById('batch-modal-paid');
+      var batchModalEmail = document.getElementById('batch-modal-email');
+      var batchModalList = document.getElementById('batch-modal-list');
+      // Login spinner logic
+      var loginBtnText = document.getElementById('login-btn-text');
+      var loginBtnSpinner = document.getElementById('login-btn-spinner');
 
-    // All your original variable declarations and functions unchanged
-    var loginOverlay = document.getElementById('login-overlay');
-    var loginBtn = document.getElementById('login-btn');
-    var pinInput = document.getElementById('admin-pin');
-    var pinError = document.getElementById('pin-error');
-    var sidebar = document.getElementById('sidebar');
-    var main = document.getElementById('main');
-    var navLinks = document.querySelectorAll('.nav-link');
-    var sidebarCustomerList = document.getElementById('sidebar-customer-list');
-    var addCustIcon = document.getElementById('add-cust-icon');
-    var addCustBtn = document.getElementById('add-cust-btn');
-    var addInvoiceBtn = document.getElementById('add-invoice-btn');
-    var deleteCustBtn = document.getElementById('delete-cust-btn');
-    var updateCustBtn = document.getElementById('update-cust-btn');
-    var updateFieldsDiv = document.getElementById('update-fields');
-    var batchBar = document.getElementById('batch-bar');
-    var batchPaidBtn = document.getElementById('batch-paid');
-    var batchEmailBtn = document.getElementById('batch-email');
-    var batchCount = document.getElementById('batch-count');
-    var selectedCustomerIds = [];
-    var activeCustomer = null;
-    var emailModalBg = document.getElementById('email-modal-bg');
-    var emailModal = document.getElementById('email-modal');
-    var closeEmailModal = document.getElementById('close-email-modal');
-    var modalCustomersList = document.getElementById('modal-customers-list');
-    var emailModalFeedback = document.getElementById('email-modal-feedback');
-    var emailSubject = document.getElementById('email-subject');
-    var emailBody = document.getElementById('email-body');
-    var massEmailForm = document.getElementById('mass-email-form');
-    var batchModalBg = document.getElementById('batch-modal-bg');
-    var batchModal = document.getElementById('batch-modal');
-    var closeBatchModal = document.getElementById('close-batch-modal');
-    var batchModalPaid = document.getElementById('batch-modal-paid');
-    var batchModalEmail = document.getElementById('batch-modal-email');
-    var batchModalList = document.getElementById('batch-modal-list');
-    var loginBtnText = document.getElementById('login-btn-text');
-    var loginBtnSpinner = document.getElementById('login-btn-spinner');
-
-    // Add the manual payment logic to your populateSidebar function
-    function populateSidebar(){
-      var emailLog = getEmailLog();
-      var manualPayments = getManualPayments();
-      sidebarCustomerList.innerHTML='';
-      getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id)).forEach(function(c){
-        var btn = document.createElement('button');
-        btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
-        btn.style.position = "relative";
-        var content = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
-        if (customerHasMissingInfo(c)) {
-          content += `<span class="customer-warning" title="Missing info">!</span>`;
-        }
-        let hasPending = Object.values(manualPayments).some(mp => mp.customerId === c.id && mp.status === "pending");
-        if (hasPending) {
-          content += ` <span class="customer-pending" title="Manual payment to review">?</span>`;
-        }
-        if (emailLog[c.id]) {
-          content += ` <span class="email-check" title="Emailed">&#10003;</span>`;
-        }
-        btn.innerHTML = content;
-        btn.addEventListener('click', function(){
-          document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
-          btn.classList.add('active');
-          openCustomer(c.id);
+      function showSection(id) {
+        ['dashboard','customers','profile'].forEach(function(sec){
+          document.getElementById(sec).style.display = (sec===id?'block':'none');
         });
-        var li = document.createElement('li'); li.appendChild(btn);
-        sidebarCustomerList.appendChild(li);
-      });
-    }
-
-    function renderManualPaymentReview() {
-      const div = document.getElementById('manual-payment-review');
-      div.innerHTML = "";
-      if (!activeCustomer) return;
-      let manualPayments = getManualPayments();
-      let bills = getBills().filter(b => b.customerId === activeCustomer.id);
-      let items = Object.entries(manualPayments)
-        .filter(([billId, req]) => req.customerId === activeCustomer.id && req.status === "pending");
-      if (items.length === 0) {
-        div.innerHTML = "";
-        return;
+        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
       }
-      items.forEach(([billId, req]) => {
-        let idx = req.invoiceIndex || bills.findIndex(b => `${b.createdAt}|${b.customerId}|${b.amount}` === billId);
-        let bill = bills[idx];
-        if (!bill) return;
-        let box = document.createElement('div');
-        box.className = "rounded bg-yellow-100 border border-yellow-500 p-3 my-2 flex flex-col";
-        box.innerHTML = `<div class="font-bold text-yellow-800 mb-1">
-          Manual payment review requested for Invoice #${idx+1} (${req.method})
-        </div>
-        <div><strong>Amount:</strong> $${bill.amount} &nbsp; <strong>Due:</strong> ${bill.dueDate}</div>
-        <div class="flex gap-2 mt-2">
-          <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" id="approve-${billId}">Approve</button>
-          <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" id="deny-${billId}">Deny</button>
-        </div>
-        <div class="text-xs text-gray-500 mt-2">Once approved, invoice is marked as paid and the customer is notified. Deny to reject this payment.</div>
-        `;
-        div.appendChild(box);
 
-        setTimeout(() => {
-          let approveBtn = document.getElementById(`approve-${billId}`);
-          let denyBtn = document.getElementById(`deny-${billId}`);
-          if (approveBtn) approveBtn.onclick = function(){
-            let bs = getBills();
-            let targetIdx = bs.findIndex(b => `${b.createdAt}|${b.customerId}|${b.amount}` === billId);
-            if (targetIdx !== -1) {
-              bs[targetIdx].paid = true;
-              saveBills(bs);
-            }
-            let mps = getManualPayments();
-            mps[billId].status = "approved";
-            saveManualPayments(mps);
-            renderManualPaymentReview();
-            renderBills();
-            updateMetrics();
-            updateGrid();
-            populateSidebar();
-            window.dispatchEvent(new Event("storage"));
-          };
-          if (denyBtn) denyBtn.onclick = function(){
-            let mps = getManualPayments();
-            mps[billId].status = "denied";
-            saveManualPayments(mps);
-            renderManualPaymentReview();
-            window.dispatchEvent(new Event("storage"));
-            populateSidebar();
-          };
-        }, 0);
+      navLinks.forEach(function(link){
+        link.addEventListener('click', function(e){
+          e.preventDefault();
+          navLinks.forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+          showSection(link.getAttribute('data-target'));
+        });
       });
-    }
 
-    // In your openCustomer function, call this:
-    function openCustomer(id) {
-      activeCustomer = getCustomers().find(function(c){ return c.id===id; });
-      if(!activeCustomer) return;
-      ['id','name','email','phone','address'].forEach(function(f){
-        document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
-      });
-      document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
-      renderBills();
-      renderEmailLog();
-      renderManualPaymentReview(); // <-- added here
-      document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
-      document.querySelectorAll('.customer-btn').forEach(function(b){
-        if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
-        else b.classList.remove('active');
-      });
-      showSection('profile');
-      updateFieldsDiv.innerHTML = '';
-    }
-
-    window.addEventListener('storage', function(e){
-      if (e.key === "manualPayments") {
-        populateSidebar();
-        if (activeCustomer) renderManualPaymentReview();
+      function customerHasMissingInfo(c) {
+        return !(c.email && c.email.trim()) || !(c.phone && c.phone.trim()) || !(c.address && c.address.trim());
       }
-    });
-
-    // --- YOUR ORIGINAL LOGIN LOGIC (TRIPLE CHECKED AND UNCHANGED) ---
-    loginBtn.addEventListener('click', function(){
-      pinError.textContent = '';
-      if(pinInput.value==='1234'){
-        loginBtnText.classList.add('hidden');
-        loginBtnSpinner.classList.remove('hidden');
-        loginBtn.disabled = true;
-        setTimeout(function(){
-          loginOverlay.style.display='none';
-          sidebar.style.display='flex';
-          main.style.display='flex';
-          populateSidebar();
-          updateMetrics();
-          updateGrid();
-          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-          showSection('dashboard');
-          loginBtnText.classList.remove('hidden');
-          loginBtnSpinner.classList.add('hidden');
-          loginBtn.disabled = false;
-          pinInput.value = '';
-        }, 2000);
-      } else {
-        pinError.textContent = 'Invalid PIN';
+      function populateSidebar(){
+        var emailLog = getEmailLog();
+        sidebarCustomerList.innerHTML='';
+        getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id)).forEach(function(c){
+          var btn = document.createElement('button');
+          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          btn.style.position = "relative";
+          var content = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          if (customerHasMissingInfo(c)) {
+            content += `<span class="customer-warning" title="Missing info">!</span>`;
+          }
+          if (emailLog[c.id]) {
+            content += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+          }
+          btn.innerHTML = content;
+          btn.addEventListener('click', function(){
+            document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            openCustomer(c.id);
+          });
+          var li = document.createElement('li'); li.appendChild(btn);
+          sidebarCustomerList.appendChild(li);
+        });
       }
-    });
 
-    // The rest of your original JS is unchanged.
-  </script>
-</body>
-</html>
+      function openCustomer(id) {
+        activeCustomer = getCustomers().find(function(c){ return c.id===id; });
+        if(!activeCustomer) return;
+        ['id','name','email','phone','address'].forEach(function(f){
+          document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
+        });
+        document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
+        renderBills();
+        renderEmailLog();
+        document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
+        // Highlight selected in sidebar
+        document.querySelectorAll('.customer-btn').forEach(function(b){
+          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
+          else b.classList.rem
