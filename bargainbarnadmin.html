@@ -1,6 +1,3 @@
-<!-- 
-Save this as admin.html (your admin dashboard, with manual payment review added).
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +6,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* (all your existing styles here, unchanged, omitted for brevity) */
+    /* --- your original styles --- */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -36,13 +33,25 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       width: 1.1em; height: 1.1em; display: inline-flex; align-items: center; justify-content: center;
       font-size: 0.9em; margin-left: 5px; border: 1px solid #b45309;
     }
-    /* (rest of your existing styles...) */
-    /* ... */
+    /* (rest of your styles remain unchanged) */
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
-  <!-- (all your HTML unchanged above this point) -->
-  <!-- ... -->
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+    <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
+      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 flex justify-center items-center text-lg font-semibold transition">
+        <span id="login-btn-text">Login</span>
+        <span id="login-btn-spinner" class="spinner hidden"></span>
+      </button>
+      <p id="pin-error" class="mt-2 text-red-600"></p>
+    </div>
+  </div>
+  <!-- Email Modal, Batch Modal, Sidebar, Main Content ... -->
+  <!-- ...all your original HTML... -->
+
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
@@ -63,8 +72,14 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard and Add Customer sections unchanged ... -->
-      <!-- ... -->
+      <!-- Dashboard -->
+      <section id="dashboard" class="space-y-6">
+        <!-- ... your dashboard code unchanged ... -->
+      </section>
+      <!-- Add Customer -->
+      <section id="customers" class="hidden space-y-8">
+        <!-- ... your add customer code unchanged ... -->
+      </section>
       <!-- Profile -->
       <section id="profile" class="hidden space-y-6">
         <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
@@ -92,17 +107,17 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
   </div>
 
   <script>
-    // (all your existing code ...)
-    // Manual Payment Review logic addition
+    // --- your original script (unchanged up to function declarations) ---
+    // Add this manual payment logic at the top of your script
     function getManualPayments() {
       try { return JSON.parse(localStorage.getItem('manualPayments') || '{}'); } catch(e){ return {}; }
     }
     function saveManualPayments(obj) {
       try { localStorage.setItem('manualPayments', JSON.stringify(obj)); } catch(e){}
     }
+    // ...all your original functions and variables, unchanged...
 
-    // ... all your existing code ... after defining functions like getCustomers, getBills, etc.
-    // Replace (or update) the function that populates the sidebar:
+    // Replace or update your populateSidebar function with this:
     function populateSidebar(){
       var emailLog = getEmailLog();
       var manualPayments = getManualPayments();
@@ -115,7 +130,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
         if (customerHasMissingInfo(c)) {
           content += `<span class="customer-warning" title="Missing info">!</span>`;
         }
-        // Add yellow ? if any of this customer's invoices are pending manual payment review
+        // Yellow ? for pending manual payment review
         let hasPending = Object.values(manualPayments).some(mp => mp.customerId === c.id && mp.status === "pending");
         if (hasPending) {
           content += ` <span class="customer-pending" title="Manual payment to review">?</span>`;
@@ -134,7 +149,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       });
     }
 
-    // Manual payment review panel in customer profile
+    // Add this manual payment review function:
     function renderManualPaymentReview() {
       const div = document.getElementById('manual-payment-review');
       div.innerHTML = "";
@@ -147,7 +162,6 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
         div.innerHTML = "";
         return;
       }
-      // Show each pending request
       items.forEach(([billId, req]) => {
         let idx = req.invoiceIndex || bills.findIndex(b => `${b.createdAt}|${b.customerId}|${b.amount}` === billId);
         let bill = bills[idx];
@@ -166,11 +180,10 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
         `;
         div.appendChild(box);
 
-        setTimeout(() => { // Attach event listeners after DOM insert
+        setTimeout(() => {
           let approveBtn = document.getElementById(`approve-${billId}`);
           let denyBtn = document.getElementById(`deny-${billId}`);
           if (approveBtn) approveBtn.onclick = function(){
-            // Mark as paid, update manualPayments, saveBills
             let bs = getBills();
             let targetIdx = bs.findIndex(b => `${b.createdAt}|${b.customerId}|${b.amount}` === billId);
             if (targetIdx !== -1) {
@@ -181,11 +194,11 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
             mps[billId].status = "approved";
             saveManualPayments(mps);
             renderManualPaymentReview();
-            renderBills(); // update paid status in bill list
+            renderBills();
             updateMetrics();
             updateGrid();
             populateSidebar();
-            window.dispatchEvent(new Event("storage")); // live update customer page
+            window.dispatchEvent(new Event("storage"));
           };
           if (denyBtn) denyBtn.onclick = function(){
             let mps = getManualPayments();
@@ -199,7 +212,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       });
     }
 
-    // Add to openCustomer and other spots
+    // In your openCustomer function, call this:
     function openCustomer(id) {
       activeCustomer = getCustomers().find(function(c){ return c.id===id; });
       if(!activeCustomer) return;
@@ -209,7 +222,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
       renderBills();
       renderEmailLog();
-      renderManualPaymentReview(); // <-- add this
+      renderManualPaymentReview(); // <-- added here
       document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
       document.querySelectorAll('.customer-btn').forEach(function(b){
         if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
@@ -219,7 +232,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       updateFieldsDiv.innerHTML = '';
     }
 
-    // Listen for storage change for real-time updates
+    // Listen for localStorage changes:
     window.addEventListener('storage', function(e){
       if (e.key === "manualPayments") {
         populateSidebar();
@@ -227,45 +240,7 @@ Save this as admin.html (your admin dashboard, with manual payment review added)
       }
     });
 
-    // After customer or bill updates
-    function renderBills() {
-      var listEl = document.getElementById('profile-bills-list');
-      if(!activeCustomer || !listEl) return;
-      listEl.innerHTML='';
-      var bills = getBills();
-      bills.filter(function(b){ return b.customerId===activeCustomer.id; }).forEach(function(b){
-        var li = document.createElement('li');
-        li.className = 'p-4 bg-gray-100 rounded';
-        li.innerHTML = '<p><strong>Amount:</strong> $'+b.amount+'</p><p><strong>Due:</strong> '+b.dueDate+'</p><p><strong>Status:</strong> '+(b.paid?'Paid':'Unpaid')+'</p>';
-        if(!b.paid){
-          var payBtn = document.createElement('button');
-          payBtn.textContent='Mark Paid';
-          payBtn.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
-          payBtn.addEventListener('click',function(){
-            var allBills = getBills();
-            var billIndex = allBills.findIndex(bb => 
-              bb.customerId === b.customerId &&
-              bb.amount === b.amount &&
-              bb.dueDate === b.dueDate &&
-              bb.createdAt === b.createdAt
-            );
-            if (billIndex !== -1) {
-              allBills[billIndex].paid = true;
-              saveBills(allBills);
-              renderBills();
-              updateMetrics();
-              updateGrid();
-              renderManualPaymentReview();
-            }
-          });
-          li.appendChild(payBtn);
-        }
-        listEl.appendChild(li);
-      });
-    }
-
-    // Ensure manual payment UI and sidebar refresh on all updates
-    // (The rest of your admin logic remains 100% unchanged)
+    // ...rest of your admin code unchanged...
   </script>
 </body>
 </html>
