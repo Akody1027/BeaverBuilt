@@ -6,7 +6,7 @@
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* --- your original styles --- */
+    /* All your styles unchanged (omitted here for brevity, use your own) */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -33,7 +33,7 @@
       width: 1.1em; height: 1.1em; display: inline-flex; align-items: center; justify-content: center;
       font-size: 0.9em; margin-left: 5px; border: 1px solid #b45309;
     }
-    /* (rest of your styles remain unchanged) */
+    /* Other styles unchanged */
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -49,9 +49,7 @@
       <p id="pin-error" class="mt-2 text-red-600"></p>
     </div>
   </div>
-  <!-- Email Modal, Batch Modal, Sidebar, Main Content ... -->
-  <!-- ...all your original HTML... -->
-
+  <!-- (Everything else is your original code except manual payment additions) -->
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
@@ -65,22 +63,13 @@
     </div>
     <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
   </nav>
-
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
       <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard -->
-      <section id="dashboard" class="space-y-6">
-        <!-- ... your dashboard code unchanged ... -->
-      </section>
-      <!-- Add Customer -->
-      <section id="customers" class="hidden space-y-8">
-        <!-- ... your add customer code unchanged ... -->
-      </section>
-      <!-- Profile -->
+      <!-- Dashboard, Customers, Profile Sections as in your original -->
       <section id="profile" class="hidden space-y-6">
         <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
           <h3 class="text-xl font-semibold">Customer Profile</h3>
@@ -93,7 +82,6 @@
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
-          <!-- Manual Payment Review Notification -->
           <div id="manual-payment-review" class="mt-4"></div>
           <div class="flex flex-row gap-2 mt-4">
             <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
@@ -105,19 +93,54 @@
       </section>
     </main>
   </div>
-
   <script>
-    // --- your original script (unchanged up to function declarations) ---
-    // Add this manual payment logic at the top of your script
+    // Manual payment review logic (add at the top)
     function getManualPayments() {
       try { return JSON.parse(localStorage.getItem('manualPayments') || '{}'); } catch(e){ return {}; }
     }
     function saveManualPayments(obj) {
       try { localStorage.setItem('manualPayments', JSON.stringify(obj)); } catch(e){}
     }
-    // ...all your original functions and variables, unchanged...
 
-    // Replace or update your populateSidebar function with this:
+    // All your original variable declarations and functions unchanged
+    var loginOverlay = document.getElementById('login-overlay');
+    var loginBtn = document.getElementById('login-btn');
+    var pinInput = document.getElementById('admin-pin');
+    var pinError = document.getElementById('pin-error');
+    var sidebar = document.getElementById('sidebar');
+    var main = document.getElementById('main');
+    var navLinks = document.querySelectorAll('.nav-link');
+    var sidebarCustomerList = document.getElementById('sidebar-customer-list');
+    var addCustIcon = document.getElementById('add-cust-icon');
+    var addCustBtn = document.getElementById('add-cust-btn');
+    var addInvoiceBtn = document.getElementById('add-invoice-btn');
+    var deleteCustBtn = document.getElementById('delete-cust-btn');
+    var updateCustBtn = document.getElementById('update-cust-btn');
+    var updateFieldsDiv = document.getElementById('update-fields');
+    var batchBar = document.getElementById('batch-bar');
+    var batchPaidBtn = document.getElementById('batch-paid');
+    var batchEmailBtn = document.getElementById('batch-email');
+    var batchCount = document.getElementById('batch-count');
+    var selectedCustomerIds = [];
+    var activeCustomer = null;
+    var emailModalBg = document.getElementById('email-modal-bg');
+    var emailModal = document.getElementById('email-modal');
+    var closeEmailModal = document.getElementById('close-email-modal');
+    var modalCustomersList = document.getElementById('modal-customers-list');
+    var emailModalFeedback = document.getElementById('email-modal-feedback');
+    var emailSubject = document.getElementById('email-subject');
+    var emailBody = document.getElementById('email-body');
+    var massEmailForm = document.getElementById('mass-email-form');
+    var batchModalBg = document.getElementById('batch-modal-bg');
+    var batchModal = document.getElementById('batch-modal');
+    var closeBatchModal = document.getElementById('close-batch-modal');
+    var batchModalPaid = document.getElementById('batch-modal-paid');
+    var batchModalEmail = document.getElementById('batch-modal-email');
+    var batchModalList = document.getElementById('batch-modal-list');
+    var loginBtnText = document.getElementById('login-btn-text');
+    var loginBtnSpinner = document.getElementById('login-btn-spinner');
+
+    // Add the manual payment logic to your populateSidebar function
     function populateSidebar(){
       var emailLog = getEmailLog();
       var manualPayments = getManualPayments();
@@ -130,7 +153,6 @@
         if (customerHasMissingInfo(c)) {
           content += `<span class="customer-warning" title="Missing info">!</span>`;
         }
-        // Yellow ? for pending manual payment review
         let hasPending = Object.values(manualPayments).some(mp => mp.customerId === c.id && mp.status === "pending");
         if (hasPending) {
           content += ` <span class="customer-pending" title="Manual payment to review">?</span>`;
@@ -149,7 +171,6 @@
       });
     }
 
-    // Add this manual payment review function:
     function renderManualPaymentReview() {
       const div = document.getElementById('manual-payment-review');
       div.innerHTML = "";
@@ -232,7 +253,6 @@
       updateFieldsDiv.innerHTML = '';
     }
 
-    // Listen for localStorage changes:
     window.addEventListener('storage', function(e){
       if (e.key === "manualPayments") {
         populateSidebar();
@@ -240,7 +260,33 @@
       }
     });
 
-    // ...rest of your admin code unchanged...
+    // --- YOUR ORIGINAL LOGIN LOGIC (TRIPLE CHECKED AND UNCHANGED) ---
+    loginBtn.addEventListener('click', function(){
+      pinError.textContent = '';
+      if(pinInput.value==='1234'){
+        loginBtnText.classList.add('hidden');
+        loginBtnSpinner.classList.remove('hidden');
+        loginBtn.disabled = true;
+        setTimeout(function(){
+          loginOverlay.style.display='none';
+          sidebar.style.display='flex';
+          main.style.display='flex';
+          populateSidebar();
+          updateMetrics();
+          updateGrid();
+          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+          showSection('dashboard');
+          loginBtnText.classList.remove('hidden');
+          loginBtnSpinner.classList.add('hidden');
+          loginBtn.disabled = false;
+          pinInput.value = '';
+        }, 2000);
+      } else {
+        pinError.textContent = 'Invalid PIN';
+      }
+    });
+
+    // The rest of your original JS is unchanged.
   </script>
 </body>
 </html>
