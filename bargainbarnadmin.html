@@ -75,6 +75,7 @@
           <p><strong>Email:</strong> <span id="profile-email"></span></p>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
+          <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
           <button id="add-invoice-btn" class="w-full rounded-lg bg-pink-200 py-2 text-black hover:bg-pink-300">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
@@ -102,6 +103,16 @@
       function saveBills(b) {
         try { localStorage.setItem('bills', JSON.stringify(b)); }
         catch(e) {}
+      }
+      function generateUniquePin(existingPins) {
+        let pin;
+        let tries = 0;
+        do {
+          pin = String(Math.floor(1000 + Math.random() * 9000));
+          tries++;
+          if (tries > 5000) throw new Error('Could not generate unique PIN');
+        } while (existingPins.includes(pin));
+        return pin;
       }
 
       // --- DOM Refs ---
@@ -161,6 +172,7 @@
         ['id','name','email','phone','address'].forEach(function(f){
           document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
         });
+        document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
         renderBills();
         document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
         showSection('profile');
@@ -216,7 +228,10 @@
         var address = document.getElementById('cust-address').value.trim();
         if(!id||!name||!email){ alert('ID, name, email required'); return; }
         var cs = getCustomers();
-        cs.unshift({ id:id, name:name, email:email, phone:phone, address:address });
+        // Generate unique 4-digit PIN
+        var existingPins = cs.map(c => c.pin);
+        var pin = generateUniquePin(existingPins);
+        cs.unshift({ id:id, name:name, email:email, phone:phone, address:address, pin:pin });
         saveCustomers(cs);
         ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(function(f){ document.getElementById(f).value=''; });
         populateSidebar(); updateMetrics(); updateGrid();
@@ -244,7 +259,7 @@
         saveBills(getBills().filter(function(b){ return b.customerId!==activeCustomer.id; }));
         activeCustomer=null;
         document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
-        ['profile-id','profile-name','profile-email','profile-phone','profile-address'].forEach(function(f){ document.getElementById(f).textContent=''; });
+        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin'].forEach(function(f){ document.getElementById(f).textContent=''; });
         var billsEl=document.getElementById('profile-bills-list'); if(billsEl) billsEl.innerHTML='';
         populateSidebar(); updateMetrics(); updateGrid();
         showSection('dashboard');
