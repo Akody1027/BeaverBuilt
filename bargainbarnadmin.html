@@ -15,7 +15,7 @@
     }
     .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
     .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
-    .grid-cell.selected { outline: 3px solid #c026d3; z-index:2; }
+    .grid-cell.selected { outline: 3px solid #000; z-index:2; }
     .customer-warning {
       display: inline-flex; align-items: center; margin-left: 0.5rem;
       background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em;
@@ -31,17 +31,22 @@
       display:none;
       position:relative;
       margin-top:1rem;
-      background:#fef3c7;
-      border:1px solid #fde68a;
+      background:#f3f4f6;
+      border:2px solid #000;
       border-radius: .5rem;
       padding:1rem;
-      box-shadow:0 4px 24px #fbbf24a8;
+      box-shadow:0 4px 24px #3332;
       text-align:center;
       font-weight:600;
-      color:#92400e;
+      color:#333;
       z-index:30;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
     }
-    #batch-bar.show { display:block; }
+    #batch-bar.show { display:flex; }
+    #batch-bar .bar-actions {display:flex; gap:1.5rem; justify-content:center;}
+    #batch-bar .bar-actions button {min-width:120px;}
     /* Sidebar fine-tuning for max auto-narrowness */
     #sidebar {
       width: auto !important;
@@ -52,15 +57,18 @@
     }
     #sidebar .customer-btn { white-space: nowrap; }
     #sidebar h1 { white-space: nowrap; }
+    .sidebar-divider {
+      width: 80%; height: 2px; background: #e5e7eb; margin: 12px auto 14px auto; border-radius: 2px;
+    }
     /* Modal styling */
-    #email-modal-bg {
+    #email-modal-bg, #batch-modal-bg {
       display: none;
       position:fixed; inset:0; z-index:1000;
       background:rgba(31,41,55,0.7);
       justify-content:center; align-items:center;
     }
-    #email-modal-bg.show { display:flex; }
-    #email-modal {
+    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
+    #email-modal, #batch-modal {
       background: #fff;
       border-radius:1.2rem;
       max-width: 80vw;
@@ -72,28 +80,47 @@
       padding:2rem 2rem 1.2rem 2rem;
       position:relative;
       overflow:auto;
+      border:3px solid #000;
     }
-    #email-modal .close-modal {
-      position:absolute; top:14px; right:18px; cursor:pointer; font-size:2rem; font-weight:600; color:#e11d48; line-height:1;
-      transition:color .15s;
+    #email-modal .close-modal, #batch-modal .close-modal {
+      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem; font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
+      z-index:2000;
     }
-    #email-modal .close-modal:hover { color:#b91c1c; }
-    #email-modal-list { margin-bottom:1.5rem; }
+    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
+    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
     @media (max-width: 900px) {
-      #email-modal { padding:1rem; max-width:98vw; width:98vw;}
+      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw;}
     }
     @media (max-width: 500px) {
-      #email-modal { min-height:220px;}
+      #email-modal, #batch-modal { min-height:220px;}
     }
+    /* Spinner */
+    .spinner {
+      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
+      border:3px solid #cbd5e1; border-top:3px solid #64748b;
+      border-radius:50%; animation:spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { 100%{transform:rotate(360deg);} }
+    /* Green check for emailed customers */
+    .email-check {
+      color: #22c55e; font-size: 1.15em; margin-left: 5px; vertical-align: middle;
+    }
+    .customer-id-label { font-weight: bold; margin-right: 3px; }
+    .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
+    .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Enter Admin PIN</h2>
-      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
-      <button id="login-btn" class="w-full py-4 bg-pink-200 text-black rounded-lg hover:bg-pink-300">Login</button>
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
+      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 flex justify-center items-center text-lg font-semibold transition">
+        <span id="login-btn-text">Login</span>
+        <span id="login-btn-spinner" class="spinner hidden"></span>
+      </button>
       <p id="pin-error" class="mt-2 text-red-600"></p>
     </div>
   </div>
@@ -111,26 +138,42 @@
         <label class="block text-gray-600 font-semibold mb-1">From:</label>
         <input type="email" readonly value="Laramos@cox.net" class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
         <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
-        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Lylia's Bargain Barn">
+        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin">
         <label class="block text-gray-600 font-semibold mb-1">Message:</label>
         <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]" placeholder="Write your message...">Dear Customer,
 
 Your personalized payment link and PIN will be provided here.
 
 Thank you,
-Lylia's Bargain Barn</textarea>
-        <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 rounded-lg">Send Email</button>
+Admin</textarea>
+        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">Send Email</button>
       </form>
       <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
     </div>
   </div>
 
+  <!-- Batch Action Modal (Long Press) -->
+  <div id="batch-modal-bg">
+    <div id="batch-modal">
+      <div class="close-modal" id="close-batch-modal">&times;</div>
+      <div class="flex flex-col items-center justify-center">
+        <div class="text-lg font-semibold mb-4">Batch Actions</div>
+        <div id="batch-modal-list" class="mb-3"></div>
+        <div class="flex flex-col gap-4 w-full items-center">
+          <button id="batch-modal-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Mark All Paid</button>
+          <button id="batch-modal-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Send Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
-    <h1 class="mb-4 text-2xl font-bold">Lylia’s Admin</h1>
+    <h1 class="mb-4 text-2xl font-bold">Admin</h1>
     <button data-target="dashboard" class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
       <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/></svg>Dashboard
     </button>
+    <div class="sidebar-divider"></div>
     <div class="mb-2 flex items-center">
       <span class="text-gray-700">👥 Customers</span>
       <button id="add-cust-icon" class="ml-2 rounded bg-gray-200 px-2 py-1">+</button>
@@ -156,19 +199,21 @@ Lylia's Bargain Barn</textarea>
           <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
           <div id="invoice-grid"></div>
           <div id="batch-bar">
-            <button id="batch-email" class="mr-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded shadow inline-flex items-center">
-              <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M16 12H8m8 0H8m12 4.5V9.75M12 4.5L3 9.75V21a.75.75 0 00.75.75H20.25A.75.75 0 0021 21V9.75L12 4.5z"/>
-              </svg>
-              Send Email
-            </button>
-            <span id="batch-count">0</span> selected. 
-            <button id="batch-paid" class="ml-2 bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded shadow inline-flex items-center">
-              <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>Mark All Paid
-            </button>
-            <button id="batch-clear" class="ml-2 bg-pink-100 hover:bg-pink-200 text-black px-4 py-1 rounded shadow">Clear</button>
+            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
+              <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 12H8m8 0H8m12 4.5V9.75M12 4.5L3 9.75V21a.75.75 0 00.75.75H20.25A.75.75 0 0021 21V9.75L12 4.5z"/>
+                </svg>
+                Send Email
+              </button>
+              <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
+                <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+                Mark All Paid
+              </button>
+            </div>
+            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
         </div>
       </section>
@@ -182,7 +227,7 @@ Lylia's Bargain Barn</textarea>
           <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
           <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
           <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <button id="add-cust-btn" class="w-full rounded-lg bg-pink-200 py-3 text-black hover:bg-pink-300">Add Customer</button>
+          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
         </div>
       </section>
 
@@ -197,13 +242,14 @@ Lylia's Bargain Barn</textarea>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
-          <button id="add-invoice-btn" class="w-full rounded-lg bg-pink-200 py-2 text-black hover:bg-pink-300">Add Invoice</button>
+          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-green-500 py-2 text-white hover:bg-green-600">Update</button>
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
             <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
           </div>
           <div id="update-fields" class="update-fields"></div>
+          <div id="profile-email-log" class="mt-4"></div>
         </div>
       </section>
     </main>
@@ -227,6 +273,14 @@ Lylia's Bargain Barn</textarea>
         try { localStorage.setItem('bills', JSON.stringify(b)); }
         catch(e) {}
       }
+      function getEmailLog() {
+        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
+        catch(e) { return {}; }
+      }
+      function saveEmailLog(log) {
+        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
+        catch(e) {}
+      }
       function generateUniquePin(existingPins) {
         let pin, tries = 0;
         do {
@@ -236,7 +290,6 @@ Lylia's Bargain Barn</textarea>
         } while (existingPins.includes(pin));
         return pin;
       }
-
       var loginOverlay = document.getElementById('login-overlay');
       var loginBtn = document.getElementById('login-btn');
       var pinInput = document.getElementById('admin-pin');
@@ -253,12 +306,10 @@ Lylia's Bargain Barn</textarea>
       var updateFieldsDiv = document.getElementById('update-fields');
       var batchBar = document.getElementById('batch-bar');
       var batchPaidBtn = document.getElementById('batch-paid');
-      var batchClearBtn = document.getElementById('batch-clear');
       var batchEmailBtn = document.getElementById('batch-email');
       var batchCount = document.getElementById('batch-count');
       var selectedCustomerIds = [];
       var activeCustomer = null;
-
       var emailModalBg = document.getElementById('email-modal-bg');
       var emailModal = document.getElementById('email-modal');
       var closeEmailModal = document.getElementById('close-email-modal');
@@ -267,6 +318,16 @@ Lylia's Bargain Barn</textarea>
       var emailSubject = document.getElementById('email-subject');
       var emailBody = document.getElementById('email-body');
       var massEmailForm = document.getElementById('mass-email-form');
+      // For modal batch actions (long press)
+      var batchModalBg = document.getElementById('batch-modal-bg');
+      var batchModal = document.getElementById('batch-modal');
+      var closeBatchModal = document.getElementById('close-batch-modal');
+      var batchModalPaid = document.getElementById('batch-modal-paid');
+      var batchModalEmail = document.getElementById('batch-modal-email');
+      var batchModalList = document.getElementById('batch-modal-list');
+      // Login spinner logic
+      var loginBtnText = document.getElementById('login-btn-text');
+      var loginBtnSpinner = document.getElementById('login-btn-spinner');
 
       function showSection(id) {
         ['dashboard','customers','profile'].forEach(function(sec){
@@ -289,15 +350,20 @@ Lylia's Bargain Barn</textarea>
         return !(c.email && c.email.trim()) || !(c.phone && c.phone.trim()) || !(c.address && c.address.trim());
       }
       function populateSidebar(){
+        var emailLog = getEmailLog();
         sidebarCustomerList.innerHTML='';
         getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id)).forEach(function(c){
           var btn = document.createElement('button');
           btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
           btn.style.position = "relative";
-          btn.innerHTML = `<span>${c.name}</span>`;
+          var content = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
           if (customerHasMissingInfo(c)) {
-            btn.innerHTML += `<span class="customer-warning" title="Missing info">!</span>`;
+            content += `<span class="customer-warning" title="Missing info">!</span>`;
           }
+          if (emailLog[c.id]) {
+            content += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+          }
+          btn.innerHTML = content;
           btn.addEventListener('click', function(){
             document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
             btn.classList.add('active');
@@ -316,16 +382,24 @@ Lylia's Bargain Barn</textarea>
         });
         document.getElementById('profile-pin').textContent = activeCustomer.pin || '';
         renderBills();
+        renderEmailLog();
         document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
         // Highlight selected in sidebar
         document.querySelectorAll('.customer-btn').forEach(function(b){
-          if(b.textContent.replace('!','').trim()===activeCustomer.name) b.classList.add('active');
+          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
           else b.classList.remove('active');
         });
         showSection('profile');
         updateFieldsDiv.innerHTML = '';
       }
-
+      function renderEmailLog() {
+        var logDiv = document.getElementById('profile-email-log');
+        logDiv.innerHTML = '';
+        var emailLog = getEmailLog();
+        if (activeCustomer && emailLog[activeCustomer.id]) {
+          logDiv.innerHTML = `<div class="log-entry">Last emailed: <span class="dt">${emailLog[activeCustomer.id]}</span></div>`;
+        }
+      }
       function renderBills() {
         var listEl = document.getElementById('profile-bills-list');
         if(!activeCustomer || !listEl) return;
@@ -436,7 +510,7 @@ Lylia's Bargain Barn</textarea>
           input.style.minWidth = "0";
           const addBtn = document.createElement('button');
           addBtn.textContent = 'Add';
-          addBtn.className = 'bg-green-400 hover:bg-green-500 text-white px-3 py-1 rounded ml-2';
+          addBtn.className = 'bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
           addBtn.onclick = function() {
             const val = input.value.trim();
             if (!val) { input.classList.add('border-red-400'); return; }
@@ -493,22 +567,18 @@ Lylia's Bargain Barn</textarea>
         updateMetrics();
         updateBatchBar();
       };
-      batchClearBtn.onclick = function() {
-        selectedCustomerIds = [];
-        updateGrid();
-        updateBatchBar();
-      };
+      // No more clear button, only in X in batch modal
 
       // ---- Mass Email Modal Logic ----
-      function openEmailModal() {
+      function openEmailModal(ids) {
         // Populate list of customers
         modalCustomersList.innerHTML = '';
         let customerData = getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id));
-        selectedCustomerIds.forEach(id=>{
+        ids.forEach(id=>{
           let c = customerData.find(cu=>cu.id===id);
           if (c) {
             let li=document.createElement('li');
-            li.textContent=`${c.name} (ID: ${c.id})${c.email ? ' — ' + c.email : ''}`;
+            li.textContent=`${c.id} - ${c.name}${c.email ? ' — ' + c.email : ''}`;
             modalCustomersList.appendChild(li);
           }
         });
@@ -517,7 +587,7 @@ Lylia's Bargain Barn</textarea>
       }
       batchEmailBtn.onclick = function() {
         if (selectedCustomerIds.length === 0) return;
-        openEmailModal();
+        openEmailModal(selectedCustomerIds);
       };
       closeEmailModal.onclick = function() {
         emailModalBg.classList.remove('show');
@@ -529,9 +599,73 @@ Lylia's Bargain Barn</textarea>
       // Demo send: This does not really send but gives instant feedback
       massEmailForm.addEventListener('submit', function(e){
         e.preventDefault();
-        // For now, just confirm and show feedback
+        // Log send for each customer
+        let log = getEmailLog();
+        let now = new Date();
+        selectedCustomerIds.forEach(function(cid) {
+          log[cid] = now.toLocaleString();
+        });
+        saveEmailLog(log);
+        populateSidebar();
+        if (activeCustomer) renderEmailLog();
         emailModalFeedback.textContent = `Emails sent to ${selectedCustomerIds.length} customer(s)!`;
-        setTimeout(()=>{ emailModalBg.classList.remove('show'); }, 1500);
+        setTimeout(()=>{ emailModalBg.classList.remove('show'); }, 1300);
+      });
+
+      // --- Invoice Grid Batch/Long Press ---
+      // Long press logic: on mousedown/touchstart hold for 700ms
+      var grid = document.getElementById('invoice-grid');
+      var gridHoldTimeout = null, lastGridHoldCell = null;
+      grid.addEventListener('mousedown', function(e){
+        let cell = e.target.closest('.grid-cell');
+        if (!cell) return;
+        gridHoldTimeout = setTimeout(function(){
+          showBatchModal(cell.textContent);
+        }, 700);
+        lastGridHoldCell = cell;
+      });
+      grid.addEventListener('mouseup', function(){ clearTimeout(gridHoldTimeout); });
+      grid.addEventListener('mouseleave', function(){ clearTimeout(gridHoldTimeout); });
+      // Touch events for mobile long press
+      grid.addEventListener('touchstart', function(e){
+        let cell = e.target.closest('.grid-cell');
+        if (!cell) return;
+        gridHoldTimeout = setTimeout(function(){
+          showBatchModal(cell.textContent);
+        }, 700);
+        lastGridHoldCell = cell;
+      }, {passive:true});
+      grid.addEventListener('touchend', function(){ clearTimeout(gridHoldTimeout); });
+      grid.addEventListener('touchcancel', function(){ clearTimeout(gridHoldTimeout); });
+
+      function showBatchModal(id) {
+        var cs = getCustomers();
+        var c = cs.find(cu => cu.id == id);
+        if (!c) return;
+        batchModalList.innerHTML = `<strong class="mb-1">${c.id} - ${c.name}</strong>`;
+        batchModalBg.classList.add('show');
+        // Email/paid logic
+        batchModalPaid.onclick = function(){
+          if (!confirm('Mark all invoices for this customer as paid?')) return;
+          let allBills = getBills();
+          let changed = false;
+          allBills.forEach(function(b){
+            if (b.customerId === c.id && !b.paid) {
+              b.paid = true; changed = true;
+            }
+          });
+          if (changed) saveBills(allBills);
+          updateGrid(); updateMetrics();
+          batchModalBg.classList.remove('show');
+        };
+        batchModalEmail.onclick = function(){
+          openEmailModal([c.id]);
+          batchModalBg.classList.remove('show');
+        };
+      }
+      closeBatchModal.onclick = function(){ batchModalBg.classList.remove('show'); };
+      batchModalBg.addEventListener('click',function(e){
+        if(e.target===batchModalBg) batchModalBg.classList.remove('show');
       });
 
       // --- Metrics & Calendar Grid ---
@@ -571,21 +705,32 @@ Lylia's Bargain Barn</textarea>
             updateGrid();
             updateBatchBar();
           });
-          grid.appendChild(cell);
+        grid.appendChild(cell);
         });
         updateBatchBar();
       }
 
+      // --- Login Spinner with 2s wait ---
       loginBtn.addEventListener('click', function(){
+        pinError.textContent = '';
         if(pinInput.value==='1234'){
-          loginOverlay.style.display='none';
-          sidebar.style.display='flex';
-          main.style.display='flex';
-          populateSidebar();
-          updateMetrics();
-          updateGrid();
-          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-          showSection('dashboard');
+          loginBtnText.classList.add('hidden');
+          loginBtnSpinner.classList.remove('hidden');
+          loginBtn.disabled = true;
+          setTimeout(function(){
+            loginOverlay.style.display='none';
+            sidebar.style.display='flex';
+            main.style.display='flex';
+            populateSidebar();
+            updateMetrics();
+            updateGrid();
+            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+            showSection('dashboard');
+            loginBtnText.classList.remove('hidden');
+            loginBtnSpinner.classList.add('hidden');
+            loginBtn.disabled = false;
+            pinInput.value = '';
+          }, 2000);
         } else {
           pinError.textContent = 'Invalid PIN';
         }
