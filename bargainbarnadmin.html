@@ -38,6 +38,16 @@
       z-index:30;
     }
     #batch-bar.show { display:block; }
+    /* Sidebar fine-tuning for max auto-narrowness */
+    #sidebar {
+      width: auto !important;
+      min-width: 0;
+      max-width: 240px;
+      padding-right: 18px !important;
+      padding-left: 13px !important;
+    }
+    #sidebar .customer-btn { white-space: nowrap; }
+    #sidebar h1 { white-space: nowrap; }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -52,7 +62,7 @@
   </div>
 
   <!-- Sidebar -->
-  <nav id="sidebar" class="hidden w-56 flex-shrink-0 flex-col bg-white p-4 shadow-lg">
+  <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Lylia’s Admin</h1>
     <button data-target="dashboard" class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
       <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/></svg>Dashboard
@@ -365,7 +375,6 @@
         });
       });
 
-      // --- Batch Selection for Calendar ---
       function updateBatchBar() {
         if (selectedCustomerIds.length > 0) {
           batchBar.classList.add('show');
@@ -398,7 +407,6 @@
         updateBatchBar();
       };
 
-      // --- Metrics & Calendar Grid ---
       function updateMetrics(){
         var cs = getCustomers();
         var bs = getBills();
@@ -427,7 +435,6 @@
           if (selectedCustomerIds.includes(c.id)) cell.classList.add('selected');
           cell.addEventListener('click', function(e) {
             e.preventDefault();
-            // Toggle selection
             if (selectedCustomerIds.includes(c.id)) {
               selectedCustomerIds = selectedCustomerIds.filter(cid => cid !== c.id);
             } else {
@@ -441,7 +448,6 @@
         updateBatchBar();
       }
 
-      // --- LOGIN ---
       loginBtn.addEventListener('click', function(){
         if(pinInput.value==='1234'){
           loginOverlay.style.display='none';
