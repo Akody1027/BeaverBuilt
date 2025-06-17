@@ -6,6 +6,7 @@
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    /* --- (ALL ORIGINAL STYLES UNCHANGED) --- */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -47,7 +48,6 @@
     #batch-bar.show { display:flex; }
     #batch-bar .bar-actions {display:flex; gap:1.5rem; justify-content:center;}
     #batch-bar .bar-actions button {min-width:120px;}
-    /* Sidebar fine-tuning for max auto-narrowness */
     #sidebar {
       width: auto !important;
       min-width: 0;
@@ -60,7 +60,6 @@
     .sidebar-divider {
       width: 80%; height: 2px; background: #e5e7eb; margin: 12px auto 14px auto; border-radius: 2px;
     }
-    /* Modal styling */
     #email-modal-bg, #batch-modal-bg {
       display: none;
       position:fixed; inset:0; z-index:1000;
@@ -94,7 +93,6 @@
     @media (max-width: 500px) {
       #email-modal, #batch-modal { min-height:220px;}
     }
-    /* Spinner */
     .spinner {
       display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
       border:3px solid #cbd5e1; border-top:3px solid #64748b;
@@ -102,13 +100,67 @@
       margin: 0 auto;
     }
     @keyframes spin { 100%{transform:rotate(360deg);} }
-    /* Green check for emailed customers */
     .email-check {
       color: #22c55e; font-size: 1.15em; margin-left: 5px; vertical-align: middle;
     }
     .customer-id-label { font-weight: bold; margin-right: 3px; }
     .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
     .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
+    /* --- (ADDED STYLE FOR THE NEW SECTION) --- */
+    .pending-payments-section {
+      background: #fef08a;
+      border: 2px solid #facc15;
+      border-radius: 1rem;
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 14px #facc1540;
+      font-size: 1rem;
+    }
+    .pending-payment-item {
+      background: #fde68a;
+      border: 1px solid #f59e42;
+      border-radius: .5rem;
+      padding: .7rem 1rem;
+      margin-bottom: .8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pending-payments-section h4 {
+      font-weight: bold;
+      color: #ca8a04;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      letter-spacing: 0.03em;
+    }
+    .pending-payment-item .actions button {
+      margin-left: 1rem;
+    }
+    .pending-payment-item .actions button.approve {
+      background: #4ade80; color: #065f46;
+      border: none;
+      border-radius: .375rem;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .pending-payment-item .actions button.approve:hover {
+      background: #22c55e;
+    }
+    .pending-payment-item .actions button.deny {
+      background: #f87171; color: #fff;
+      border: none;
+      border-radius: .375rem;
+      padding: 0.5rem 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .pending-payment-item .actions button.deny:hover {
+      background: #ef4444;
+    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -216,6 +268,13 @@ Admin</textarea>
             <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
         </div>
+        <!-- ===========================
+            Pending Payment Confirmation Section (ADDED)
+        ============================ -->
+        <div id="pending-payments-section" class="pending-payments-section" style="display:none"></div>
+        <!-- ===========================
+            END Pending Payment Section
+        ============================ -->
       </section>
 
       <!-- Add Customer -->
@@ -257,6 +316,7 @@ Admin</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      /* --- ORIGINAL CODE (unchanged) --- */
       function getCustomers() { 
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
         catch(e) { return []; }
@@ -318,14 +378,12 @@ Admin</textarea>
       var emailSubject = document.getElementById('email-subject');
       var emailBody = document.getElementById('email-body');
       var massEmailForm = document.getElementById('mass-email-form');
-      // For modal batch actions (long press)
       var batchModalBg = document.getElementById('batch-modal-bg');
       var batchModal = document.getElementById('batch-modal');
       var closeBatchModal = document.getElementById('close-batch-modal');
       var batchModalPaid = document.getElementById('batch-modal-paid');
       var batchModalEmail = document.getElementById('batch-modal-email');
       var batchModalList = document.getElementById('batch-modal-list');
-      // Login spinner logic
       var loginBtnText = document.getElementById('login-btn-text');
       var loginBtnSpinner = document.getElementById('login-btn-spinner');
 
@@ -335,6 +393,7 @@ Admin</textarea>
         });
         document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
         if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+        if(id==='dashboard') updatePendingPaymentsSection();
       }
 
       navLinks.forEach(function(link){
@@ -384,7 +443,6 @@ Admin</textarea>
         renderBills();
         renderEmailLog();
         document.querySelectorAll('.nav-link').forEach(function(l){ l.classList.remove('active'); });
-        // Highlight selected in sidebar
         document.querySelectorAll('.customer-btn').forEach(function(b){
           if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id + ' -')) b.classList.add('active');
           else b.classList.remove('active');
@@ -538,7 +596,6 @@ Admin</textarea>
         });
       });
 
-      // --- Batch Selection for Calendar ---
       function updateBatchBar() {
         if (selectedCustomerIds.length > 0) {
           batchBar.classList.add('show');
@@ -567,11 +624,8 @@ Admin</textarea>
         updateMetrics();
         updateBatchBar();
       };
-      // No more clear button, only in X in batch modal
 
-      // ---- Mass Email Modal Logic ----
       function openEmailModal(ids) {
-        // Populate list of customers
         modalCustomersList.innerHTML = '';
         let customerData = getCustomers().slice().sort((a,b)=>parseInt(a.id)-parseInt(b.id));
         ids.forEach(id=>{
@@ -595,11 +649,8 @@ Admin</textarea>
       emailModalBg.addEventListener('click', function(e){
         if (e.target === emailModalBg) emailModalBg.classList.remove('show');
       });
-
-      // Demo send: This does not really send but gives instant feedback
       massEmailForm.addEventListener('submit', function(e){
         e.preventDefault();
-        // Log send for each customer
         let log = getEmailLog();
         let now = new Date();
         selectedCustomerIds.forEach(function(cid) {
@@ -612,8 +663,6 @@ Admin</textarea>
         setTimeout(()=>{ emailModalBg.classList.remove('show'); }, 1300);
       });
 
-      // --- Invoice Grid Batch/Long Press ---
-      // Long press logic: on mousedown/touchstart hold for 700ms
       var grid = document.getElementById('invoice-grid');
       var gridHoldTimeout = null, lastGridHoldCell = null;
       grid.addEventListener('mousedown', function(e){
@@ -626,7 +675,6 @@ Admin</textarea>
       });
       grid.addEventListener('mouseup', function(){ clearTimeout(gridHoldTimeout); });
       grid.addEventListener('mouseleave', function(){ clearTimeout(gridHoldTimeout); });
-      // Touch events for mobile long press
       grid.addEventListener('touchstart', function(e){
         let cell = e.target.closest('.grid-cell');
         if (!cell) return;
@@ -644,7 +692,6 @@ Admin</textarea>
         if (!c) return;
         batchModalList.innerHTML = `<strong class="mb-1">${c.id} - ${c.name}</strong>`;
         batchModalBg.classList.add('show');
-        // Email/paid logic
         batchModalPaid.onclick = function(){
           if (!confirm('Mark all invoices for this customer as paid?')) return;
           let allBills = getBills();
@@ -668,7 +715,6 @@ Admin</textarea>
         if(e.target===batchModalBg) batchModalBg.classList.remove('show');
       });
 
-      // --- Metrics & Calendar Grid ---
       function updateMetrics(){
         var cs = getCustomers();
         var bs = getBills();
@@ -710,7 +756,6 @@ Admin</textarea>
         updateBatchBar();
       }
 
-      // --- Login Spinner with 2s wait ---
       loginBtn.addEventListener('click', function(){
         pinError.textContent = '';
         if(pinInput.value==='1234'){
@@ -735,6 +780,72 @@ Admin</textarea>
           pinError.textContent = 'Invalid PIN';
         }
       });
+
+      /* ============= NEW CODE FOR MANUAL PAYMENT CONFIRMATION SECTION ============= */
+      function getManualPayments() {
+        // Simulate a storage array of manual payment objects: {id, customerId, amount, date}
+        // Example manualPayments = [{id:1,customerId:'001',amount:100.00,date:'2024-06-15'}]
+        try { return JSON.parse(localStorage.getItem('manualPayments') || '[]'); }
+        catch(e){ return []; }
+      }
+      function saveManualPayments(arr) {
+        try { localStorage.setItem('manualPayments', JSON.stringify(arr)); }
+        catch(e){}
+      }
+      function updatePendingPaymentsSection() {
+        var section = document.getElementById('pending-payments-section');
+        var payments = getManualPayments();
+        section.innerHTML = '';
+        if (payments.length === 0) {
+          section.style.display = 'block';
+          section.innerHTML = '<h4>Pending Payment Confirmation</h4><div>0 pending payments</div>';
+          return;
+        }
+        section.style.display = 'block';
+        section.innerHTML = '<h4>Pending Payment Confirmation</h4>';
+        payments.forEach(function(p) {
+          var customer = getCustomers().find(c => c.id === p.customerId) || {};
+          var item = document.createElement('div');
+          item.className = 'pending-payment-item';
+          item.innerHTML = `
+            <div>
+              <b>${customer.id || p.customerId} - ${customer.name || 'Unknown'}</b> 
+              owes <b>$${Number(p.amount).toFixed(2)}</b> 
+              <span style="font-size:0.92em;color:#b45309;">(${p.date||''})</span>
+            </div>
+            <div class="actions">
+              <button class="approve">Approve</button>
+              <button class="deny">Deny</button>
+            </div>
+          `;
+          item.querySelector('.approve').onclick = function(){
+            if (confirm('Approve this payment?')) {
+              saveManualPayments(getManualPayments().filter(m => m.id !== p.id));
+              updatePendingPaymentsSection();
+            }
+          };
+          item.querySelector('.deny').onclick = function(){
+            if (confirm('Deny this payment?')) {
+              saveManualPayments(getManualPayments().filter(m => m.id !== p.id));
+              updatePendingPaymentsSection();
+            }
+          };
+          section.appendChild(item);
+        });
+      }
+      // Make sure it updates on dashboard load/return:
+      updatePendingPaymentsSection();
+      // For demonstration, allow this in console to add a manual payment quickly:
+      window.demoAddManualPayment = function(customerId, amount){
+        var arr = getManualPayments();
+        var id = Date.now() + Math.floor(Math.random()*999);
+        arr.push({id:id,customerId:String(customerId),amount:amount,date:new Date().toISOString().substring(0,10)});
+        saveManualPayments(arr);
+        updatePendingPaymentsSection();
+      };
+      // Triple safety: Update the section whenever the dashboard is shown
+      // (already handled above in showSection('dashboard'))
+      /* ============= END MANUAL PAYMENT CONFIRMATION SECTION ============= */
     });
   </script>
 </body>
