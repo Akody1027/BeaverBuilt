@@ -184,6 +184,10 @@
         const snap = await db.collection('bills')
                              .where('customerId','==',currentCustomer.id)
                              .get();
+        alert("Firestore returned " + snap.size + " document(s) for PIN " + pin);
+
+
+        
         if (snap.empty) {
           invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
           return;
