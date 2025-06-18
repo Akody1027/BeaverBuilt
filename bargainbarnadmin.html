@@ -27,6 +27,16 @@
       background: #f87171; color: #fff; border-radius: 50%; width:1.1em; height:1.1em;
       justify-content:center; font-size:.8em; box-shadow:0 0 2px #b91c1c88;
     }
+    .customer-stripe-request {
+      display: inline-flex; align-items: center; margin-left: .3em;
+      background: #fde68a; color: #b45309; border-radius: 50%; width:1.1em; height:1.1em;
+      justify-content:center; font-size:.92em; box-shadow:0 0 2px #b4530988;
+    }
+    .customer-pending {
+      display: inline-flex; align-items: center; margin-left: .3em;
+      background: #fef08a; color: #ca8a04; border-radius: 50%; width:1.1em; height:1.1em;
+      justify-content:center; font-size:.92em; box-shadow:0 0 2px #ca8a0488;
+    }
     .customer-btn.active, #sidebar .customer-btn.active {
       background: #E5E7EB !important; border-radius: .375rem;
     }
@@ -86,6 +96,19 @@
     .customer-id-label { font-weight:bold; margin-right:3px; }
     .log-entry { font-size:.92em; color:#475569; margin-bottom:6px; }
     .log-entry .dt { font-size:.85em; color:#999; margin-left:4px; }
+    .pending-alert {
+      background: #fef08a; color: #ca8a04; padding: .5em 1em; border-radius: .5em;
+      margin-bottom: .6em; font-weight: 600; display: inline-block; font-size: 1em;
+    }
+    .stripe-request-box {
+      background: #fef9c3; color: #92400e; border: 1.5px solid #fde68a;
+      padding: .5em 1em; border-radius: .7em; margin-bottom: .7em;
+      display: flex; align-items: center; gap: .7em;
+    }
+    .stripe-request-box input[type='url'] {
+      border: 1.5px solid #fde68a; border-radius: .3em; padding: .2em .5em;
+      min-width: 140px;
+    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -106,10 +129,14 @@
   </div>
 
   <!-- Email Modal -->
-  <div id="email-modal-bg"><!-- … unchanged … --></div>
+  <div id="email-modal-bg">
+    <!-- … unchanged … -->
+  </div>
 
   <!-- Batch Action Modal -->
-  <div id="batch-modal-bg"><!-- … unchanged … --></div>
+  <div id="batch-modal-bg">
+    <!-- … unchanged … -->
+  </div>
 
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
@@ -136,6 +163,7 @@
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
       <!-- Dashboard Panels -->
       <section id="dashboard" class="space-y-6">
+        <!-- ... unchanged ... -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div class="rounded-2xl bg-white p-6 shadow">
             <p class="text-sm text-gray-500">Total Customers</p>
@@ -175,6 +203,7 @@
 
       <!-- Add Customer -->
       <section id="customers" class="hidden space-y-8">
+        <!-- ... unchanged ... -->
         <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
           <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
           <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
@@ -219,8 +248,8 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Firebase
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Firestore initialization
       const firebaseConfig = {
         apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
         authDomain: "customerportal-3032d.firebaseapp.com",
@@ -233,30 +262,7 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // DOM refs
-      const loginOverlay    = document.getElementById('login-overlay');
-      const loginBtn        = document.getElementById('login-btn');
-      const loginBtnText    = document.getElementById('login-btn-text');
-      const loginBtnSpinner = document.getElementById('login-btn-spinner');
-      const pinInput        = document.getElementById('admin-pin');
-      const pinError        = document.getElementById('pin-error');
-      const sidebar         = document.getElementById('sidebar');
-      const main            = document.getElementById('main');
-      const navLinks        = document.querySelectorAll('.nav-link');
-      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
-      const addCustIcon     = document.getElementById('add-cust-icon');
-      const addCustBtn      = document.getElementById('add-cust-btn');
-      const addInvoiceBtn   = document.getElementById('add-invoice-btn');
-      const deleteCustBtn   = document.getElementById('delete-cust-btn');
-      const updateCustBtn   = document.getElementById('update-cust-btn');
-      const updateFieldsDiv = document.getElementById('update-fields');
-      const batchBar        = document.getElementById('batch-bar');
-      const batchPaidBtn    = document.getElementById('batch-paid');
-      const batchEmailBtn   = document.getElementById('batch-email');
-      const batchCount      = document.getElementById('batch-count');
-      let activeCustomer = null, selectedCustomerIds = [];
-
-      // Helpers for data access
+      // Helpers (unchanged)
       function generateUniquePin(existingPins) {
         let pin, tries = 0;
         do {
@@ -283,6 +289,7 @@
         catch(e) {}
       }
 
+      // Metrics & calendar (unchanged)
       async function updateMetrics() {
         const customers = await getCustomers();
         const bills = await getBills();
@@ -319,21 +326,75 @@
         }
       }
 
-      // Sidebar and profile population
+      // DOM refs (unchanged)
+      const loginOverlay    = document.getElementById('login-overlay');
+      const loginBtn        = document.getElementById('login-btn');
+      const loginBtnText    = document.getElementById('login-btn-text');
+      const loginBtnSpinner = document.getElementById('login-btn-spinner');
+      const pinInput        = document.getElementById('admin-pin');
+      const pinError        = document.getElementById('pin-error');
+      const sidebar         = document.getElementById('sidebar');
+      const main            = document.getElementById('main');
+      const navLinks        = document.querySelectorAll('.nav-link');
+      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
+      const addCustIcon     = document.getElementById('add-cust-icon');
+      const addCustBtn      = document.getElementById('add-cust-btn');
+      const addInvoiceBtn   = document.getElementById('add-invoice-btn');
+      const deleteCustBtn   = document.getElementById('delete-cust-btn');
+      const updateCustBtn   = document.getElementById('update-cust-btn');
+      const updateFieldsDiv = document.getElementById('update-fields');
+      const batchBar        = document.getElementById('batch-bar');
+      const batchPaidBtn    = document.getElementById('batch-paid');
+      const batchEmailBtn   = document.getElementById('batch-email');
+      const batchCount      = document.getElementById('batch-count');
+      let activeCustomer = null, selectedCustomerIds = [];
+
+      function showSection(id){
+        ['dashboard','customers','profile'].forEach(s=>{
+          document.getElementById(s).style.display = (s===id?'block':'none');
+        });
+        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
+      }
+      navLinks.forEach(link=>{
+        link.addEventListener('click',e=>{
+          e.preventDefault();
+          navLinks.forEach(l=>l.classList.remove('active'));
+          link.classList.add('active');
+          showSection(link.getAttribute('data-target'));
+        });
+      });
       function customerHasMissingInfo(c){
         return !c.email||!c.phone||!c.address;
       }
 
+      // ==== MODIFIED: Sidebar now also shows ! for stripeRequested and pending for paymentPending ====
       async function populateSidebar(){
         const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = '';
         const customers = await getCustomers();
+        const bills = await getBills();
+
         customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
           const btn = document.createElement('button');
           btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
           let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+
+          // Show warning if missing info
           if(customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
+
+          // Show check if emailed
           if(emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+
+          // NEW: Add ! for stripeRequested invoice (and no link yet)
+          const custBills = bills.filter(b=>b.customerId === c.id);
+          const needsStripe = custBills.some(b => b.stripeRequested && !b.stripeLink && !b.paid);
+          if (needsStripe) html += `<span class="customer-stripe-request" title="Stripe link requested">!</span>`;
+
+          // NEW: Add Pending Payment icon for paymentPending invoice
+          const pendingPay = custBills.some(b => b.paymentPending && !b.paid);
+          if (pendingPay) html += `<span class="customer-pending" title="Payment pending">!</span>`;
+
           btn.innerHTML = html;
           btn.onclick = () => openCustomer(c.id);
           const li = document.createElement('li'); li.appendChild(btn);
@@ -341,6 +402,7 @@
         });
       }
 
+      // ==== MODIFIED: Render bills in profile for Stripe requests and payment pending ====
       async function openCustomer(id){
         const customers = await getCustomers();
         activeCustomer = customers.find(c=>c.id===id);
@@ -369,27 +431,108 @@
           : '';
       }
 
+      // ====== MODIFIED: Render Stripe request, Stripe link input, and Payment Pending review =====
       async function renderBills(){
         const listEl = document.getElementById('profile-bills-list');
         listEl.innerHTML = '';
         const bills = await getBills();
+        let foundStripe = false, foundPending = false;
         bills.filter(b=>b.customerId===activeCustomer.id).forEach(b=>{
           const li = document.createElement('li');
-          li.className = 'p-4 bg-gray-100 rounded';
-          li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
-                          <p><strong>Due:</strong> ${b.dueDate}</p>
-                          <p><strong>Status:</strong> ${b.paid?'Paid':'Unpaid'}</p>`;
-          if(!b.paid){
-            const payBtn = document.createElement('button');
-            payBtn.textContent = 'Mark Paid';
-            payBtn.className = 'mt-2 bg-green-400 text-white px-3 py-1 rounded';
-            payBtn.onclick = async ()=>{
-              await db.collection('bills').doc(b.id).update({paid:true});
-              await renderBills(); await updateMetrics(); await updateGrid();
-            };
-            li.appendChild(payBtn);
+          li.className = 'p-4 bg-gray-100 rounded mb-2';
+          let html = `<p><strong>Amount:</strong> $${b.amount}</p>
+                      <p><strong>Due:</strong> ${b.dueDate}</p>
+                      <p><strong>Status:</strong> ${b.paid?'Paid': b.paymentPending?'Pending':'Unpaid'}</p>`;
+
+          // ===== Stripe Link request and input =====
+          if (!b.paid && b.stripeRequested && !b.stripeLink) {
+            foundStripe = true;
+            html += `<div class="stripe-request-box">
+              <span>Stripe link requested</span>
+              <input type="url" placeholder="Paste Stripe link" id="stripe-link-input-${b.id}">
+              <button id="submit-stripe-link-${b.id}" class="bg-blue-500 text-white rounded px-3 py-1 text-sm">Submit</button>
+            </div>`;
+          } else if (!b.paid && b.stripeRequested && b.stripeLink) {
+            html += `<div class="text-green-600 mb-2">Stripe payment link sent to customer</div>`;
           }
+
+          // ===== Payment pending review =====
+          if (!b.paid && b.paymentPending) {
+            foundPending = true;
+            html += `<div class="pending-alert">
+              Pending payment confirmation:
+              <button id="approve-payment-${b.id}" class="ml-2 bg-green-500 text-white px-2 py-1 rounded text-xs">Confirm</button>
+              <button id="deny-payment-${b.id}" class="ml-2 bg-red-500 text-white px-2 py-1 rounded text-xs">Deny</button>
+            </div>`;
+          }
+
+          // ===== Default mark paid button =====
+          if (!b.paid && !b.paymentPending) {
+            html += `<button id="pay-btn-${b.id}" class="mt-2 bg-green-400 text-white px-3 py-1 rounded">Mark Paid</button>`;
+          }
+
+          li.innerHTML = html;
           listEl.appendChild(li);
+
+          // Event listeners for Stripe link submission
+          if (!b.paid && b.stripeRequested && !b.stripeLink) {
+            setTimeout(() => {
+              const btn = document.getElementById(`submit-stripe-link-${b.id}`);
+              const input = document.getElementById(`stripe-link-input-${b.id}`);
+              if (btn && input) {
+                btn.onclick = async () => {
+                  const link = input.value.trim();
+                  if (!link.startsWith('http')) {
+                    alert('Please enter a valid URL');
+                    return;
+                  }
+                  await db.collection('bills').doc(b.id).update({ stripeLink: link, stripeRequested: false });
+                  renderBills(); // refresh
+                  await populateSidebar();
+                  alert('Stripe payment link saved and sent to customer.');
+                };
+              }
+            }, 0);
+          }
+
+          // Event listeners for payment pending review
+          if (!b.paid && b.paymentPending) {
+            setTimeout(() => {
+              const approveBtn = document.getElementById(`approve-payment-${b.id}`);
+              const denyBtn    = document.getElementById(`deny-payment-${b.id}`);
+              if (approveBtn) {
+                approveBtn.onclick = async () => {
+                  if (confirm('Confirm this payment as received?')) {
+                    await db.collection('bills').doc(b.id).update({ paid: true, paymentPending: false });
+                    renderBills();
+                    await populateSidebar();
+                  }
+                };
+              }
+              if (denyBtn) {
+                denyBtn.onclick = async () => {
+                  if (confirm('Deny this payment?')) {
+                    await db.collection('bills').doc(b.id).update({ paymentPending: false });
+                    renderBills();
+                    await populateSidebar();
+                  }
+                };
+              }
+            }, 0);
+          }
+
+          // Mark paid default
+          if (!b.paid && !b.paymentPending) {
+            setTimeout(() => {
+              const payBtn = document.getElementById(`pay-btn-${b.id}`);
+              if (payBtn) {
+                payBtn.onclick = async ()=>{
+                  await db.collection('bills').doc(b.id).update({paid:true});
+                  await renderBills(); await updateMetrics(); await updateGrid();
+                };
+              }
+            }, 0);
+          }
         });
       }
 
@@ -498,50 +641,34 @@
         await updateMetrics(); await updateGrid(); updateBatchBar();
       };
 
-      // Section navigation
-      function showSection(id){
-        ['dashboard','customers','profile'].forEach(s=>{
-          document.getElementById(s).style.display = (s===id?'block':'none');
-        });
-        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
-      }
-      navLinks.forEach(link=>{
-        link.addEventListener('click',e=>{
-          e.preventDefault();
-          navLinks.forEach(l=>l.classList.remove('active'));
-          link.classList.add('active');
-          showSection(link.getAttribute('data-target'));
-        });
-      });
-
-      // LOGIN FLOW - fixed and complete
-      loginBtn.addEventListener('click', async function() {
+      // Login flow (unchanged)
+      loginBtn.onclick = async ()=>{
         pinError.textContent = '';
-        if (pinInput.value === '1234') {
+        if(pinInput.value === '1234'){
           loginBtnText.classList.add('hidden');
           loginBtnSpinner.classList.remove('hidden');
           loginBtn.disabled = true;
-          setTimeout(async () => {
-            loginOverlay.classList.add('hidden');
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
+          try {
             await populateSidebar();
             await updateMetrics();
             await updateGrid();
+            loginOverlay.classList.add('hidden');
+            sidebar.classList.remove('hidden');
+            main.classList.remove('hidden');
             document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
             showSection('dashboard');
+          } finally {
             loginBtnText.classList.remove('hidden');
             loginBtnSpinner.classList.add('hidden');
             loginBtn.disabled = false;
             pinInput.value = '';
-          }, 400);
+          }
         } else {
           pinError.textContent = 'Invalid PIN';
         }
-      });
+      };
 
-      // Page loads with overlay visible, dashboard hidden
+      // Initial state: overlay visible; sidebar/main hidden via Tailwind
     });
   </script>
 </body>
