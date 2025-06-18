@@ -158,6 +158,7 @@
           downloadReceipt= document.getElementById('download-receipt');
 
     let currentCustomer = null;
+    let billsUnsub = null;  // To unsubscribe on logout
 
     // LOGIN
     loginBtn.onclick = async () => {
@@ -177,6 +178,7 @@
           overlay.classList.add('hidden');
           main.classList.remove('hidden');
           renderCustomer();
+          setupRealtimeInvoices(); // Setup real-time invoice listener
         }
       } catch (e) {
         pinError.textContent = "Login error";
@@ -191,6 +193,9 @@
       main.classList.add('hidden');
       pinInput.value = '';
       pinError.textContent = '';
+      currentCustomer = null;
+      if(billsUnsub) { billsUnsub(); billsUnsub = null; }
+      invoicesList.innerHTML = '';
     };
 
     // Render customer info
@@ -203,16 +208,22 @@
       document.getElementById('input-email').value   = currentCustomer.email;
       document.getElementById('input-phone').value   = currentCustomer.phone;
       document.getElementById('input-address').value = currentCustomer.address;
-      renderInvoices();
     }
 
-    // Render invoices with new payment flows
-    async function renderInvoices() {
+    // Setup realtime listener for invoices of current customer
+    function setupRealtimeInvoices() {
+      if(billsUnsub) billsUnsub(); // Clean up old listener if any
+      billsUnsub = db.collection('bills')
+        .where('customerId', '==', currentCustomer.id)
+        .onSnapshot(snapshot => {
+          renderInvoicesRealtime(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+    }
+
+    // Render invoices from realtime snapshot data
+    function renderInvoicesRealtime(bills) {
       invoicesList.innerHTML = '';
-      const snap = await db.collection('bills')
-                           .where('customerId','==',currentCustomer.id)
-                           .get();
-      if (snap.empty) {
+      if (bills.length === 0) {
         invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">
                                     No invoices found.
                                  </div>`;
@@ -220,8 +231,7 @@
       }
 
       let idx = 1;
-      for (const doc of snap.docs) {
-        const b = { id: doc.id, ...doc.data() };
+      for (const b of bills) {
         const paid    = !!b.paid;
         const div     = document.createElement('div');
         div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
@@ -237,7 +247,6 @@
         `;
 
         if (!paid) {
-          // Modern payment button stack
           const payStack = document.createElement('div');
           payStack.className = 'pay-btn-stack';
 
@@ -265,7 +274,7 @@
             onApprove: function(data, actions) {
               return actions.order.capture().then(async function(details) {
                 await db.collection('bills').doc(b.id).update({ paid: true });
-                renderInvoices();
+                // No need to call renderInvoices explicitly, real-time listener will update UI
               });
             }
           }).render(ppDiv);
@@ -277,9 +286,8 @@
           venmoBtn.onclick = () => {
             const amount = b.amount;
             const note = encodeURIComponent(`Invoice #${idx}`);
-            // Try deep link first, then fallback
             window.location = `venmo://paycharge?txn=pay&recipients=@Lylia-Cruz&amount=${amount}&note=${note}`;
-            setTimeout(()=>window.open(`https://venmo.com/@Lylia-Cruz?txn=pay&amount=${amount}&note=${note}`,'_blank'), 500);
+            setTimeout(() => window.open(`https://venmo.com/@Lylia-Cruz?txn=pay&amount=${amount}&note=${note}`, '_blank'), 500);
           };
 
           // Cash App button
@@ -288,9 +296,8 @@
           cashBtn.textContent = 'Pay with Cash App';
           cashBtn.onclick = () => {
             const amount = b.amount;
-            // Try deep link first, then fallback
             window.location = `cashapp://cash.me/$LyliaCruzNE/${amount}`;
-            setTimeout(()=>window.open(`https://cash.app/$LyliaCruzNE/${amount}`,'_blank'), 500);
+            setTimeout(() => window.open(`https://cash.app/$LyliaCruzNE/${amount}`, '_blank'), 500);
           };
 
           payStack.appendChild(venmoBtn);
@@ -323,7 +330,8 @@
         .then(() => {
           currentCustomer = { ...currentCustomer, ...upd };
           updateFeedback.textContent = 'Information updated!';
-          welcomeName.textContent    = `Welcome, ${currentCustomer.name}!`;
+          welcomeName.textCon
+tent    = `Welcome, ${currentCustomer.name}!`;
           setTimeout(()=>updateFeedback.textContent='', 2000);
         })
         .catch(err => {
