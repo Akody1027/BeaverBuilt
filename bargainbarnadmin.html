@@ -132,43 +132,44 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Helpers, data functions, DOM refs, and all existing handlers remain exactly the same…
+      // Helpers, data functions, DOM refs, and all existing handlers remain exactly as before…
 
-      // —— FIXED LOGIN FLOW —— 
-      const loginOverlay    = document.getElementById('login-overlay');
-      const loginBtn        = document.getElementById('login-btn');
-      const loginBtnText    = document.getElementById('login-btn-text');
-      const loginBtnSpinner = document.getElementById('login-btn-spinner');
-      const pinInput        = document.getElementById('admin-pin');
-      const pinError        = document.getElementById('pin-error');
-      const sidebar         = document.getElementById('sidebar');
-      const main            = document.getElementById('main');
+      // —— LOGIN FIX —— 
+      const loginOverlay = document.getElementById('login-overlay');
+      const loginBtn     = document.getElementById('login-btn');
+      const loginText    = document.getElementById('login-btn-text');
+      const loginSpin    = document.getElementById('login-btn-spinner');
+      const pinInput     = document.getElementById('admin-pin');
+      const pinError     = document.getElementById('pin-error');
+      const sidebar      = document.getElementById('sidebar');
+      const main         = document.getElementById('main');
 
-      loginBtn.addEventListener('click', async (e) => {
+      loginBtn.addEventListener('click', async function(e) {
         e.preventDefault();
         pinError.textContent = '';
         if (pinInput.value === '1234') {
-          // Show spinner
-          loginBtnText.classList.add('hidden');
-          loginBtnSpinner.classList.remove('hidden');
+          // show spinner
+          loginText.classList.add('hidden');
+          loginSpin.classList.remove('hidden');
           loginBtn.disabled = true;
 
-          // Initialize and show UI
+          // initialize firestorm data
           await populateSidebar();
           await updateMetrics();
           await updateGrid();
-          loginOverlay.classList.add('hidden');
-          sidebar.classList.remove('hidden');
-          sidebar.classList.add('flex');
-          main.classList.remove('hidden');
-          main.classList.add('flex');
-          document.querySelector('.nav-link[data-target="dashboard"]')
-                  .classList.add('active');
+
+          // hide login, show UI
+          loginOverlay.style.display = 'none';
+          sidebar.style.display      = 'flex';
+          main.style.display         = 'flex';
+
+          // select dashboard tab
+          document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
           showSection('dashboard');
 
-          // Reset button and input
-          loginBtnText.classList.remove('hidden');
-          loginBtnSpinner.classList.add('hidden');
+          // reset button
+          loginText.classList.remove('hidden');
+          loginSpin.classList.add('hidden');
           loginBtn.disabled = false;
           pinInput.value = '';
         } else {
@@ -176,7 +177,7 @@
         }
       });
 
-      // Initial state: overlay visible; sidebar/main hidden
+      // initial overlay visible; sidebar/main hidden via Tailwind
     });
   </script>
 </body>
