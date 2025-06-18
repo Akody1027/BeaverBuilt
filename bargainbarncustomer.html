@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Customer Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldq&currency=USD"></script>
   <!-- Firebase App (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <style>
     body { background: #fafafa; }
     .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
@@ -22,10 +22,26 @@
     .modal .close-modal:hover { color:#b91c1c; }
     .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer; }
     .spinner { display:inline-block; width:1.4em; height:1.4em; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; }
+    .pay-btn-stack { width:80%; margin: 0.5rem auto 0 auto; display: flex; flex-direction: column; gap: 0.5rem; }
+    .modern-btn {
+      background: #e5e7eb;
+      border-radius: 0.5rem;
+      color: #1a202c;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      width: 100%;
+      padding: 0.75rem 0;
+      transition: background .12s;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #0001;
+    }
+    .modern-btn:hover { background: #d1d5db; }
+    .paypal-button-container { width: 100%; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
-
 <body class="h-screen flex flex-col">
 
   <!-- Login Overlay -->
@@ -207,91 +223,80 @@
       for (const doc of snap.docs) {
         const b = { id: doc.id, ...doc.data() };
         const paid    = !!b.paid;
-        const pending = !!b.paymentPending;
         const div     = document.createElement('div');
         div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
-                        (paid || pending ? 'invoice-status-paid' : 'invoice-status-unpaid');
+                        (paid ? 'invoice-status-paid' : 'invoice-status-unpaid');
 
         div.innerHTML = `
           <div class="flex justify-between items-center mb-1">
             <span class="font-semibold">Invoice #${idx}</span>
-            <span class="text-xs">${paid ? 'Paid' : pending ? 'Pending' : 'Unpaid'}</span>
+            <span class="text-xs">${paid ? 'Paid' : 'Unpaid'}</span>
           </div>
           <div>Amount: <span class="font-bold">$${b.amount}</span></div>
           <div>Due: ${b.dueDate}</div>
         `;
 
         if (!paid) {
-          // Stripe link request/display
-          if (b.stripeLink) {
-            const a = document.createElement('a');
-            a.href       = b.stripeLink;
-            a.target     = '_blank';
-            a.textContent= 'Pay with Stripe';
-            a.className  = 'text-blue-600 underline mt-2';
-            div.appendChild(a);
-          }
-          else if (b.stripeRequested) {
-            const msg = document.createElement('div');
-            msg.textContent = 'Stripe link requested…';
-            msg.className   = 'mt-2 text-gray-600';
-            div.appendChild(msg);
-          }
-          else {
-            const p  = document.createElement('small');
-            p.textContent  = 'Request a Stripe payment link';
-            p.className    = 'text-red-600';
-            const btn      = document.createElement('button');
-            btn.textContent= 'Request Stripe Link';
-            btn.className  = 'mt-1 bg-red-500 text-white px-3 py-1 rounded';
-            btn.onclick    = async () => {
-              await db.collection('bills').doc(b.id).update({ stripeRequested: true });
-              renderInvoices();
-            };
-            div.append(p, document.createElement('br'), btn);
-          }
+          // Modern payment button stack
+          const payStack = document.createElement('div');
+          payStack.className = 'pay-btn-stack';
 
-          // Venmo deep-link
-          const venmo     = document.createElement('button');
-          venmo.textContent = 'Venmo';
-          venmo.className   = 'mt-2 bg-gray-200 px-3 py-1 rounded';
-          venmo.onclick     = () => {
-            const web      = `https://venmo.com/?txn=pay&amount=${b.amount}&note=Invoice%20${idx}`;
-            window.location = `venmo://paycharge?txn=pay&amount=${b.amount}&note=Invoice%20${idx}`;
-            setTimeout(()=>window.location=web,500);
+          // PayPal Button
+          const ppDiv = document.createElement('div');
+          ppDiv.className = 'paypal-button-container';
+          payStack.appendChild(ppDiv);
+
+          window.paypal.Buttons({
+            style: {
+              layout: 'vertical',
+              color: 'silver',
+              shape: 'rect',
+              label: 'pay',
+              height: 48
+            },
+            createOrder: function(data, actions) {
+              return actions.order.create({
+                purchase_units: [{
+                  amount: { value: String(b.amount) },
+                  description: `Invoice #${idx} - ${currentCustomer.name}`
+                }]
+              });
+            },
+            onApprove: function(data, actions) {
+              return actions.order.capture().then(async function(details) {
+                await db.collection('bills').doc(b.id).update({ paid: true });
+                renderInvoices();
+              });
+            }
+          }).render(ppDiv);
+
+          // Venmo button
+          const venmoBtn = document.createElement('button');
+          venmoBtn.className = 'modern-btn';
+          venmoBtn.textContent = 'Pay with Venmo';
+          venmoBtn.onclick = () => {
+            const amount = b.amount;
+            const note = encodeURIComponent(`Invoice #${idx}`);
+            // Try deep link first, then fallback
+            window.location = `venmo://paycharge?txn=pay&recipients=@Lylia-Cruz&amount=${amount}&note=${note}`;
+            setTimeout(()=>window.open(`https://venmo.com/@Lylia-Cruz?txn=pay&amount=${amount}&note=${note}`,'_blank'), 500);
           };
 
-          // Cash App deep-link
-          const cashapp   = document.createElement('button');
-          cashapp.textContent = 'Cash App';
-          cashapp.className   = 'ml-2 mt-2 bg-gray-200 px-3 py-1 rounded';
-          cashapp.onclick     = () => {
-            const handle  = 'YourCashTag';
-            const scheme  = `cashapp://$${handle}/${b.amount}`;
-            window.location = scheme;
-            setTimeout(()=>window.location=`https://cash.app/$${handle}/${b.amount}`,500);
+          // Cash App button
+          const cashBtn = document.createElement('button');
+          cashBtn.className = 'modern-btn';
+          cashBtn.textContent = 'Pay with Cash App';
+          cashBtn.onclick = () => {
+            const amount = b.amount;
+            // Try deep link first, then fallback
+            window.location = `cashapp://cash.me/$LyliaCruzNE/${amount}`;
+            setTimeout(()=>window.open(`https://cash.app/$LyliaCruzNE/${amount}`,'_blank'), 500);
           };
 
-          div.append(venmo, cashapp);
+          payStack.appendChild(venmoBtn);
+          payStack.appendChild(cashBtn);
 
-          // Payment confirmation if not pending
-          if (!pending) {
-            const q  = document.createElement('div');
-            q.className = 'mt-2';
-            q.innerHTML = 'Was payment made? ';
-            const yes   = document.createElement('button');
-            yes.textContent = 'Yes';
-            yes.className   = 'ml-2 bg-green-400 text-white px-2 py-1 rounded';
-            yes.onclick     = async () => {
-              await db.collection('bills').doc(b.id).update({ paymentPending: true });
-              renderInvoices();
-            };
-            const no    = document.createElement('button');
-            no.textContent  = 'No';
-            no.className    = 'ml-2 bg-gray-400 text-white px-2 py-1 rounded';
-            q.append(yes, no);
-            div.appendChild(q);
-          }
+          div.appendChild(payStack);
         }
 
         invoicesList.appendChild(div);
