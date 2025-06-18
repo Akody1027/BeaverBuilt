@@ -5,30 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customer Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
-<!-- Firebase App (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<!-- Firestore (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script>
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
-    authDomain: "customerportal-3032d.firebaseapp.com",
-    projectId: "customerportal-3032d",
-    storageBucket: "customerportal-3032d.firebasestorage.app",
-    messagingSenderId: "1003504088676",
-    appId: "1:1003504088676:web:43453e986312257b2f5171",
-    measurementId: "G-CVC0HK0WP8"
-  };
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  // Initialize Firestore
-  const db = firebase.firestore();
-</script>
-
+  <!-- Firebase App (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <!-- Firestore (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
     body { background: #fafafa; }
     .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
@@ -106,41 +86,25 @@
   </div>
 
   <script>
-    // DEMO DATA: In production, replace with Firebase reads/writes.
-
-
-// Get all customers (returns a Promise resolving to an array)
-function getCustomers() {
-  return db.collection('customers').get().then(snapshot =>
-    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-  );
-}
-
-// Add or update a customer (object: {id, name, ...})
-function saveCustomer(customer) {
-  return db.collection('customers').doc(customer.id).set(customer);
-}
-
-    
-    function getBills() {
-      return JSON.parse(localStorage.getItem('bills') || '[]');
-    }
-
-    function saveBills(bs) {
-      localStorage.setItem('bills', JSON.stringify(bs));
-    }
-
-    // Spinner for login
-    function showLoginSpinner(show) {
-      document.getElementById('login-btn-text').classList.toggle('hidden', show);
-      document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
-    }
-    // Spinner CSS
+    // Spinner CSS for login
     if (!document.querySelector('.spinner')) {
       var s = document.createElement('style');
       s.innerHTML = `.spinner{display:inline-block;width:1.4em;height:1.4em;border:3px solid #cbd5e1;border-top:3px solid #64748b;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{100%{transform:rotate(360deg);}}`;
       document.head.appendChild(s);
     }
+
+    // Firebase config and Firestore init
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
+      authDomain: "customerportal-3032d.firebaseapp.com",
+      projectId: "customerportal-3032d",
+      storageBucket: "customerportal-3032d.firebasestorage.app",
+      messagingSenderId: "1003504088676",
+      appId: "1:1003504088676:web:43453e986312257b2f5171",
+      measurementId: "G-CVC0HK0WP8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     // State
     let loggedIn = false;
@@ -165,41 +129,52 @@ function saveCustomer(customer) {
     const closeReceiptModal = document.getElementById('close-receipt-modal');
     const downloadReceipt = document.getElementById('download-receipt');
 
-    // Login logic
-    loginBtn.onclick = function(){
+    // Helper to show/hide spinner
+    function showLoginSpinner(show) {
+      document.getElementById('login-btn-text').classList.toggle('hidden', show);
+      document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
+    }
+
+    // Login logic using Firestore
+    loginBtn.onclick = async function() {
       pinError.textContent = "";
       showLoginSpinner(true);
-      setTimeout(()=>{
-        showLoginSpinner(false);
-        // In production: Query Firebase for customer by PIN
-        const customers = getCustomers();
+      try {
         let pin = pinInput.value.trim();
-        let cust = customers.find(c => c.pin === pin);
-        // Demo: allow 1234 as universal PIN if not found
-        if (!cust && pin === '1234') cust = customers[0] || null;
-        if (!cust) {
+        // Query for customer by PIN
+        let querySnapshot = await db.collection("customers").where("pin", "==", pin).get();
+        let customer = null;
+        querySnapshot.forEach(doc => customer = { id: doc.id, ...doc.data() });
+
+        if (!customer) {
           pinError.textContent = "Invalid PIN.";
+          showLoginSpinner(false);
           return;
         }
-        currentCustomer = cust;
+        currentCustomer = customer;
         loggedIn = true;
         overlay.classList.add('hidden');
         main.classList.remove('hidden');
         renderCustomer();
-      }, 1100);
+      } catch (e) {
+        pinError.textContent = "Login error: " + e;
+      }
+      showLoginSpinner(false);
     };
 
-    logoutBtn.onclick = function(){
+    logoutBtn.onclick = function() {
       overlay.classList.remove('hidden');
       main.classList.add('hidden');
       pinInput.value = '';
       pinError.textContent = '';
+      currentCustomer = null;
+      loggedIn = false;
     };
 
     function renderCustomer() {
       if (!currentCustomer) return;
       welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
-      welcomeID.textContent = currentCustomer.id;
+      welcomeID.textContent = currentCustomer.id || '';
       welcomePIN.textContent = currentCustomer.pin || '';
       // Populate update info
       document.getElementById('input-name').value = currentCustomer.name || '';
@@ -210,9 +185,14 @@ function saveCustomer(customer) {
       renderInvoices();
     }
 
-    function renderInvoices() {
+    async function renderInvoices() {
       invoicesList.innerHTML = '';
-      let bills = getBills().filter(b => b.customerId === currentCustomer.id);
+      if (!currentCustomer) return;
+      // Query Firestore for bills tied to this customer
+      let querySnapshot = await db.collection("bills").where("customerId", "==", currentCustomer.id).get();
+      let bills = [];
+      querySnapshot.forEach(doc => bills.push({ ...doc.data(), id: doc.id }));
+
       if (bills.length === 0) {
         invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
         return;
@@ -236,12 +216,7 @@ function saveCustomer(customer) {
           stripeBtn.className = 'rounded bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-2 mb-1 font-semibold text-sm';
           stripeBtn.textContent = "Pay with Stripe";
           stripeBtn.onclick = function() {
-            // For demo: mark as paid
-            bill.paid = true;
-            saveBills(getBills());
-            renderInvoices();
-            // In production, redirect to Stripe, then update payment status via Firebase after webhook/callback
-            alert('Demo: Invoice marked as paid. (In real use, redirect to Stripe checkout.)');
+            alert('Stripe integration not yet set up.');
           };
           // Venmo/CashApp: Demo links
           let venmo = document.createElement('a');
@@ -252,16 +227,6 @@ function saveCustomer(customer) {
           cashapp.href = "https://cash.app/"; cashapp.target="_blank";
           cashapp.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 text-sm inline-block';
           cashapp.textContent = "Cash App";
-          // Mark paid manual (for demo)
-          let markPaid = document.createElement('button');
-          markPaid.textContent = "Mark Paid (Manual)";
-          markPaid.className = 'rounded bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 mt-2 text-xs ml-2';
-          markPaid.onclick = function() {
-            bill.paid = true;
-            saveBills(getBills());
-            renderInvoices();
-            alert("Invoice marked as paid (demo only).");
-          };
           let row = document.createElement('div');
           row.className = "flex flex-wrap gap-2 items-center mt-2";
           row.appendChild(stripeBtn);
@@ -295,73 +260,34 @@ function saveCustomer(customer) {
     }
 
     // Close receipt modal
-    closeReceiptModal.onclick = function(){ receiptModalBg.style.display = 'none'; };
+    closeReceiptModal.onclick = function() { receiptModalBg.style.display = 'none'; };
     downloadReceipt.onclick = function() { alert("Demo: Would download PDF here."); };
 
     // Update info form
-    updateForm.onsubmit = function(e){
+    updateForm.onsubmit = async function(e) {
       e.preventDefault();
       if (!currentCustomer) return;
-      // In production: write to Firebase
+      // Write to Firestore
       var name = document.getElementById('input-name').value.trim();
       var email = document.getElementById('input-email').value.trim();
       var phone = document.getElementById('input-phone').value.trim();
       var address = document.getElementById('input-address').value.trim();
-      let cs = getCustomers();
-      let idx = cs.findIndex(c => c.pin === currentCustomer.pin);
-      if (idx === -1) { updateFeedback.textContent = "Update failed."; return; }
-      cs[idx].name = name;
-      cs[idx].email = email;
-      cs[idx].phone = phone;
-      cs[idx].address = address;
-      saveCustomers(cs);
-      currentCustomer = cs[idx];
-      updateFeedback.textContent = "Information updated!";
-      welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
-      setTimeout(()=>{ updateFeedback.textContent=''; }, 2000);
-    };
-
-    // Autofill demo data if empty
-    (function demoAutofill() {
-      let cs = getCustomers();
-      if (!cs.length) {
-        cs = [
-          { id:"1", name:"John Doe", email:"john@email.com", phone:"123-456-7890", address:"123 Main St", pin:"1234" },
-          { id:"2", name:"Jane Smith", email:"jane@email.com", phone:"555-555-5555", address:"456 Elm St", pin:"4321" }
-        ];
-        saveCustomers(cs);
-        saveBills([
-          { customerId:"1", amount:120, dueDate:"2025-06-30", paid:false, createdAt:"2025-06-15T12:00:00Z" },
-          { customerId:"1", amount:75, dueDate:"2025-05-15", paid:true, createdAt:"2025-05-01T12:00:00Z" },
-          { customerId:"2", amount:99, dueDate:"2025-06-29", paid:false, createdAt:"2025-06-12T12:00:00Z" }
-        ]);
+      // Update Firestore
+      try {
+        await db.collection("customers").doc(currentCustomer.id).update({
+          name, email, phone, address
+        });
+        currentCustomer.name = name;
+        currentCustomer.email = email;
+        currentCustomer.phone = phone;
+        currentCustomer.address = address;
+        updateFeedback.textContent = "Information updated!";
+        welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
+        setTimeout(() => { updateFeedback.textContent = ''; }, 2000);
+      } catch (e) {
+        updateFeedback.textContent = "Update failed: " + e;
       }
-    })();
-
-
-saveCustomer({ id: "1", name: "Test User", email: "test@email.com", pin: "1234" })
-  .then(() => getCustomers())
-  .then(customers => {
-    alert("Test customer added and loaded! Check your Firebase console.");
-    console.log("Customers from Firestore:", customers);
-  })
-  .catch(err => alert("Error: " + err));
-
-    
+    };
   </script>
-<script>
-  // Check if Firebase and Firestore are initialized
-  if (window.firebase && window.db) {
-    alert("Firebase and Firestore loaded!");
-    db.collection("test").add({ time: Date.now() })
-      .then(() => alert("Test Firestore write succeeded!"))
-      .catch(err => alert("Firestore error: " + err));
-  } else {
-    alert("Firebase/Firestore NOT loaded.");
-  }
-</script>
-
-
-  
 </body>
 </html>
