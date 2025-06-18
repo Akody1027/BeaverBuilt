@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Dashboard</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
@@ -17,104 +18,81 @@
     .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
     .grid-cell.selected { outline: 3px solid #000; z-index:2; }
     .customer-warning {
-      display: inline-flex; align-items: center; margin-left: 0.5rem;
-      background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em;
-      justify-content: center; font-size: 0.8em; box-shadow: 0 0 2px #b91c1c88;
+      display: inline-flex; align-items: center; margin-left: .5rem;
+      background: #f87171; color: #fff; border-radius: 50%; width:1.1em; height:1.1em;
+      justify-content:center; font-size:.8em; box-shadow:0 0 2px #b91c1c88;
     }
     .customer-btn.active, #sidebar .customer-btn.active {
-      background: #E5E7EB !important;
-      border-radius: .375rem;
+      background: #E5E7EB !important; border-radius: .375rem;
     }
-    .update-fields { margin-top: 1rem; }
-    .update-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .update-fields { margin-top:1rem; }
+    .update-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; }
     #batch-bar {
-      display:none;
-      position:relative;
-      margin-top:1rem;
-      background:#f3f4f6;
-      border:2px solid #000;
-      border-radius: .5rem;
-      padding:1rem;
-      box-shadow:0 4px 24px #3332;
-      text-align:center;
-      font-weight:600;
-      color:#333;
-      z-index:30;
-      align-items:center;
-      justify-content:center;
+      display:none; position:relative; margin-top:1rem; background:#f3f4f6;
+      border:2px solid #000; border-radius:.5rem; padding:1rem;
+      box-shadow:0 4px 24px #3332; text-align:center; font-weight:600;
+      color:#333; z-index:30; align-items:center; justify-content:center;
       flex-direction:column;
     }
     #batch-bar.show { display:flex; }
-    #batch-bar .bar-actions {display:flex; gap:1.5rem; justify-content:center;}
-    #batch-bar .bar-actions button {min-width:120px;}
+    #batch-bar .bar-actions { display:flex; gap:1.5rem; justify-content:center; }
     #sidebar {
-      width: auto !important;
-      min-width: 0;
-      max-width: 240px;
-      padding-right: 18px !important;
-      padding-left: 13px !important;
+      width:auto!important; min-width:0; max-width:240px;
+      padding-right:18px!important; padding-left:13px!important;
     }
     #sidebar .customer-btn { white-space: nowrap; }
     #sidebar h1 { white-space: nowrap; }
     .sidebar-divider {
-      width: 80%; height: 2px; background: #e5e7eb; margin: 12px auto 14px auto; border-radius: 2px;
+      width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px;
     }
-    /* Modal styling */
     #email-modal-bg, #batch-modal-bg {
-      display: none;
-      position:fixed; inset:0; z-index:1000;
-      background:rgba(31,41,55,0.7);
-      justify-content:center; align-items:center;
+      display:none; position:fixed; inset:0; z-index:1000;
+      background:rgba(31,41,55,0.7); justify-content:center; align-items:center;
     }
     #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
     #email-modal, #batch-modal {
-      background: #fff;
-      border-radius:1.2rem;
-      max-width: 80vw;
-      width: 80vw;
-      max-height:80vh;
-      min-height:380px;
-      box-shadow: 0 8px 32px #0002;
-      display:flex; flex-direction:column;
-      padding:2rem 2rem 1.2rem 2rem;
-      position:relative;
-      overflow:auto;
-      border:3px solid #000;
+      background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw;
+      max-height:80vh; min-height:380px; box-shadow:0 8px 32px #0002;
+      display:flex; flex-direction:column; padding:2rem 2rem 1.2rem 2rem;
+      position:relative; overflow:auto; border:3px solid #000;
     }
     #email-modal .close-modal, #batch-modal .close-modal {
-      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem; font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
+      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem;
+      font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
       z-index:2000;
     }
     #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
     #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
-    @media (max-width: 900px) {
-      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw;}
+    @media (max-width:900px) {
+      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw; }
     }
-    @media (max-width: 500px) {
-      #email-modal, #batch-modal { min-height:220px;}
+    @media (max-width:500px) {
+      #email-modal, #batch-modal { min-height:220px; }
     }
     .spinner {
       display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
       border:3px solid #cbd5e1; border-top:3px solid #64748b;
-      border-radius:50%; animation:spin 1s linear infinite;
-      margin: 0 auto;
+      border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;
     }
     @keyframes spin { 100%{transform:rotate(360deg);} }
     .email-check {
-      color: #22c55e; font-size: 1.15em; margin-left: 5px; vertical-align: middle;
+      color:#22c55e; font-size:1.15em; margin-left:5px; vertical-align:middle;
     }
-    .customer-id-label { font-weight: bold; margin-right: 3px; }
-    .log-entry { font-size: .92em; color: #475569; margin-bottom: 6px; }
-    .log-entry .dt { font-size: .85em; color: #999; margin-left:4px; }
+    .customer-id-label { font-weight:bold; margin-right:3px; }
+    .log-entry { font-size:.92em; color:#475569; margin-bottom:6px; }
+    .log-entry .dt { font-size:.85em; color:#999; margin-left:4px; }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
+
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
-      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
-      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 flex justify-center items-center text-lg font-semibold transition">
+      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN"
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300
+                                  flex justify-center items-center text-lg font-semibold transition">
         <span id="login-btn-text">Login</span>
         <span id="login-btn-spinner" class="spinner hidden"></span>
       </button>
@@ -133,23 +111,29 @@
       </div>
       <form id="mass-email-form" class="flex flex-col gap-3">
         <label class="block text-gray-600 font-semibold mb-1">From:</label>
-        <input type="email" readonly value="Laramos@cox.net" class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
+        <input type="email" readonly value="Laramos@cox.net"
+               class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
         <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
-        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin">
+        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300"
+               value="Your Invoice from Admin">
         <label class="block text-gray-600 font-semibold mb-1">Message:</label>
-        <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]" placeholder="Write your message...">Dear Customer,
+        <textarea id="email-body"
+                  class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]"
+                  placeholder="Write your message...">Dear Customer,
 
 Your personalized payment link and PIN will be provided here.
 
 Thank you,
 Admin</textarea>
-        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">Send Email</button>
+        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">
+          Send Email
+        </button>
       </form>
       <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
     </div>
   </div>
 
-  <!-- Batch Action Modal (Long Press) -->
+  <!-- Batch Action Modal -->
   <div id="batch-modal-bg">
     <div id="batch-modal">
       <div class="close-modal" id="close-batch-modal">&times;</div>
@@ -157,8 +141,14 @@ Admin</textarea>
         <div class="text-lg font-semibold mb-4">Batch Actions</div>
         <div id="batch-modal-list" class="mb-3"></div>
         <div class="flex flex-col gap-4 w-full items-center">
-          <button id="batch-modal-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Mark All Paid</button>
-          <button id="batch-modal-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">Send Email</button>
+          <button id="batch-modal-paid"
+                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
+            Mark All Paid
+          </button>
+          <button id="batch-modal-email"
+                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
+            Send Email
+          </button>
         </div>
       </div>
     </div>
@@ -167,7 +157,8 @@ Admin</textarea>
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
-    <button data-target="dashboard" class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
+    <button data-target="dashboard"
+            class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
       Dashboard
     </button>
     <div class="sidebar-divider"></div>
@@ -181,24 +172,44 @@ Admin</textarea>
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
-      <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
+      <div class="px-4 py-3">
+        <h2 id="page-title" class="text-xl font-semibold">Dashboard</h2>
+      </div>
     </header>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard -->
+      <!-- Dashboard Panels -->
       <section id="dashboard" class="space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Total Customers</p><p id="customersCount" class="text-3xl font-bold">0</p></div>
-          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Outstanding Invoices</p><p id="outstandingCount" class="text-3xl font-bold">0</p></div>
-          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Unpaid Amount Due</p><p id="unpaidAmount" class="text-3xl font-bold">$0.00</p></div>
-          <div class="rounded-2xl bg-white p-6 shadow"><p class="text-sm text-gray-500">Revenue This Month</p><p id="revenueCount" class="text-3xl font-bold">$0.00</p></div>
+          <div class="rounded-2xl bg-white p-6 shadow">
+            <p class="text-sm text-gray-500">Total Customers</p>
+            <p id="customersCount" class="text-3xl font-bold">0</p>
+          </div>
+          <div class="rounded-2xl bg-white p-6 shadow">
+            <p class="text-sm text-gray-500">Outstanding Invoices</p>
+            <p id="outstandingCount" class="text-3xl font-bold">0</p>
+          </div>
+          <div class="rounded-2xl bg-white p-6 shadow">
+            <p class="text-sm text-gray-500">Unpaid Amount Due</p>
+            <p id="unpaidAmount" class="text-3xl font-bold">$0.00</p>
+          </div>
+          <div class="rounded-2xl bg-white p-6 shadow">
+            <p class="text-sm text-gray-500">Revenue This Month</p>
+            <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
+          </div>
         </div>
         <div class="rounded-2xl bg-white p-6 shadow">
           <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
           <div id="invoice-grid"></div>
           <div id="batch-bar">
             <div class="bar-actions w-full flex flex-row gap-4 justify-center">
-              <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">Send Email</button>
-              <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">Mark All Paid</button>
+              <button id="batch-email"
+                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
+                Send Email
+              </button>
+              <button id="batch-paid"
+                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
+                Mark All Paid
+              </button>
             </div>
             <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
@@ -214,7 +225,9 @@ Admin</textarea>
           <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
           <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
           <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <button id="add-cust-btn" class="w-full rounded-lg	bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
+          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">
+            Add Customer
+          </button>
         </div>
       </section>
 
@@ -229,11 +242,17 @@ Admin</textarea>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
-          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
+          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
+            Add Invoice
+          </button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
-            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
+              Update
+            </button>
+            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">
+              Delete Customer
+            </button>
           </div>
           <div id="update-fields" class="update-fields"></div>
           <div id="profile-email-log" class="mt-4"></div>
@@ -244,7 +263,7 @@ Admin</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      function getCustomers() { 
+      function getCustomers() {
         try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
         catch(e) { return []; }
       }
@@ -252,7 +271,7 @@ Admin</textarea>
         try { localStorage.setItem('customers', JSON.stringify(c)); }
         catch(e) {}
       }
-      function getBills() { 
+      function getBills() {
         try { return JSON.parse(localStorage.getItem('bills') || '[]'); }
         catch(e) { return []; }
       }
@@ -277,6 +296,7 @@ Admin</textarea>
         } while (existingPins.includes(pin));
         return pin;
       }
+
       var loginOverlay = document.getElementById('login-overlay');
       var loginBtn = document.getElementById('login-btn');
       var pinInput = document.getElementById('admin-pin');
@@ -399,7 +419,7 @@ Admin</textarea>
             payBtn.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
             payBtn.addEventListener('click',function(){
               var allBills = getBills();
-              var billIndex = allBills.findIndex(bb => 
+              var billIndex = allBills.findIndex(bb =>
                 bb.customerId === b.customerId &&
                 bb.amount === b.amount &&
                 bb.dueDate === b.dueDate &&
@@ -550,7 +570,36 @@ Admin</textarea>
         updateMetrics();
         updateBatchBar();
       };
-      // ... (rest of original JS untouched) ...
+      // … the rest of the original JS continues unchanged …
+      loginBtn.addEventListener('click', function(){
+        pinError.textContent = '';
+        if(pinInput.value==='1234'){
+          loginBtnText.classList.add('hidden');
+          loginBtnSpinner.classList.remove('hidden');
+          loginBtn.disabled = true;
+          setTimeout(function(){
+            loginOverlay.style.display='none';
+            sidebar.style.display='flex';
+            main.style.display='flex';
+            populateSidebar();
+            updateMetrics();
+            updateGrid();
+            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+            showSection('dashboard');
+            loginBtnText.classList.remove('hidden');
+            loginBtnSpinner.classList.add('hidden');
+            loginBtn.disabled = false;
+            pinInput.value = '';
+          }, 2000);
+        } else {
+          pinError.textContent = 'Invalid PIN';
+        }
+      });
+
+      // Initial load
+      populateSidebar();
+      updateMetrics();
+      updateGrid();
     });
   </script>
 </body>
