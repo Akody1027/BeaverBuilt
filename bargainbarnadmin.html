@@ -279,14 +279,20 @@ Admin</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      function getCustomers() { 
-        try { return JSON.parse(localStorage.getItem('customers') || '[]'); }
-        catch(e) { return []; }
-      }
-      function saveCustomers(c) {
-        try { localStorage.setItem('customers', JSON.stringify(c)); }
-        catch(e) {}
-      }
+
+// Get all customers (returns a Promise resolving to an array)
+function getCustomers() {
+  return db.collection('customers').get().then(snapshot =>
+    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+  );
+}
+
+// Add or update a customer (object: {id, name, ...})
+function saveCustomer(customer) {
+  return db.collection('customers').doc(customer.id).set(customer);
+}
+
+      
       function getBills() { 
         try { return JSON.parse(localStorage.getItem('bills') || '[]'); }
         catch(e) { return []; }
@@ -759,6 +765,17 @@ Admin</textarea>
       updateMetrics();
       updateGrid();
     });
+
+
+saveCustomer({ id: "1", name: "Test User", email: "test@email.com", pin: "1234" })
+  .then(() => getCustomers())
+  .then(customers => {
+    alert("Test customer added and loaded! Check your Firebase console.");
+    console.log("Customers from Firestore:", customers);
+  })
+  .catch(err => alert("Error: " + err));
+
+    
   </script>
 </body>
 </html>
