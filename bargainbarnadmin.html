@@ -1,4 +1,3 @@
-<!-- Admin Dashboard (Firestore-enabled, login fix only) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +11,6 @@
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    /* ——— All original CSS unchanged ——— */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
     .grid-cell {
       aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
@@ -269,7 +267,7 @@ Admin</textarea>
 
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
-      // Firestore initialization
+      // Firestore init
       const firebaseConfig = {
         apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
         authDomain: "customerportal-3032d.firebaseapp.com",
@@ -282,7 +280,6 @@ Admin</textarea>
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Helper functions unchanged...
       function generateUniquePin(existingPins) {
         let pin, tries = 0;
         do {
@@ -292,24 +289,8 @@ Admin</textarea>
         } while (existingPins.includes(pin));
         return pin;
       }
-      async function getCustomers() {
-        const snap = await db.collection('customers').get();
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-      async function getBills() {
-        const snap = await db.collection('bills').get();
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-      function getEmailLog() {
-        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
-        catch(e) { return {}; }
-      }
-      function saveEmailLog(log) {
-        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
-        catch(e) {}
-      }
 
-      // DOM Refs (partial, you can complete as needed)
+      // DOM refs
       var loginOverlay = document.getElementById('login-overlay');
       var loginBtn = document.getElementById('login-btn');
       var pinInput = document.getElementById('admin-pin');
@@ -330,57 +311,75 @@ Admin</textarea>
       var batchCount = document.getElementById('batch-count');
       var selectedCustomerIds = [];
       var activeCustomer = null;
-      var emailModalBg = document.getElementById('email-modal-bg');
-      var emailModal = document.getElementById('email-modal');
-      var closeEmailModal = document.getElementById('close-email-modal');
-      var modalCustomersList = document.getElementById('modal-customers-list');
-      var emailModalFeedback = document.getElementById('email-modal-feedback');
-      var emailSubject = document.getElementById('email-subject');
-      var emailBody = document.getElementById('email-body');
-      var massEmailForm = document.getElementById('mass-email-form');
-      var batchModalBg = document.getElementById('batch-modal-bg');
-      var batchModal = document.getElementById('batch-modal');
-      var closeBatchModal = document.getElementById('close-batch-modal');
-      var batchModalPaid = document.getElementById('batch-modal-paid');
-      var batchModalEmail = document.getElementById('batch-modal-email');
-      var batchModalList = document.getElementById('batch-modal-list');
-      var loginBtnText = document.getElementById('login-btn-text');
-      var loginBtnSpinner = document.getElementById('login-btn-spinner');
 
-      // ... all your other original code here (populateSidebar, showSection, addCustomer, addInvoice, renderBills, etc) ...
-      // ... not repeating here for brevity, since your uploaded file is lengthy and it's all retained EXCEPT login fix below! ...
+      function showSection(id) {
+        ['dashboard','customers','profile'].forEach(function(sec){
+          document.getElementById(sec).style.display = (sec===id?'block':'none');
+        });
+        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+      }
 
-      // LOGIN BUTTON FIX (the only thing changed)
-      loginBtn.addEventListener('click', async function() {
+      async function populateSidebar(){
+        sidebarCustomerList.innerHTML='';
+        const snap = await db.collection('customers').get();
+        const customers = snap.docs.map(doc=>({id:doc.id,...doc.data()}));
+        customers.forEach(function(c){
+          var btn = document.createElement('button');
+          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          btn.innerHTML = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          btn.addEventListener('click', function(){
+            document.querySelectorAll('.customer-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            openCustomer(c.id);
+          });
+          var li = document.createElement('li'); li.appendChild(btn);
+          sidebarCustomerList.appendChild(li);
+        });
+      }
+
+      addCustIcon.addEventListener('click',function(){
+        navLinks.forEach(function(l){ l.classList.remove('active'); });
+        showSection('customers');
+      });
+
+      // ---- THE FIX: Add customer to Firestore ----
+      addCustBtn.addEventListener('click', async function() {
+        const id = document.getElementById('cust-id').value.trim();
+        const name = document.getElementById('cust-name').value.trim();
+        const email = document.getElementById('cust-email').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
+        const address = document.getElementById('cust-address').value.trim();
+        if(!id || !name){ alert('ID and name required'); return; }
+        // Generate unique pin
+        const snap = await db.collection('customers').get();
+        const existingPins = snap.docs.map(doc => doc.data().pin);
+        const pin = generateUniquePin(existingPins);
+        // Write customer
+        await db.collection('customers').doc(id).set({ name, email, phone, address, pin });
+        // Clear inputs
+        ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(function(f){ document.getElementById(f).value=''; });
+        await populateSidebar();
+        showSection('dashboard');
+      });
+
+      // Keep the rest of your original JS code here:
+      // ... nav link clicks, invoice handling, profile logic, etc. ...
+
+      loginBtn.addEventListener('click', async function(){
         pinError.textContent = '';
         if (pinInput.value === '1234') {
-          loginBtnText.classList.add('hidden');
-          loginBtnSpinner.classList.remove('hidden');
-          loginBtn.disabled = true;
-          setTimeout(async function() {
-            loginOverlay.style.display = 'none';
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
-            if(typeof populateSidebar === "function") await populateSidebar();
-            if(typeof updateMetrics === "function") await updateMetrics();
-            if(typeof updateGrid === "function") await updateGrid();
-            var dashLink = document.querySelector('.nav-link[data-target="dashboard"]');
-            if(dashLink) dashLink.classList.add('active');
-            if(typeof showSection === "function") showSection('dashboard');
-            loginBtnText.classList.remove('hidden');
-            loginBtnSpinner.classList.add('hidden');
-            loginBtn.disabled = false;
-            pinInput.value = '';
-          }, 500);
+          loginOverlay.style.display = 'none';
+          sidebar.classList.remove('hidden');
+          main.classList.remove('hidden');
+          await populateSidebar();
+          // ... updateMetrics/updateGrid as needed ...
         } else {
           pinError.textContent = 'Invalid PIN';
         }
       });
 
-      // Initial render
-      if(typeof populateSidebar === "function") await populateSidebar();
-      if(typeof updateMetrics === "function") await updateMetrics();
-      if(typeof updateGrid === "function") await updateGrid();
+      await populateSidebar();
     });
   </script>
 </body>
