@@ -777,5 +777,18 @@ saveCustomer({ id: "1", name: "Test User", email: "test@email.com", pin: "1234" 
 
     
   </script>
+<script>
+  // Check if Firebase and Firestore are initialized
+  if (window.firebase && window.db) {
+    alert("Firebase and Firestore loaded!");
+    db.collection("test").add({ time: Date.now() })
+      .then(() => alert("Test Firestore write succeeded!"))
+      .catch(err => alert("Firestore error: " + err));
+  } else {
+    alert("Firebase/Firestore NOT loaded.");
+  }
+</script>
+
+  
 </body>
 </html>
