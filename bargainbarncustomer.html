@@ -5,25 +5,67 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Customer Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase -->
+
+  <!-- Firebase App (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
   <style>
-    /* ——— All your original CSS unchanged ——— */
+    body { background: #fafafa; }
+    .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
+    .invoice-status-unpaid { background: #fecaca; color: #b91c1c; }
+    .invoice-status-paid   { background: #bbf7d0; color: #166534; }
+    /* reuse paid style for “Pending” invoices */
+    .modal-bg { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(31,41,55,0.7); }
+    .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative; }
+    .modal .close-modal { position:absolute; top:8px; right:18px; cursor:pointer; font-size:1.7rem; color:#e11d48; font-weight:700; }
+    .modal .close-modal:hover { color:#b91c1c; }
+    .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer; }
+    .spinner { display:inline-block; width:1.4em; height:1.4em; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
+
 <body class="h-screen flex flex-col">
 
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-    <!-- … unchanged markup … -->
+    <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Customer Login</h2>
+      <input id="customer-pin" type="password" maxlength="4"
+             placeholder="Enter your 4-digit PIN"
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300"/>
+      <button id="login-btn"
+              class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 text-lg font-semibold flex justify-center items-center">
+        <span id="login-btn-text">Login</span>
+        <span id="login-btn-spinner" class="spinner hidden"></span>
+      </button>
+      <p id="pin-error" class="mt-2 text-red-600"></p>
+    </div>
   </div>
 
   <!-- Main Content -->
   <div id="main" class="hidden flex-1 flex flex-col">
-    <!-- … unchanged header … -->
-    <main class="flex-1 …">
-      <!-- Welcome … -->
+    <header class="bg-white shadow-md">
+      <div class="px-4 py-3 flex items-center">
+        <h2 class="text-xl font-semibold text-gray-900">Customer Portal</h2>
+      </div>
+    </header>
+    <main class="flex-1 max-w-2xl w-full mx-auto p-6 space-y-8">
+      <!-- Welcome -->
+      <section>
+        <div class="dashboard-card p-6 mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold mb-2" id="welcome-name">Welcome!</h3>
+            <div class="text-gray-600 text-sm">Customer ID: <span id="welcome-id"></span></div>
+            <div class="text-gray-600 text-sm">PIN: <span id="welcome-pin"></span></div>
+          </div>
+          <button id="logout-btn" class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-2 text-gray-700 font-medium text-sm">
+            Log Out
+          </button>
+        </div>
+      </section>
 
       <!-- Invoices -->
       <section>
@@ -31,108 +73,229 @@
         <div id="invoices-list" class="space-y-4"></div>
       </section>
 
-      <!-- Update Info … -->
+      <!-- Update Info -->
+      <section>
+        <h3 class="text-lg font-bold mb-3">Update Your Info</h3>
+        <form id="update-form" class="dashboard-card p-6 flex flex-col gap-3">
+          <input id="input-name" placeholder="Name" class="rounded border px-3 py-2" autocomplete="name"/>
+          <input id="input-email" type="email" placeholder="Email" class="rounded border px-3 py-2" autocomplete="email"/>
+          <input id="input-phone" type="tel" placeholder="Phone Number" class="rounded border px-3 py-2" autocomplete="tel"/>
+          <input id="input-address" placeholder="Address" class="rounded border px-3 py-2" autocomplete="street-address"/>
+          <button type="submit"
+                  class="rounded bg-gray-300 hover:bg-gray-400 text-black py-2 font-semibold mt-2">
+            Update Info
+          </button>
+          <div id="update-feedback" class="text-green-700 font-semibold"></div>
+        </form>
+      </section>
     </main>
   </div>
 
-  <!-- Receipt Modal … -->
+  <!-- Receipt Modal -->
+  <div id="receipt-modal-bg" class="modal-bg" style="display:none;">
+    <div class="modal">
+      <div class="close-modal" id="close-receipt-modal">&times;</div>
+      <h4 class="text-lg font-bold mb-3">Your Receipt</h4>
+      <div id="receipt-content" class="mb-2 text-gray-700"></div>
+      <button id="download-receipt"
+              class="rounded bg-gray-300 hover:bg-gray-400 py-2 px-4 text-black font-semibold">
+        Download PDF (Demo)
+      </button>
+    </div>
+  </div>
 
   <script>
-    // ——— Firebase init ———
-    const firebaseConfig = { /* your config */ };
+    // 1) Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
+      authDomain: "customerportal-3032d.firebaseapp.com",
+      projectId: "customerportal-3032d",
+      storageBucket: "customerportal-3032d.appspot.com",
+      messagingSenderId: "1003504088676",
+      appId: "1:1003504088676:web:43453e986312257b2f5171",
+      measurementId: "G-CVC0HK0WP8"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ——— Helpers ———
-    function toggleSpinner(show) { /* … */ }
-    async function getBills() {
-      const snap = await db.collection('bills').where('customerId','==',currentCustomer.id).get();
-      return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    // 2) Spinner helper
+    function toggleSpinner(show) {
+      document.getElementById('login-btn-text').classList.toggle('hidden', show);
+      document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
     }
-    // …
 
-    // Render & login existing code…
+    // 3) DOM refs
+    const overlay        = document.getElementById('login-overlay'),
+          loginBtn       = document.getElementById('login-btn'),
+          pinInput       = document.getElementById('customer-pin'),
+          pinError       = document.getElementById('pin-error'),
+          main           = document.getElementById('main'),
+          logoutBtn      = document.getElementById('logout-btn'),
+          welcomeName    = document.getElementById('welcome-name'),
+          welcomeID      = document.getElementById('welcome-id'),
+          welcomePIN     = document.getElementById('welcome-pin'),
+          invoicesList   = document.getElementById('invoices-list'),
+          updateForm     = document.getElementById('update-form'),
+          updateFeedback = document.getElementById('update-feedback'),
+          receiptBg      = document.getElementById('receipt-modal-bg'),
+          receiptContent = document.getElementById('receipt-content'),
+          closeReceipt   = document.getElementById('close-receipt-modal'),
+          downloadReceipt= document.getElementById('download-receipt');
+
+    let currentCustomer = null;
+
+    // 4) LOGIN
+    loginBtn.onclick = async () => {
+      pinError.textContent = "";
+      const pin = pinInput.value.trim();
+      if (!pin) {
+        pinError.textContent = "Please enter your PIN.";
+        return;
+      }
+      toggleSpinner(true);
+      try {
+        const snap = await db.collection('customers')
+                             .where('pin','==',pin)
+                             .get();
+        if (snap.empty) {
+          pinError.textContent = "Invalid PIN.";
+        } else {
+          snap.forEach(doc => {
+            currentCustomer = { id: doc.id, ...doc.data() };
+          });
+          overlay.classList.add('hidden');
+          main.classList.remove('hidden');
+          renderCustomer();
+        }
+      } catch (e) {
+        pinError.textContent = "Login error";
+        console.error(e);
+      }
+      toggleSpinner(false);
+    };
+
+    // 5) LOGOUT
+    logoutBtn.onclick = () => {
+      overlay.classList.remove('hidden');
+      main.classList.add('hidden');
+      pinInput.value = '';
+      pinError.textContent = '';
+    };
+
+    // 6) Render customer & invoices
+    function renderCustomer() {
+      if (!currentCustomer) return;
+      welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+      welcomeID.textContent   = currentCustomer.id;
+      welcomePIN.textContent  = currentCustomer.pin;
+      document.getElementById('input-name').value    = currentCustomer.name;
+      document.getElementById('input-email').value   = currentCustomer.email;
+      document.getElementById('input-phone').value   = currentCustomer.phone;
+      document.getElementById('input-address').value = currentCustomer.address;
+      renderInvoices();
+    }
 
     async function renderInvoices() {
       invoicesList.innerHTML = '';
-      const bills = await getBills();
-      let idx=1;
-      for (let b of bills) {
-        const paid = !!b.paid;
+      const snap = await db.collection('bills')
+                           .where('customerId','==',currentCustomer.id)
+                           .get();
+      if (snap.empty) {
+        invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">
+                                    No invoices found.
+                                 </div>`;
+        return;
+      }
+
+      let idx = 1;
+      for (const doc of snap.docs) {
+        const b = { id: doc.id, ...doc.data() };
+        const paid    = !!b.paid;
         const pending = !!b.paymentPending;
-        const div = document.createElement('div');
+        const div     = document.createElement('div');
+        // If pending → use paid style to show green
         div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
-                        (paid?'invoice-status-paid': pending?'bg-yellow-200':'invoice-status-unpaid');
+                        (paid || pending ? 'invoice-status-paid' : 'invoice-status-unpaid');
+
         div.innerHTML = `
           <div class="flex justify-between items-center mb-1">
             <span class="font-semibold">Invoice #${idx}</span>
-            <span class="text-xs">${paid? 'Paid': pending? 'Pending': 'Unpaid'}</span>
+            <span class="text-xs">${paid ? 'Paid' : pending ? 'Pending' : 'Unpaid'}</span>
           </div>
           <div>Amount: <span class="font-bold">$${b.amount}</span></div>
           <div>Due: ${b.dueDate}</div>
         `;
 
         if (!paid) {
-          // Stripe link / request UI
+          // Stripe link logic
           if (b.stripeLink) {
             const a = document.createElement('a');
-            a.href = b.stripeLink; a.target = '_blank';
+            a.href   = b.stripeLink;
+            a.target = '_blank';
             a.textContent = 'Pay with Stripe';
-            a.className = 'text-blue-600 underline mt-2';
+            a.className   = 'text-blue-600 underline mt-2';
             div.appendChild(a);
-          } else if (b.stripeRequested) {
+          }
+          else if (b.stripeRequested) {
             const msg = document.createElement('div');
-            msg.textContent = 'Stripe link requested…';
-            msg.className = 'mt-2 text-gray-600';
+            msg.textContent   = 'Stripe link requested…';
+            msg.className     = 'mt-2 text-gray-600';
             div.appendChild(msg);
-          } else {
-            const prompt = document.createElement('small');
-            prompt.textContent = 'Request a Stripe payment link';
-            prompt.className = 'text-red-600';
+          }
+          else {
+            const p = document.createElement('small');
+            p.textContent     = 'Request a Stripe payment link';
+            p.className       = 'text-red-600';
             const btn = document.createElement('button');
-            btn.textContent = 'Request Stripe Link';
-            btn.className = 'mt-1 bg-red-500 text-white px-3 py-1 rounded';
-            btn.onclick = async ()=>{
+            btn.textContent   = 'Request Stripe Link';
+            btn.className     = 'mt-1 bg-red-500 text-white px-3 py-1 rounded';
+            btn.onclick       = async () => {
               await db.collection('bills').doc(b.id).update({ stripeRequested: true });
               renderInvoices();
             };
-            div.append(prompt, document.createElement('br'), btn);
+            div.append(p, document.createElement('br'), btn);
           }
 
           // Venmo deep-link
-          const v = document.createElement('button');
-          v.textContent = 'Venmo'; v.className = 'mt-2 bg-gray-200 px-3 py-1 rounded';
-          v.onclick = ()=>{
-            const web = `https://venmo.com/?txn=pay&amount=${b.amount}&note=Invoice%20${idx}`;
+          const venmo = document.createElement('button');
+          venmo.textContent = 'Venmo';
+          venmo.className   = 'mt-2 bg-gray-200 px-3 py-1 rounded';
+          venmo.onclick     = () => {
+            const web    = `https://venmo.com/?txn=pay&amount=${b.amount}&note=Invoice%20${idx}`;
             window.location = `venmo://paycharge?txn=pay&amount=${b.amount}&note=Invoice%20${idx}`;
-            setTimeout(()=>window.location=web,500);
+            setTimeout(() => window.location = web, 500);
           };
           // Cash App deep-link
-          const c = document.createElement('button');
-          c.textContent = 'Cash App'; c.className = 'ml-2 mt-2 bg-gray-200 px-3 py-1 rounded';
-          c.onclick = ()=>{
+          const cashapp = document.createElement('button');
+          cashapp.textContent = 'Cash App';
+          cashapp.className   = 'ml-2 mt-2 bg-gray-200 px-3 py-1 rounded';
+          cashapp.onclick     = () => {
             const handle = 'YourCashTag';
             const scheme = `cashapp://$${handle}/${b.amount}`;
             window.location = scheme;
-            setTimeout(()=>window.location=`https://cash.app/$${handle}/${b.amount}`,500);
+            setTimeout(() => window.location = `https://cash.app/$${handle}/${b.amount}`, 500);
           };
-          div.append(v, c);
+          div.appendChild(venmo);
+          div.appendChild(cashapp);
 
-          // Payment confirmation
+          // Payment confirmation (only if not already pending)
           if (!pending) {
-            const yes = document.createElement('button');
-            yes.textContent = 'Yes'; yes.className = 'ml-4 bg-green-400 text-white px-2 py-1 rounded';
-            const no = document.createElement('button');
-            no.textContent = 'No'; no.className = 'ml-2 bg-gray-400 text-white px-2 py-1 rounded';
-            yes.onclick = async ()=>{
-              await db.collection('bills').doc(b.id).update({ paymentPending: true });
-              renderInvoices();
-            };
-            // no does nothing
             const q = document.createElement('div');
             q.className = 'mt-2';
             q.innerHTML = 'Was payment made? ';
-            q.append(yes, no);
+            const yes = document.createElement('button');
+            yes.textContent = 'Yes';
+            yes.className   = 'ml-2 bg-green-400 text-white px-2 py-1 rounded';
+            yes.onclick     = async () => {
+              await db.collection('bills').doc(b.id).update({ paymentPending: true });
+              renderInvoices();
+            };
+            const no = document.createElement('button');
+            no.textContent = 'No';
+            no.className   = 'ml-2 bg-gray-400 text-white px-2 py-1 rounded';
+            // No does nothing, remains unpaid
+            q.appendChild(yes);
+            q.appendChild(no);
             div.appendChild(q);
           }
         }
@@ -142,8 +305,33 @@
       }
     }
 
-    // … rest of your existing login & updateInfo code …
+    // 7) Receipt modal
+    closeReceipt.onclick   = () => receiptBg.style.display = 'none';
+    downloadReceipt.onclick= () => alert('Demo: Download PDF');
 
+    // 8) Update form
+    updateForm.onsubmit = e => {
+      e.preventDefault();
+      if (!currentCustomer) return;
+      const upd = {
+        name:    document.getElementById('input-name').value.trim(),
+        email:   document.getElementById('input-email').value.trim(),
+        phone:   document.getElementById('input-phone').value.trim(),
+        address: document.getElementById('input-address').value.trim(),
+        pin:     currentCustomer.pin
+      };
+      db.collection('customers').doc(currentCustomer.id).set(upd)
+        .then(() => {
+          currentCustomer = { ...currentCustomer, ...upd };
+          updateFeedback.textContent = 'Information updated!';
+          welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+          setTimeout(() => updateFeedback.textContent = '', 2000);
+        })
+        .catch(err => {
+          updateFeedback.textContent = 'Update failed.';
+          console.error(err);
+        });
+    };
   </script>
 </body>
 </html>
