@@ -134,7 +134,7 @@
 
       // Helpers, data functions, DOM refs, and all existing handlers remain exactly the same…
 
-      // FIXED LOGIN FLOW:
+      // —— FIXED LOGIN FLOW —— 
       const loginOverlay    = document.getElementById('login-overlay');
       const loginBtn        = document.getElementById('login-btn');
       const loginBtnText    = document.getElementById('login-btn-text');
@@ -144,40 +144,39 @@
       const sidebar         = document.getElementById('sidebar');
       const main            = document.getElementById('main');
 
-      loginBtn.addEventListener('click', () => {
+      loginBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
         pinError.textContent = '';
         if (pinInput.value === '1234') {
-          // show spinner briefly
+          // Show spinner
           loginBtnText.classList.add('hidden');
           loginBtnSpinner.classList.remove('hidden');
           loginBtn.disabled = true;
 
-          setTimeout(async () => {
-            // hide overlay, reveal admin UI
-            loginOverlay.classList.add('hidden');
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
+          // Initialize and show UI
+          await populateSidebar();
+          await updateMetrics();
+          await updateGrid();
+          loginOverlay.classList.add('hidden');
+          sidebar.classList.remove('hidden');
+          sidebar.classList.add('flex');
+          main.classList.remove('hidden');
+          main.classList.add('flex');
+          document.querySelector('.nav-link[data-target="dashboard"]')
+                  .classList.add('active');
+          showSection('dashboard');
 
-            // initialize data
-            await populateSidebar();
-            await updateMetrics();
-            await updateGrid();
-            document.querySelector('.nav-link[data-target="dashboard"]')
-                    .classList.add('active');
-            showSection('dashboard');
-
-            // restore button
-            loginBtnText.classList.remove('hidden');
-            loginBtnSpinner.classList.add('hidden');
-            loginBtn.disabled = false;
-            pinInput.value = '';
-          }, 500);
+          // Reset button and input
+          loginBtnText.classList.remove('hidden');
+          loginBtnSpinner.classList.add('hidden');
+          loginBtn.disabled = false;
+          pinInput.value = '';
         } else {
           pinError.textContent = 'Invalid PIN';
         }
       });
 
-      // Existing login overlay start-up: overlay visible, sidebar/main hidden
+      // Initial state: overlay visible; sidebar/main hidden
     });
   </script>
 </body>
