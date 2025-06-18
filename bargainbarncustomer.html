@@ -16,11 +16,13 @@
     .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
     .invoice-status-unpaid { background: #fecaca; color: #b91c1c; }
     .invoice-status-paid { background: #bbf7d0; color: #166534; }
-    .modal-bg { position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(31,41,55,0.7);}
+    .modal-bg { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(31,41,55,0.7);}
     .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative;}
-    .modal .close-modal { position:absolute;top:8px;right:18px;cursor:pointer;font-size:1.7rem;color:#e11d48;font-weight:700;}
+    .modal .close-modal { position:absolute; top:8px; right:18px; cursor:pointer; font-size:1.7rem; color:#e11d48; font-weight:700;}
     .modal .close-modal:hover { color:#b91c1c; }
     .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer;}
+    .spinner{display:inline-block;width:1.4em;height:1.4em;border:3px solid #cbd5e1;border-top:3px solid #64748b;border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{100%{transform:rotate(360deg);}}
   </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -77,7 +79,7 @@
     </main>
   </div>
 
-  <!-- Modal (for receipt/download in demo) -->
+  <!-- Modal (Receipt) -->
   <div id="receipt-modal-bg" class="modal-bg" style="display:none;">
     <div class="modal">
       <div class="close-modal" id="close-receipt-modal">&times;</div>
@@ -88,12 +90,12 @@
   </div>
 
   <script>
-    // Firebase config and initialization
+    // 1. Firebase config & init
     const firebaseConfig = {
       apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
       authDomain: "customerportal-3032d.firebaseapp.com",
       projectId: "customerportal-3032d",
-      storageBucket: "customerportal-3032d.firebasestorage.app",
+      storageBucket: "customerportal-3032d.appspot.com",
       messagingSenderId: "1003504088676",
       appId: "1:1003504088676:web:43453e986312257b2f5171",
       measurementId: "G-CVC0HK0WP8"
@@ -101,191 +103,178 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Spinner CSS (no changes)
-    if (!document.querySelector('.spinner')) {
-      var s = document.createElement('style');
-      s.innerHTML = `.spinner{display:inline-block;width:1.4em;height:1.4em;border:3px solid #cbd5e1;border-top:3px solid #64748b;border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{100%{transform:rotate(360deg);}}`;
-      document.head.appendChild(s);
-    }
-
-    // State and Elements
-    let loggedIn = false;
-    let currentCustomer = null;
-
-    const overlay = document.getElementById('login-overlay');
-    const loginBtn = document.getElementById('login-btn');
-    const pinInput = document.getElementById('customer-pin');
-    const pinError = document.getElementById('pin-error');
-    const main = document.getElementById('main');
-    const welcomeName = document.getElementById('welcome-name');
-    const welcomeID = document.getElementById('welcome-id');
-    const welcomePIN = document.getElementById('welcome-pin');
-    const invoicesList = document.getElementById('invoices-list');
-    const updateForm = document.getElementById('update-form');
-    const updateFeedback = document.getElementById('update-feedback');
-    const logoutBtn = document.getElementById('logout-btn');
-    // Modal
-    const receiptModalBg = document.getElementById('receipt-modal-bg');
-    const receiptContent = document.getElementById('receipt-content');
-    const closeReceiptModal = document.getElementById('close-receipt-modal');
-    const downloadReceipt = document.getElementById('download-receipt');
-
-    // Helper: Show/Hide Spinner
-    function showLoginSpinner(show) {
+    // 2. Spinner helper
+    function toggleSpinner(show) {
       document.getElementById('login-btn-text').classList.toggle('hidden', show);
       document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
     }
 
-    // 1. LOGIN: Check pin, load customer from Firestore
-    loginBtn.onclick = async function() {
+    // 3. DOM refs
+    const overlay = document.getElementById('login-overlay'),
+          loginBtn = document.getElementById('login-btn'),
+          pinInput = document.getElementById('customer-pin'),
+          pinError = document.getElementById('pin-error'),
+          main    = document.getElementById('main'),
+          logoutBtn = document.getElementById('logout-btn'),
+          welcomeName = document.getElementById('welcome-name'),
+          welcomeID   = document.getElementById('welcome-id'),
+          welcomePIN  = document.getElementById('welcome-pin'),
+          invoicesList = document.getElementById('invoices-list'),
+          updateForm   = document.getElementById('update-form'),
+          updateFeedback = document.getElementById('update-feedback'),
+          receiptBg = document.getElementById('receipt-modal-bg'),
+          receiptContent = document.getElementById('receipt-content'),
+          closeReceipt = document.getElementById('close-receipt-modal'),
+          downloadReceipt = document.getElementById('download-receipt');
+
+    let currentCustomer = null;
+
+    // 4. LOGIN
+    loginBtn.onclick = async () => {
       pinError.textContent = "";
-      showLoginSpinner(true);
-      let pin = pinInput.value.trim();
+      const pin = pinInput.value.trim();
       if (!pin) {
-        pinError.textContent = "Please enter your 4-digit PIN.";
-        showLoginSpinner(false);
+        pinError.textContent = "Please enter your PIN.";
         return;
       }
+      toggleSpinner(true);
       try {
-        let querySnapshot = await db.collection("customers").where("pin", "==", pin).get();
-        let customer = null;
-        querySnapshot.forEach(doc => customer = { id: doc.id, ...doc.data() });
-        if (!customer) {
-          pinError.textContent = "Invalid PIN. (Or not in Firestore yet)";
-          showLoginSpinner(false);
-          return;
+        const snap = await db.collection('customers').where('pin','==',pin).get();
+        if (snap.empty) {
+          pinError.textContent = "Invalid PIN.";
+        } else {
+          snap.forEach(doc => currentCustomer = { id: doc.id, ...doc.data() });
+          overlay.classList.add('hidden');
+          main.classList.remove('hidden');
+          renderCustomer();
         }
-        currentCustomer = customer;
-        loggedIn = true;
-        overlay.classList.add('hidden');
-        main.classList.remove('hidden');
-        renderCustomer();
       } catch (e) {
-        pinError.textContent = "Login error: " + e;
+        pinError.textContent = "Login error.";
         console.error(e);
       }
-      showLoginSpinner(false);
+      toggleSpinner(false);
     };
 
-    // 2. LOGOUT: Hide main, show login
-    logoutBtn.onclick = function(){
+    // 5. LOGOUT
+    logoutBtn.onclick = () => {
       overlay.classList.remove('hidden');
       main.classList.add('hidden');
       pinInput.value = '';
       pinError.textContent = '';
     };
 
-    // 3. Render customer info and invoices (from Firestore)
+    // 6. RENDER CUSTOMER & INVOICES
     function renderCustomer() {
       if (!currentCustomer) return;
-      welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
-      welcomeID.textContent = currentCustomer.id;
-      welcomePIN.textContent = currentCustomer.pin || '';
-      document.getElementById('input-name').value = currentCustomer.name || '';
-      document.getElementById('input-email').value = currentCustomer.email || '';
-      document.getElementById('input-phone').value = currentCustomer.phone || '';
+      welcomeName.textContent = `Welcome, ${ currentCustomer.name || 'Customer'}!`;
+      welcomeID.textContent   = currentCustomer.id;
+      welcomePIN.textContent  = currentCustomer.pin || '';
+      document.getElementById('input-name').value    = currentCustomer.name || '';
+      document.getElementById('input-email').value   = currentCustomer.email || '';
+      document.getElementById('input-phone').value   = currentCustomer.phone || '';
       document.getElementById('input-address').value = currentCustomer.address || '';
       renderInvoices();
     }
 
-    // 4. Load invoices for this customer from Firestore
-    function renderInvoices() {
+    async function renderInvoices() {
       invoicesList.innerHTML = '';
-      db.collection('bills')
-        .where('customerId', '==', currentCustomer.id)
-        .get().then(snapshot => {
-          const bills = [];
-          snapshot.forEach(doc => bills.push({ ...doc.data(), id: doc.id }));
-          if (bills.length === 0) {
-            invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
-            return;
+      try {
+        const snap = await db.collection('bills')
+                             .where('customerId','==',currentCustomer.id)
+                             .get();
+        if (snap.empty) {
+          invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
+          return;
+        }
+        let idx = 1;
+        snap.forEach(doc => {
+          const b = { id: doc.id, ...doc.data() };
+          const paid = !!b.paid;
+          const div = document.createElement('div');
+          div.className = 'dashboard-card p-5 flex flex-col gap-2 ' + (paid?'invoice-status-paid':'invoice-status-unpaid');
+          div.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-semibold">Invoice #${idx}</span>
+              <span class="text-xs">${paid?'Paid':'Unpaid'}</span>
+            </div>
+            <div>Amount: <span class="font-bold">$${b.amount}</span></div>
+            <div>Due: ${b.dueDate}</div>
+          `;
+          if (!paid) {
+            // Stripe demo
+            const stripeBtn = document.createElement('button');
+            stripeBtn.className = 'rounded bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-2 mb-1 font-semibold text-sm';
+            stripeBtn.textContent = 'Pay with Stripe';
+            stripeBtn.onclick = () => alert('Stripe checkout here');
+            // Venmo / Cash App links
+            const venmo = document.createElement('a');
+            venmo.href = 'https://venmo.com/';
+            venmo.target = '_blank';
+            venmo.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 mr-2 text-sm inline-block';
+            venmo.textContent = 'Venmo';
+            const cashapp = document.createElement('a');
+            cashapp.href = 'https://cash.app/';
+            cashapp.target = '_blank';
+            cashapp.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 text-sm inline-block';
+            cashapp.textContent = 'Cash App';
+            const row = document.createElement('div');
+            row.className = 'flex flex-wrap gap-2 items-center mt-2';
+            row.append(stripeBtn, venmo, cashapp);
+            div.appendChild(row);
+          } else {
+            const receiptBtn = document.createElement('span');
+            receiptBtn.className = 'receipt-link ml-1';
+            receiptBtn.textContent = 'Download Receipt';
+            receiptBtn.onclick = () => {
+              receiptContent.innerHTML = `
+                <div class="font-bold mb-1 text-green-700">Invoice Receipt</div>
+                <div><strong>Invoice #:</strong> ${idx}</div>
+                <div><strong>Name:</strong> ${currentCustomer.name}</div>
+                <div><strong>ID:</strong> ${currentCustomer.id}</div>
+                <div><strong>Amount:</strong> $${b.amount}</div>
+                <div><strong>Status:</strong> Paid</div>
+                <div><strong>Date Paid:</strong> ${b.dueDate}</div>
+              `;
+              receiptBg.style.display = 'flex';
+            };
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 items-center mt-2';
+            row.appendChild(receiptBtn);
+            div.appendChild(row);
           }
-          bills.forEach((bill, idx) => {
-            let paid = !!bill.paid;
-            let div = document.createElement('div');
-            div.className = 'dashboard-card p-5 flex flex-col gap-2 ' + (paid ? 'invoice-status-paid' : 'invoice-status-unpaid');
-            div.innerHTML = `
-              <div class="flex justify-between items-center mb-1">
-                <span class="font-semibold">Invoice #${idx + 1}</span>
-                <span class="text-xs">${paid ? 'Paid' : 'Unpaid'}</span>
-              </div>
-              <div>Amount: <span class="font-bold">$${bill.amount}</span></div>
-              <div>Due: ${bill.dueDate}</div>
-            `;
-            if (!paid) {
-              // Stripe demo
-              let stripeBtn = document.createElement('button');
-              stripeBtn.className = 'rounded bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-2 mb-1 font-semibold text-sm';
-              stripeBtn.textContent = "Pay with Stripe";
-              stripeBtn.onclick = function() {
-                alert('Stripe integration goes here.');
-              };
-              // Venmo/CashApp demo
-              let venmo = document.createElement('a');
-              venmo.href = "https://venmo.com/"; venmo.target="_blank";
-              venmo.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 mr-2 text-sm inline-block';
-              venmo.textContent = "Venmo";
-              let cashapp = document.createElement('a');
-              cashapp.href = "https://cash.app/"; cashapp.target="_blank";
-              cashapp.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 text-sm inline-block';
-              cashapp.textContent = "Cash App";
-              let row = document.createElement('div');
-              row.className = "flex flex-wrap gap-2 items-center mt-2";
-              row.appendChild(stripeBtn);
-              row.appendChild(venmo);
-              row.appendChild(cashapp);
-              div.appendChild(row);
-            } else {
-              // Show download receipt
-              let receiptBtn = document.createElement('span');
-              receiptBtn.className = 'receipt-link ml-1';
-              receiptBtn.textContent = "Download Receipt";
-              receiptBtn.onclick = function() {
-                document.getElementById('receipt-content').innerHTML = `
-                  <div class="font-bold mb-1 text-green-700">Invoice Receipt</div>
-                  <div><strong>Invoice #:</strong> ${idx + 1}</div>
-                  <div><strong>Name:</strong> ${currentCustomer.name}</div>
-                  <div><strong>ID:</strong> ${currentCustomer.id}</div>
-                  <div><strong>Amount:</strong> $${bill.amount}</div>
-                  <div><strong>Status:</strong> Paid</div>
-                  <div><strong>Date Paid:</strong> ${bill.dueDate}</div>
-                `;
-                receiptModalBg.style.display = 'flex';
-              };
-              let row = document.createElement('div');
-              row.className = "flex gap-2 items-center mt-2";
-              row.appendChild(receiptBtn);
-              div.appendChild(row);
-            }
-            invoicesList.appendChild(div);
-          });
+          invoicesList.appendChild(div);
+          idx++;
         });
+      } catch (e) {
+        console.error('Error loading invoices:', e);
+      }
     }
 
-    // Modal events
-    closeReceiptModal.onclick = function(){ receiptModalBg.style.display = 'none'; };
-    downloadReceipt.onclick = function() { alert("Demo: Would download PDF here."); };
+    // 7. MODAL EVENTS
+    closeReceipt.onclick = () => receiptBg.style.display = 'none';
+    downloadReceipt.onclick = () => alert('Demo: Download PDF');
 
-    // 5. Update customer info in Firestore
-    updateForm.onsubmit = function(e){
+    // 8. UPDATE INFO FORM
+    updateForm.onsubmit = e => {
       e.preventDefault();
       if (!currentCustomer) return;
-      let update = {
-        name: document.getElementById('input-name').value.trim(),
-        email: document.getElementById('input-email').value.trim(),
-        phone: document.getElementById('input-phone').value.trim(),
+      const upd = {
+        name:    document.getElementById('input-name').value.trim(),
+        email:   document.getElementById('input-email').value.trim(),
+        phone:   document.getElementById('input-phone').value.trim(),
         address: document.getElementById('input-address').value.trim(),
-        pin: currentCustomer.pin // keep pin!
+        pin:     currentCustomer.pin
       };
-      db.collection('customers').doc(currentCustomer.id).set(update)
+      db.collection('customers').doc(currentCustomer.id).set(upd)
         .then(() => {
-          currentCustomer = { ...currentCustomer, ...update };
-          updateFeedback.textContent = "Information updated!";
-          welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
-          setTimeout(()=>{ updateFeedback.textContent=''; }, 2000);
+          currentCustomer = { ...currentCustomer, ...upd };
+          updateFeedback.textContent = 'Information updated!';
+          welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+          setTimeout(()=> updateFeedback.textContent = '', 2000);
         })
         .catch(err => {
-          updateFeedback.textContent = "Update failed: " + err;
+          updateFeedback.textContent = 'Update failed.';
+          console.error(err);
         });
     };
   </script>
