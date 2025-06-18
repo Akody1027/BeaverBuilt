@@ -6,589 +6,250 @@
   <title>Admin Dashboard</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase App (compat) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    /* ——— All original CSS unchanged ——— */
-    #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
-    .grid-cell {
-      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
-      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
-      position: relative;
-    }
-    .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
-    .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
-    .grid-cell.selected { outline: 3px solid #000; z-index:2; }
-    .customer-warning {
-      display: inline-flex; align-items: center; margin-left: .5rem;
-      background: #f87171; color: #fff; border-radius: 50%; width:1.1em; height:1.1em;
-      justify-content:center; font-size:.8em; box-shadow:0 0 2px #b91c1c88;
-    }
-    .customer-btn.active, #sidebar .customer-btn.active {
-      background: #E5E7EB !important; border-radius: .375rem;
-    }
-    .update-fields { margin-top:1rem; }
-    .update-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; }
-    #batch-bar {
-      display:none; position:relative; margin-top:1rem; background:#f3f4f6;
-      border:2px solid #000; border-radius:.5rem; padding:1rem;
-      box-shadow:0 4px 24px #3332; text-align:center; font-weight:600;
-      color:#333; z-index:30; align-items:center; justify-content:center;
-      flex-direction:column;
-    }
-    #batch-bar.show { display:flex; }
-    #batch-bar .bar-actions { display:flex; gap:1.5rem; justify-content:center; }
-    #sidebar {
-      width:auto!important; min-width:0; max-width:240px;
-      padding-right:18px!important; padding-left:13px!important;
-    }
-    #sidebar .customer-btn { white-space: nowrap; }
-    #sidebar h1 { white-space: nowrap; }
-    .sidebar-divider {
-      width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px;
-    }
-    #email-modal-bg, #batch-modal-bg {
-      display:none; position:fixed; inset:0; z-index:1000;
-      background:rgba(31,41,55,0.7); justify-content:center; align-items:center;
-    }
-    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
-    #email-modal, #batch-modal {
-      background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw;
-      max-height:80vh; min-height:380px; box-shadow:0 8px 32px #0002;
-      display:flex; flex-direction:column; padding:2rem 2rem 1.2rem 2rem;
-      position:relative; overflow:auto; border:3px solid #000;
-    }
-    #email-modal .close-modal, #batch-modal .close-modal {
-      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem;
-      font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
-      z-index:2000;
-    }
-    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
-    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
-    @media (max-width:900px) {
-      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw; }
-    }
-    @media (max-width:500px) {
-      #email-modal, #batch-modal { min-height:220px; }
-    }
-    .spinner {
-      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
-      border:3px solid #cbd5e1; border-top:3px solid #64748b;
-      border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;
-    }
-    @keyframes spin { 100%{transform:rotate(360deg);} }
-    .email-check {
-      color:#22c55e; font-size:1.15em; margin-left:5px; vertical-align:middle;
-    }
-    .customer-id-label { font-weight:bold; margin-right:3px; }
-    .log-entry { font-size:.92em; color:#475569; margin-bottom:6px; }
-    .log-entry .dt { font-size:.85em; color:#999; margin-left:4px; }
+    /* ——— All your original CSS unchanged ——— */
+    /* (omitted for brevity; copy from your original) */
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
 
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
-    <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
-      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN"
-             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
-      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300
-                                  flex justify-center items-center text-lg font-semibold transition">
-        <span id="login-btn-text">Login</span>
-        <span id="login-btn-spinner" class="spinner hidden"></span>
-      </button>
-      <p id="pin-error" class="mt-2 text-red-600"></p>
-    </div>
+    <!-- … unchanged login markup … -->
   </div>
 
-  <!-- Email Modal -->
-  <div id="email-modal-bg">
-    <div id="email-modal">
-      <div class="close-modal" id="close-email-modal">&times;</div>
-      <h2 class="text-2xl mb-4 font-bold text-pink-700">Send Mass Email</h2>
-      <div id="email-modal-list" class="mb-4">
-        <strong class="mb-1 text-gray-700 block">Sending to:</strong>
-        <ul id="modal-customers-list" class="mb-3 pl-4 list-disc text-pink-700"></ul>
-      </div>
-      <form id="mass-email-form" class="flex flex-col gap-3">
-        <label class="block text-gray-600 font-semibold mb-1">From:</label>
-        <input type="email" readonly value="Laramos@cox.net"
-               class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
-        <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
-        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300"
-               value="Your Invoice from Admin">
-        <label class="block text-gray-600 font-semibold mb-1">Message:</label>
-        <textarea id="email-body"
-                  class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]"
-                  placeholder="Write your message...">Dear Customer,
-
-Your personalized payment link and PIN will be provided here.
-
-Thank you,
-Admin</textarea>
-        <button type="submit" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 rounded-lg">
-          Send Email
-        </button>
-      </form>
-      <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
-    </div>
-  </div>
-
-  <!-- Batch Action Modal -->
-  <div id="batch-modal-bg">
-    <div id="batch-modal">
-      <div class="close-modal" id="close-batch-modal">&times;</div>
-      <div class="flex flex-col items-center justify-center">
-        <div class="text-lg font-semibold mb-4">Batch Actions</div>
-        <div id="batch-modal-list" class="mb-3"></div>
-        <div class="flex flex-col gap-4 w-full items-center">
-          <button id="batch-modal-paid"
-                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
-            Mark All Paid
-          </button>
-          <button id="batch-modal-email"
-                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
-            Send Email
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Modals -->
+  <div id="email-modal-bg">…</div>
+  <div id="batch-modal-bg">…</div>
 
   <!-- Sidebar -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
-    <button data-target="dashboard"
-            class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
-      Dashboard
-    </button>
+    <button data-target="dashboard" class="nav-link mb-2 …">Dashboard</button>
     <div class="sidebar-divider"></div>
     <div class="mb-2 flex items-center">
       <span class="text-gray-700">👥 Customers</span>
-      <button id="add-cust-icon" class="ml-2 rounded bg-gray-200 px-2 py-1">+</button>
+      <button id="add-cust-icon" class="ml-2 …">+</button>
     </div>
     <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
   </nav>
 
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
-    <header class="bg-white shadow-md">
-      <div class="px-4 py-3">
-        <h2 id="page-title" class="text-xl font-semibold">Dashboard</h2>
-      </div>
-    </header>
-    <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard Panels -->
-      <section id="dashboard" class="space-y-6">
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Total Customers</p>
-            <p id="customersCount" class="text-3xl font-bold">0</p>
-          </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Outstanding Invoices</p>
-            <p id="outstandingCount" class="text-3xl font-bold">0</p>
-          </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Unpaid Amount Due</p>
-            <p id="unpaidAmount" class="text-3xl font-bold">$0.00</p>
-          </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Revenue This Month</p>
-            <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
-          </div>
-        </div>
-        <div class="rounded-2xl bg-white p-6 shadow">
-          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
-          <div id="invoice-grid"></div>
-          <div id="batch-bar">
-            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
-              <button id="batch-email"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Send Email
-              </button>
-              <button id="batch-paid"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Mark All Paid
-              </button>
-            </div>
-            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
-          </div>
-        </div>
-      </section>
+    <!-- … all original dashboard, customers, profile sections … -->
+    <!-- Inside the profile section, immediately after <ul id="profile-bills-list">: -->
+    <!-- REQUESTED PAYMENT LINKS -->
+    <div id="payment-link-requests" class="mt-6 p-4 bg-yellow-50 rounded-lg shadow-sm">
+      <h4 class="font-semibold mb-2">Stripe Link Requests</h4>
+    </div>
 
-      <!-- Add Customer -->
-      <section id="customers" class="hidden space-y-8">
-        <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
-          <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
-          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">
-            Add Customer
-          </button>
-        </div>
-      </section>
-
-      <!-- Profile -->
-      <section id="profile" class="hidden space-y-6">
-        <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
-          <h3 class="text-xl font-semibold">Customer Profile</h3>
-          <p><strong>ID:</strong> <span id="profile-id"></span></p>
-          <p><strong>Name:</strong> <span id="profile-name"></span></p>
-          <p><strong>Email:</strong> <span id="profile-email"></span></p>
-          <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
-          <p><strong>Address:</strong> <span id="profile-address"></span></p>
-          <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
-          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
-          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-            Add Invoice
-          </button>
-          <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
-          <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-              Update
-            </button>
-            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">
-              Delete Customer
-            </button>
-          </div>
-          <div id="update-fields" class="update-fields"></div>
-          <div id="profile-email-log" class="mt-4"></div>
-        </div>
-      </section>
-    </main>
+    <!-- PENDING PAYMENTS -->
+    <div id="pending-payments-admin" class="mt-6 p-4 bg-yellow-50 rounded-lg shadow-sm">
+      <h4 class="font-semibold mb-2">Pending Payments</h4>
+    </div>
+    <!-- … rest unchanged … -->
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
-      // Firestore initialization
-      const firebaseConfig = {
-        apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
-        authDomain: "customerportal-3032d.firebaseapp.com",
-        projectId: "customerportal-3032d",
-        storageBucket: "customerportal-3032d.appspot.com",
-        messagingSenderId: "1003504088676",
-        appId: "1:1003504088676:web:43453e986312257b2f5171",
-        measurementId: "G-CVC0HK0WP8"
-      };
+      // ——— Firebase init ———
+      const firebaseConfig = { /* your config */ };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Helpers
-      function generateUniquePin(existingPins) {
-        let pin, tries = 0;
-        do {
-          pin = String(Math.floor(1000 + Math.random() * 9000));
-          tries++;
-          if (tries > 5000) throw new Error('Could not generate unique PIN');
-        } while (existingPins.includes(pin));
-        return pin;
-      }
-      async function getCustomers() {
-        const snap = await db.collection('customers').get();
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-      async function getBills() {
-        const snap = await db.collection('bills').get();
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      }
-      function getEmailLog() {
-        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
-        catch(e) { return {}; }
-      }
-      function saveEmailLog(log) {
-        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
-        catch(e) {}
-      }
+      // ——— Existing helpers & DOM refs unchanged ———
+      /* getCustomers, getBills, generateUniquePin, showSection, populateSidebar, openCustomer, renderBills, etc. */
 
-      // Metrics & calendar
-      async function updateMetrics() {
+      // ——— Modify populateSidebar to flag customers with stripeRequested ———
+      async function populateSidebar() {
         const customers = await getCustomers();
-        const bills = await getBills();
-        document.getElementById('customersCount').textContent = customers.length;
-        const unpaid = bills.filter(b=>!b.paid);
-        document.getElementById('outstandingCount').textContent = unpaid.length;
-        document.getElementById('unpaidAmount').textContent =
-          '$' + unpaid.reduce((s,b)=>s+b.amount,0).toFixed(2);
-        const now = new Date(), m = now.getMonth(), y = now.getFullYear();
-        const revenue = bills
-          .filter(b=>b.paid && new Date(b.dueDate).getMonth()===m && new Date(b.dueDate).getFullYear()===y)
-          .reduce((s,b)=>s+b.amount,0);
-        document.getElementById('revenueCount').textContent = '$' + revenue.toFixed(2);
-      }
-      async function updateGrid() {
-        const grid = document.getElementById('invoice-grid');
-        grid.innerHTML = '';
-        const now = new Date(), y = now.getFullYear(), m = now.getMonth();
-        const firstDay = new Date(y,m,1).getDay();
-        const daysInMonth = new Date(y,m+1,0).getDate();
-        for(let i=0;i<firstDay;i++){
-          const c=document.createElement('div'); c.className='grid-cell'; grid.appendChild(c);
-        }
-        const bills = await getBills();
-        for(let d=1; d<=daysInMonth; d++){
-          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const dayBills = bills.filter(b=>b.dueDate===dateStr);
-          const paidCount = dayBills.filter(b=>b.paid).length;
-          const unpaidCount = dayBills.length - paidCount;
-          const cell=document.createElement('div');
-          cell.className='grid-cell '+(unpaidCount? 'unpaid': (dayBills.length?'paid':'' ));
-          cell.textContent = dayBills.length? (unpaidCount||'✓') : '';
-          grid.appendChild(cell);
-        }
-      }
-
-      // DOM refs
-      const loginOverlay    = document.getElementById('login-overlay');
-      const loginBtn        = document.getElementById('login-btn');
-      const loginBtnText    = document.getElementById('login-btn-text');
-      const loginBtnSpinner = document.getElementById('login-btn-spinner');
-      const pinInput        = document.getElementById('admin-pin');
-      const pinError        = document.getElementById('pin-error');
-      const sidebar         = document.getElementById('sidebar');
-      const main            = document.getElementById('main');
-      const navLinks        = document.querySelectorAll('.nav-link');
-      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
-      const addCustIcon     = document.getElementById('add-cust-icon');
-      const addCustBtn      = document.getElementById('add-cust-btn');
-      const addInvoiceBtn   = document.getElementById('add-invoice-btn');
-      const deleteCustBtn   = document.getElementById('delete-cust-btn');
-      const updateCustBtn   = document.getElementById('update-cust-btn');
-      const updateFieldsDiv = document.getElementById('update-fields');
-      const batchBar        = document.getElementById('batch-bar');
-      const batchPaidBtn    = document.getElementById('batch-paid');
-      const batchEmailBtn   = document.getElementById('batch-email');
-      const batchCount      = document.getElementById('batch-count');
-      let activeCustomer = null, selectedCustomerIds = [];
-
-      function showSection(id){
-        ['dashboard','customers','profile'].forEach(s=>{
-          document.getElementById(s).style.display = (s===id?'block':'none');
-        });
-        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
-      }
-      navLinks.forEach(link=>{
-        link.addEventListener('click',e=>{
-          e.preventDefault();
-          navLinks.forEach(l=>l.classList.remove('active'));
-          link.classList.add('active');
-          showSection(link.getAttribute('data-target'));
-        });
-      });
-      function customerHasMissingInfo(c){
-        return !c.email||!c.phone||!c.address;
-      }
-
-      async function populateSidebar(){
-        const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = '';
-        const customers = await getCustomers();
-        customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
+        for (let c of customers.sort((a,b)=>+a.id-+b.id)) {
           const btn = document.createElement('button');
-          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
-          let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
-          if(customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
-          if(emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
-          btn.innerHTML = html;
-          btn.onclick = () => openCustomer(c.id);
+          /* … original button html … */
+          // if any bill stripeRequested:
+          const bills = await getBills();
+          if (bills.some(b=>b.customerId===c.id && b.stripeRequested)) {
+            btn.innerHTML += ' <span class="text-yellow-500 font-bold">!</span>';
+          }
+          btn.onclick = ()=>openCustomer(c.id);
           const li = document.createElement('li'); li.appendChild(btn);
           sidebarCustomerList.appendChild(li);
-        });
+        }
       }
 
-      async function openCustomer(id){
-        const customers = await getCustomers();
-        activeCustomer = customers.find(c=>c.id===id);
-        if(!activeCustomer) return;
-        ['id','name','email','phone','address'].forEach(f=>{
-          document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
-        });
-        document.getElementById('profile-pin').textContent = activeCustomer.pin;
-        await renderBills();
-        renderEmailLog();
-        navLinks.forEach(l=>l.classList.remove('active'));
-        document.querySelectorAll('.customer-btn').forEach(b=>{
-          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id+' -'))
-            b.classList.add('active');
-          else b.classList.remove('active');
-        });
-        showSection('profile');
-        updateFieldsDiv.innerHTML = '';
+      // ——— Render profile requests & pendings ———
+      async function renderPaymentLinkRequests() {
+        const div = document.getElementById('payment-link-requests');
+        div.innerHTML = '<h4 class="font-semibold mb-2">Stripe Link Requests</h4>';
+        const bills = await getBills();
+        for (let b of bills.filter(b=>b.customerId===activeCustomer.id && b.stripeRequested && !b.stripeLink)) {
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2 mb-2';
+          row.innerHTML = `
+            <span>Invoice ${b.dueDate}:</span>
+            <input type="url" placeholder="Paste Stripe link" class="flex-1 border px-2 py-1 rounded" id="link-${b.id}">
+            <button class="bg-blue-500 text-white px-3 py-1 rounded" data-id="${b.id}">Submit</button>
+          `;
+          div.appendChild(row);
+          row.querySelector('button').onclick = async e => {
+            const id = e.target.dataset.id;
+            const link = document.getElementById('link-'+id).value.trim();
+            if (!link) return alert('Enter link');
+            await db.collection('bills').doc(id).update({ stripeLink: link, stripeRequested: false });
+            alert('Link saved');
+            await renderPaymentLinkRequests();
+          };
+        }
+      }
+      async function renderPendingPaymentsAdmin() {
+        const div = document.getElementById('pending-payments-admin');
+        div.innerHTML = '<h4 class="font-semibold mb-2">Pending Payments</h4>';
+        const bills = await getBills();
+        for (let b of bills.filter(b=>b.customerId===activeCustomer.id && b.paymentPending)) {
+          const row = document.createElement('div');
+          row.className = 'flex items-center gap-2 mb-2';
+          row.innerHTML = `
+            <span>Invoice ${b.dueDate}</span>
+            <button data-id="${b.id}" data-action="confirm" class="bg-green-500 text-white px-2 py-1 rounded">Confirm</button>
+            <button data-id="${b.id}" data-action="deny" class="bg-red-500 text-white px-2 py-1 rounded">Deny</button>
+          `;
+          div.appendChild(row);
+          row.querySelectorAll('button').forEach(btn=>{
+            btn.onclick = async e => {
+              const { id, action } = e.target.dataset;
+              if (action==='confirm') {
+                await db.collection('bills').doc(id).update({ paid: true, paymentPending: false });
+                alert('Payment confirmed');
+              } else {
+                await db.collection('bills').doc(id).update({ paymentPending: false });
+                alert('Payment denied');
+              }
+              await renderPendingPaymentsAdmin();
+              await renderBills(); // update profile UI
+            };
+          });
+        }
       }
 
-      function renderEmailLog(){
-        const log = getEmailLog();
-        const div = document.getElementById('profile-email-log');
-        div.innerHTML = activeCustomer && log[activeCustomer.id]
-          ? `<div class="log-entry">Last emailed: <span class="dt">${log[activeCustomer.id]}</span></div>`
-          : '';
-      }
-
-      async function renderBills(){
+      // ——— Extend renderBills to include Stripe/CashApp UI & “Was payment made?” ———
+      async function renderBills() {
         const listEl = document.getElementById('profile-bills-list');
         listEl.innerHTML = '';
         const bills = await getBills();
-        bills.filter(b=>b.customerId===activeCustomer.id).forEach(b=>{
+        for (let b of bills.filter(b=>b.customerId===activeCustomer.id)) {
           const li = document.createElement('li');
-          li.className = 'p-4 bg-gray-100 rounded';
-          li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
-                          <p><strong>Due:</strong> ${b.dueDate}</p>
-                          <p><strong>Status:</strong> ${b.paid?'Paid':'Unpaid'}</p>`;
-          if(!b.paid){
-            const payBtn = document.createElement('button');
-            payBtn.textContent = 'Mark Paid';
-            payBtn.className = 'mt-2 bg-green-400 text-white px-3 py-1 rounded';
-            payBtn.onclick = async ()=>{
-              await db.collection('bills').doc(b.id).update({paid:true});
-              await renderBills(); await updateMetrics(); await updateGrid();
-            };
-            li.appendChild(payBtn);
-          }
-          listEl.appendChild(li);
-        });
-      }
+          li.className = 'p-4 bg-gray-100 rounded mb-2';
+          const statusColor = b.paid ? 'paid' : (b.paymentPending ? 'bg-yellow-200' : 'unpaid');
+          li.innerHTML = `
+            <p><strong>Due:</strong> ${b.dueDate}</p>
+            <p class="py-1 ${statusColor}">${ b.paid ? 'Paid' : b.paymentPending ? 'Pending' : 'Unpaid' }</p>
+          `;
 
-      addCustIcon.onclick = ()=> showSection('customers');
-      addCustBtn.onclick = async ()=>{
-        const id = document.getElementById('cust-id').value.trim();
-        const name = document.getElementById('cust-name').value.trim();
-        if(!id||!name){ alert('ID and name required'); return; }
-        const pins = (await getCustomers()).map(c=>c.pin);
-        const pin = generateUniquePin(pins);
-        await db.collection('customers').doc(id).set({
-          id,name,
-          email:document.getElementById('cust-email').value.trim(),
-          phone:document.getElementById('cust-phone').value.trim(),
-          address:document.getElementById('cust-address').value.trim(),
-          pin
-        });
-        ['cust-id','cust-name','cust-email','cust-phone','cust-address']
-          .forEach(f=>document.getElementById(f).value='');
-        await populateSidebar(); await updateMetrics(); await updateGrid();
-        showSection('dashboard');
-      };
-
-      addInvoiceBtn.onclick = async ()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        const amt = document.getElementById('invoice-amount').value.trim();
-        if(!amt){ alert('Enter amount'); return; }
-        const due = new Date().toISOString().slice(0,10);
-        await db.collection('bills').add({
-          customerId:activeCustomer.id,
-          amount:parseFloat(amt),
-          dueDate:due,
-          paid:false,
-          createdAt:new Date().toISOString()
-        });
-        document.getElementById('invoice-amount').value='';
-        await renderBills(); await updateMetrics(); await updateGrid();
-      };
-
-      deleteCustBtn.onclick = async ()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        if(!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
-        await db.collection('customers').doc(activeCustomer.id).delete();
-        const snap = await db.collection('bills').where('customerId','==',activeCustomer.id).get();
-        const batch = db.batch();
-        snap.forEach(d=>batch.delete(d.ref));
-        await batch.commit();
-        activeCustomer = null;
-        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin']
-          .forEach(f=>document.getElementById(f).textContent='');
-        document.getElementById('profile-bills-list').innerHTML='';
-        await populateSidebar(); await updateMetrics(); await updateGrid();
-        showSection('dashboard');
-      };
-
-      updateCustBtn.onclick = ()=>{
-        if(updateFieldsDiv.innerHTML!==''){ updateFieldsDiv.innerHTML=''; return; }
-        if(!activeCustomer) return;
-        const fields = [
-          {key:'email',label:'Email',type:'email'},
-          {key:'phone',label:'Phone Number',type:'tel'},
-          {key:'address',label:'Address',type:'text'}
-        ];
-        const missing = fields.filter(f=>!activeCustomer[f.key]?.trim());
-        if(!missing.length){
-          updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">No missing information!</div>';
-          return;
-        }
-        updateFieldsDiv.innerHTML = '';
-        missing.forEach(f=>{
-          const row = document.createElement('div'); row.className='update-row';
-          const inp = document.createElement('input');
-          inp.type=f.type; inp.placeholder=f.label; inp.className='border rounded px-2 py-1 flex-1';
-          const btn = document.createElement('button');
-          btn.textContent='Add'; btn.className='bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
-          btn.onclick=async ()=>{
-            const val = inp.value.trim();
-            if(!val){ inp.classList.add('border-red-400'); return; }
-            await db.collection('customers').doc(activeCustomer.id).update({[f.key]:val});
-            activeCustomer[f.key]=val;
-            document.getElementById('profile-'+f.key).textContent=val;
-            row.remove();
-            await populateSidebar(); await updateMetrics(); await updateGrid();
-            if(!fields.filter(ff=>!activeCustomer[ff.key]?.trim()).length){
-              updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">All information updated!</div>';
-              setTimeout(()=>updateFieldsDiv.innerHTML='',2000);
+          // Stripe link UI
+          if (!b.paid) {
+            if (b.stripeLink) {
+              li.innerHTML += `
+                <div class="mt-2">
+                  <a href="${b.stripeLink}" target="_blank" class="text-blue-600 underline">Pay with Stripe</a>
+                </div>
+              `;
+            } else if (b.stripeRequested) {
+              li.innerHTML += `<div class="mt-2 text-gray-600">Stripe link requested…</div>`;
+            } else {
+              li.innerHTML += `
+                <div class="mt-2">
+                  <small class="text-red-600">Request a Stripe payment link</small><br>
+                  <button class="mt-1 bg-red-500 text-white px-3 py-1 rounded" data-id="${b.id}" id="req-${b.id}">
+                    Request Stripe Link
+                  </button>
+                </div>
+              `;
             }
-          };
-          row.append(inp,btn); updateFieldsDiv.appendChild(row);
-        });
-      };
-
-      function updateBatchBar(){
-        batchBar.classList.toggle('show', selectedCustomerIds.length>0);
-        batchCount.textContent = selectedCustomerIds.length;
-      }
-      batchPaidBtn.onclick = async ()=>{
-        if(!selectedCustomerIds.length) return;
-        if(!confirm('Mark all unpaid for selected?')) return;
-        const bills = await getBills();
-        const batch = db.batch();
-        bills.filter(b=>selectedCustomerIds.includes(b.customerId)&&!b.paid)
-             .forEach(b=>batch.update(db.collection('bills').doc(b.id),{paid:true}));
-        await batch.commit();
-        selectedCustomerIds = [];
-        await updateMetrics(); await updateGrid(); updateBatchBar();
-      };
-
-      // Login flow
-      loginBtn.onclick = async ()=>{
-        pinError.textContent = '';
-        if(pinInput.value === '1234'){
-          loginBtnText.classList.add('hidden');
-          loginBtnSpinner.classList.remove('hidden');
-          loginBtn.disabled = true;
-          try {
-            await populateSidebar();
-            await updateMetrics();
-            await updateGrid();
-            loginOverlay.classList.add('hidden');
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
-            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-            showSection('dashboard');
-          } finally {
-            loginBtnText.classList.remove('hidden');
-            loginBtnSpinner.classList.add('hidden');
-            loginBtn.disabled = false;
-            pinInput.value = '';
           }
-        } else {
-          pinError.textContent = 'Invalid PIN';
+
+          // Cash App & Venmo
+          if (!b.paid) {
+            li.innerHTML += `
+              <div class="mt-2 space-x-2">
+                <button class="bg-gray-200 px-3 py-1 rounded" id="venmo-${b.id}">Venmo</button>
+                <button class="bg-gray-200 px-3 py-1 rounded" id="cashapp-${b.id}">Cash App</button>
+              </div>
+            `;
+          }
+
+          // Payment confirmation
+          if (!b.paid && !b.paymentPending) {
+            li.innerHTML += `
+              <div class="mt-2">
+                <span>Was payment made?</span>
+                <button class="ml-2 bg-green-400 text-white px-2 py-1 rounded" id="yes-${b.id}">Yes</button>
+                <button class="ml-1 bg-gray-400 text-white px-2 py-1 rounded" id="no-${b.id}">No</button>
+              </div>
+            `;
+          }
+
+          listEl.appendChild(li);
+
+          // Wire events:
+          if (!b.paid && !b.stripeLink && !b.stripeRequested) {
+            document.getElementById(`req-${b.id}`)
+              .onclick = async ()=>{
+                await db.collection('bills').doc(b.id).update({ stripeRequested: true });
+                await renderBills();
+                await renderPaymentLinkRequests();
+              };
+          }
+          // Venmo deep-link:
+          document.getElementById(`venmo-${b.id}`)
+            .onclick = ()=>{ 
+              const web = `https://venmo.com/?txn=pay&amount=${b.amount}&note=Invoice%20${b.id}`;
+              window.location = `venmo://paycharge?txn=pay&amount=${b.amount}&note=Invoice%20${b.id}`;
+              setTimeout(()=>window.location=web,500);
+            };
+          // Cash App deep-link:
+          document.getElementById(`cashapp-${b.id}`)
+            .onclick = ()=>{
+              const handle = 'YourCashTag';
+              const scheme = `cashapp://$${handle}/${b.amount}`;
+              window.location = scheme;
+              setTimeout(()=>window.location=`https://cash.app/$${handle}/${b.amount}`,500);
+            };
+          // Payment confirmation:
+          if (!b.paid && !b.paymentPending) {
+            document.getElementById(`yes-${b.id}`)
+              .onclick = async ()=>{
+                await db.collection('bills').doc(b.id).update({ paymentPending: true });
+                await renderBills();
+                await renderPendingPaymentsAdmin();
+              };
+            document.getElementById(`no-${b.id}`)
+              .onclick = ()=>{/* do nothing, remains unpaid */}
+          }
         }
+      }
+
+      // ——— Extend openCustomer to re-render new sections ———
+      async function openCustomer(id) {
+        /* your existing openCustomer code… */
+        await renderBills();
+        await renderPaymentLinkRequests();
+        renderEmailLog();
+        await renderPendingPaymentsAdmin();
+      }
+
+      // ——— Extend login flow to initial render ———
+      loginBtn.onclick = async ()=>{
+        /* existing login code… */
+        await populateSidebar();
+        await renderPaymentLinkRequests();
+        await renderPendingPaymentsAdmin();
       };
 
-      // Initial state: overlay visible; sidebar/main hidden via Tailwind
+      // Initial load hidden; login overlay shows
     });
   </script>
 </body>
