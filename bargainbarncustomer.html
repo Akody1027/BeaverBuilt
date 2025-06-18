@@ -109,16 +109,25 @@
 
   <script>
     // DEMO DATA: In production, replace with Firebase reads/writes.
-    function getCustomers() {
-      // Only for demo; real: query Firebase with PIN.
-      return JSON.parse(localStorage.getItem('customers') || '[]');
-    }
+
+
+// Get all customers (returns a Promise resolving to an array)
+function getCustomers() {
+  return db.collection('customers').get().then(snapshot =>
+    snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+  );
+}
+
+// Add or update a customer (object: {id, name, ...})
+function saveCustomer(customer) {
+  return db.collection('customers').doc(customer.id).set(customer);
+}
+
+    
     function getBills() {
       return JSON.parse(localStorage.getItem('bills') || '[]');
     }
-    function saveCustomers(cs) {
-      localStorage.setItem('customers', JSON.stringify(cs));
-    }
+
     function saveBills(bs) {
       localStorage.setItem('bills', JSON.stringify(bs));
     }
@@ -331,6 +340,16 @@
       }
     })();
 
+
+saveCustomer({ id: "1", name: "Test User", email: "test@email.com", pin: "1234" })
+  .then(() => getCustomers())
+  .then(customers => {
+    alert("Test customer added and loaded! Check your Firebase console.");
+    console.log("Customers from Firestore:", customers);
+  })
+  .catch(err => alert("Error: " + err));
+
+    
   </script>
 </body>
 </html>
