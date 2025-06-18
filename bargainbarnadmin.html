@@ -10,6 +10,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- PayPal SDK (added) -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldq&currency=USD"></script>
   <style>
     /* ——— All original CSS unchanged ——— */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
@@ -380,7 +382,7 @@ Admin</textarea>
           e.preventDefault();
           navLinks.forEach(l=>l.classList.remove('active'));
           link.classList.add('active');
-          showSection(link.getAttribute('data-target'));
+          showSection(link.getAttribute('datatarget'));
         });
       });
       function customerHasMissingInfo(c){
@@ -394,9 +396,9 @@ Admin</textarea>
         customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
           const btn = document.createElement('button');
           btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
-          let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          let html = `<span><span class="customer-idlabel">${c.id} -</span> ${c.name}</span>`;
           if(customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
-          if(emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+          if(emailLog[c.id]) html += ` <span class="emailcheck" title="Emailed">&#10003;</span>`;
           btn.innerHTML = html;
           btn.onclick = () => openCustomer(c.id);
           const li = document.createElement('li'); li.appendChild(btn);
@@ -563,7 +565,7 @@ Admin</textarea>
 
       // Login flow
       loginBtn.onclick = async ()=>{
-        pinError.textContent = '';
+        pinError.textContent = '';  
         if(pinInput.value === '1234'){
           loginBtnText.classList.add('hidden');
           loginBtnSpinner.classList.remove('hidden');
