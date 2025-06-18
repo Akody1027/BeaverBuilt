@@ -1,103 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Dashboard</title>
-  <!-- Tailwind CSS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Firebase App (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
   <style>
-    #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
-    .grid-cell {
-      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
-      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
-      position: relative;
-    }
-    .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
-    .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
-    .grid-cell.selected { outline: 3px solid #000; z-index:2; }
-    .customer-warning {
-      display: inline-flex; align-items: center; margin-left: .5rem;
-      background: #f87171; color: #fff; border-radius: 50%; width:1.1em; height:1.1em;
-      justify-content:center; font-size:.8em; box-shadow:0 0 2px #b91c1c88;
-    }
-    .customer-btn.active, #sidebar .customer-btn.active {
-      background: #E5E7EB !important; border-radius: .375rem;
-    }
-    .update-fields { margin-top:1rem; }
-    .update-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; }
-    #batch-bar {
-      display:none; position:relative; margin-top:1rem; background:#f3f4f6;
-      border:2px solid #000; border-radius:.5rem; padding:1rem;
-      box-shadow:0 4px 24px #3332; text-align:center; font-weight:600;
-      color:#333; z-index:30; align-items:center; justify-content:center;
-      flex-direction:column;
-    }
-    #batch-bar.show { display:flex; }
-    #batch-bar .bar-actions { display:flex; gap:1.5rem; justify-content:center; }
-    #sidebar {
-      width:auto!important; min-width:0; max-width:240px;
-      padding-right:18px!important; padding-left:13px!important;
-    }
-    #sidebar .customer-btn { white-space: nowrap; }
-    #sidebar h1 { white-space: nowrap; }
-    .sidebar-divider {
-      width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px;
-    }
-    #email-modal-bg, #batch-modal-bg {
-      display:none; position:fixed; inset:0; z-index:1000;
-      background:rgba(31,41,55,0.7); justify-content:center; align-items:center;
-    }
-    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
-    #email-modal, #batch-modal {
-      background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw;
-      max-height:80vh; min-height:380px; box-shadow:0 8px 32px #0002;
-      display:flex; flex-direction:column; padding:2rem 2rem 1.2rem 2rem;
-      position:relative; overflow:auto; border:3px solid #000;
-    }
-    #email-modal .close-modal, #batch-modal .close-modal {
-      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem;
-      font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
-      z-index:2000;
-    }
-    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
-    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
-    @media (max-width:900px) {
-      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw; }
-    }
-    @media (max-width:500px) {
-      #email-modal, #batch-modal { min-height:220px; }
-    }
-    .spinner {
-      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
-      border:3px solid #cbd5e1; border-top:3px solid #64748b;
-      border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;
-    }
-    @keyframes spin { 100%{transform:rotate(360deg);} }
-    .email-check {
-      color:#22c55e; font-size:1.15em; margin-left:5px; vertical-align:middle;
-    }
-    .customer-id-label { font-weight:bold; margin-right:3px; }
-    .log-entry { font-size:.92em; color:#475569; margin-bottom:6px; }
-    .log-entry .dt { font-size:.85em; color:#999; margin-left:4px; }
+    body { background: #fafafa; }
+    .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
+    .invoice-status-unpaid { background: #fecaca; color: #b91c1c; }
+    .invoice-status-paid { background: #bbf7d0; color: #166534; }
+    .modal-bg { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(31,41,55,0.7); }
+    .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative; }
+    .modal .close-modal { position:absolute; top:8px; right:18px; cursor:pointer; font-size:1.7rem; color:#e11d48; font-weight:700; }
+    .modal .close-modal:hover { color:#b91c1c; }
+    .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer; }
+    .spinner { display:inline-block; width:1.4em; height:1.4em; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="flex h-screen bg-gray-50">
 
-  <!-- Login Overlay (always visible at first) -->
+<body class="h-screen flex flex-col">
+
+  <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
-      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
-      <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN"
-             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Customer Login</h2>
+      <input id="customer-pin" type="password" maxlength="4"
+             placeholder="Enter your 4-digit PIN"
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300"/>
       <button id="login-btn"
-              class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300
-                     flex justify-center items-center text-lg font-semibold transition">
+              class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 text-lg font-semibold flex justify-center items-center">
         <span id="login-btn-text">Login</span>
         <span id="login-btn-spinner" class="spinner hidden"></span>
       </button>
@@ -105,431 +44,258 @@
     </div>
   </div>
 
-  <!-- Email Modal -->
-  <div id="email-modal-bg" style="display:none;"></div>
-  <!-- Batch Modal -->
-  <div id="batch-modal-bg" style="display:none;"></div>
-
-  <!-- Sidebar (hidden until login) -->
-  <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
-    <h1 class="mb-4 text-2xl font-bold">Admin</h1>
-    <button data-target="dashboard"
-            class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
-      Dashboard
-    </button>
-    <div class="sidebar-divider"></div>
-    <div class="mb-2 flex items-center">
-      <span class="text-gray-700">👥 Customers</span>
-      <button id="add-cust-icon" class="ml-2 rounded bg-gray-200 px-2 py-1">+</button>
-    </div>
-    <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
-  </nav>
-
-  <!-- Main Content (hidden until login) -->
+  <!-- Main Content -->
   <div id="main" class="hidden flex-1 flex flex-col">
     <header class="bg-white shadow-md">
-      <div class="px-4 py-3">
-        <h2 id="page-title" class="text-xl font-semibold">Dashboard</h2>
+      <div class="px-4 py-3 flex items-center">
+        <h2 class="text-xl font-semibold text-gray-900">Customer Portal</h2>
       </div>
     </header>
-    <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard Panels -->
-      <section id="dashboard" class="space-y-6">
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Total Customers</p>
-            <p id="customersCount" class="text-3xl font-bold">0</p>
+    <main class="flex-1 max-w-2xl w-full mx-auto p-6 space-y-8">
+      <!-- Welcome -->
+      <section>
+        <div class="dashboard-card p-6 mb-4 flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold mb-2" id="welcome-name">Welcome!</h3>
+            <div class="text-gray-600 text-sm">Customer ID: <span id="welcome-id"></span></div>
+            <div class="text-gray-600 text-sm">PIN: <span id="welcome-pin"></span></div>
           </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Outstanding Invoices</p>
-            <p id="outstandingCount" class="text-3xl font-bold">0</p>
-          </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Unpaid Amount Due</p>
-            <p id="unpaidAmount" class="text-3xl font-bold">$0.00</p>
-          </div>
-          <div class="rounded-2xl bg-white p-6 shadow">
-            <p class="text-sm text-gray-500">Revenue This Month</p>
-            <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
-          </div>
-        </div>
-        <div class="rounded-2xl bg-white p-6 shadow">
-          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
-          <div id="invoice-grid"></div>
-          <div id="batch-bar">
-            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
-              <button id="batch-email"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Send Email
-              </button>
-              <button id="batch-paid"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Mark All Paid
-              </button>
-            </div>
-            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
-          </div>
-        </div>
-      </section>
-      <!-- Add Customer -->
-      <section id="customers" class="hidden space-y-8">
-        <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
-          <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
-          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">
-            Add Customer
+          <button id="logout-btn" class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-2 text-gray-700 font-medium text-sm">
+            Log Out
           </button>
         </div>
       </section>
-      <!-- Profile -->
-      <section id="profile" class="hidden space-y-6">
-        <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
-          <h3 class="text-xl font-semibold">Customer Profile</h3>
-          <p><strong>ID:</strong> <span id="profile-id"></span></p>
-          <p><strong>Name:</strong> <span id="profile-name"></span></p>
-          <p><strong>Email:</strong> <span id="profile-email"></span></p>
-          <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
-          <p><strong>Address:</strong> <span id="profile-address"></span></p>
-          <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
-          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
-          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-            Add Invoice
+
+      <!-- Invoices -->
+      <section>
+        <h3 class="text-lg font-bold mb-3">Your Invoices</h3>
+        <div id="invoices-list" class="space-y-4"></div>
+      </section>
+
+      <!-- Update Info -->
+      <section>
+        <h3 class="text-lg font-bold mb-3">Update Your Info</h3>
+        <form id="update-form" class="dashboard-card p-6 flex flex-col gap-3">
+          <input id="input-name" placeholder="Name" class="rounded border px-3 py-2" autocomplete="name"/>
+          <input id="input-email" type="email" placeholder="Email" class="rounded border px-3 py-2" autocomplete="email"/>
+          <input id="input-phone" type="tel" placeholder="Phone Number" class="rounded border px-3 py-2" autocomplete="tel"/>
+          <input id="input-address" placeholder="Address" class="rounded border px-3 py-2" autocomplete="street-address"/>
+          <button type="submit"
+                  class="rounded bg-gray-300 hover:bg-gray-400 text-black py-2 font-semibold mt-2">
+            Update Info
           </button>
-          <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
-          <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-              Update
-            </button>
-            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">
-              Delete Customer
-            </button>
-          </div>
-          <div id="update-fields" class="update-fields"></div>
-          <div id="profile-email-log" class="mt-4"></div>
-        </div>
+          <div id="update-feedback" class="text-green-700 font-semibold"></div>
+        </form>
       </section>
     </main>
   </div>
 
+  <!-- Receipt Modal -->
+  <div id="receipt-modal-bg" class="modal-bg" style="display:none;">
+    <div class="modal">
+      <div class="close-modal" id="close-receipt-modal">&times;</div>
+      <h4 class="text-lg font-bold mb-3">Your Receipt</h4>
+      <div id="receipt-content" class="mb-2 text-gray-700"></div>
+      <button id="download-receipt"
+              class="rounded bg-gray-300 hover:bg-gray-400 py-2 px-4 text-black font-semibold">
+        Download PDF (Demo)
+      </button>
+    </div>
+  </div>
+
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Firebase init
-      const firebaseConfig = {
-        apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
-        authDomain: "customerportal-3032d.firebaseapp.com",
-        projectId: "customerportal-3032d",
-        storageBucket: "customerportal-3032d.appspot.com",
-        messagingSenderId: "1003504088676",
-        appId: "1:1003504088676:web:43453e986312257b2f5171",
-        measurementId: "G-CVC0HK0WP8"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
+    // 1) Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
+      authDomain: "customerportal-3032d.firebaseapp.com",
+      projectId: "customerportal-3032d",
+      storageBucket: "customerportal-3032d.appspot.com",
+      messagingSenderId: "1003504088676",
+      appId: "1:1003504088676:web:43453e986312257b2f5171",
+      measurementId: "G-CVC0HK0WP8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-      // Helper functions for Firestore access
-      async function getCustomers() {
-        const snap=await db.collection('customers').get();
-        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      }
-      async function getBills() {
-        const snap=await db.collection('bills').get();
-        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      }
-      function generateUniquePin(existing){
-        let pin,tries=0;
-        do{ pin=String(Math.floor(1000+Math.random()*9000)); tries++; }
-        while(existing.includes(pin)&&tries<5000);
-        return pin;
-      }
-      function getEmailLog(){try{return JSON.parse(localStorage.getItem('emailLog')||'{}');}catch{return{};}}
-      function saveEmailLog(log){localStorage.setItem('emailLog',JSON.stringify(log));}
+    // 2) Spinner helper
+    function toggleSpinner(show) {
+      document.getElementById('login-btn-text').classList.toggle('hidden', show);
+      document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
+    }
 
-      // Dashboard metrics and calendar
-      async function updateMetrics() {
-        const customers = await getCustomers();
-        const bills = await getBills();
-        document.getElementById('customersCount').textContent = customers.length;
-        const unpaid = bills.filter(b=>!b.paid);
-        document.getElementById('outstandingCount').textContent = unpaid.length;
-        document.getElementById('unpaidAmount').textContent =
-          '$' + unpaid.reduce((s,b)=>s+b.amount,0).toFixed(2);
-        const now = new Date(), m = now.getMonth(), y = now.getFullYear();
-        const revenue = bills
-          .filter(b=>b.paid && new Date(b.dueDate).getMonth()===m && new Date(b.dueDate).getFullYear()===y)
-          .reduce((s,b)=>s+b.amount,0);
-        document.getElementById('revenueCount').textContent = '$' + revenue.toFixed(2);
+    // 3) DOM refs
+    const overlay        = document.getElementById('login-overlay'),
+          loginBtn       = document.getElementById('login-btn'),
+          pinInput       = document.getElementById('customer-pin'),
+          pinError       = document.getElementById('pin-error'),
+          main           = document.getElementById('main'),
+          logoutBtn      = document.getElementById('logout-btn'),
+          welcomeName    = document.getElementById('welcome-name'),
+          welcomeID      = document.getElementById('welcome-id'),
+          welcomePIN     = document.getElementById('welcome-pin'),
+          invoicesList   = document.getElementById('invoices-list'),
+          updateForm     = document.getElementById('update-form'),
+          updateFeedback = document.getElementById('update-feedback'),
+          receiptBg      = document.getElementById('receipt-modal-bg'),
+          receiptContent = document.getElementById('receipt-content'),
+          closeReceipt   = document.getElementById('close-receipt-modal'),
+          downloadReceipt= document.getElementById('download-receipt');
+
+    let currentCustomer = null;
+
+    // 4) LOGIN
+    loginBtn.onclick = async () => {
+      pinError.textContent = "";
+      const pin = pinInput.value.trim();
+      if (!pin) {
+        pinError.textContent = "Please enter your PIN.";
+        return;
       }
-      async function updateGrid() {
-        const grid = document.getElementById('invoice-grid');
-        grid.innerHTML = '';
-        const now = new Date(), y = now.getFullYear(), m = now.getMonth();
-        const firstDay = new Date(y,m,1).getDay();
-        const daysInMonth = new Date(y,m+1,0).getDate();
-        for(let i=0;i<firstDay;i++){
-          const c=document.createElement('div'); c.className='grid-cell'; grid.appendChild(c);
+      toggleSpinner(true);
+      try {
+        const snap = await db.collection('customers')
+                             .where('pin','==',pin)
+                             .get();
+        if (snap.empty) {
+          pinError.textContent = "Invalid PIN.";
+        } else {
+          snap.forEach(doc => {
+            currentCustomer = { id: doc.id, ...doc.data() };
+          });
+          overlay.classList.add('hidden');
+          main.classList.remove('hidden');
+          renderCustomer();
         }
-        const bills = await getBills();
-        for(let d=1; d<=daysInMonth; d++){
-          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const dayBills = bills.filter(b=>b.dueDate===dateStr);
-          const paidCount = dayBills.filter(b=>b.paid).length;
-          const unpaidCount = dayBills.length - paidCount;
-          const cell=document.createElement('div');
-          cell.className='grid-cell '+(unpaidCount? 'unpaid': (dayBills.length?'paid':'' ));
-          cell.textContent = dayBills.length? (unpaidCount||'✓') : '';
-          grid.appendChild(cell);
-        }
+      } catch (e) {
+        pinError.textContent = "Login error";
+        console.error(e);
       }
+      toggleSpinner(false);
+    };
 
-      // DOM refs
-      const loginOverlay    = document.getElementById('login-overlay');
-      const loginBtn        = document.getElementById('login-btn');
-      const loginBtnText    = document.getElementById('login-btn-text');
-      const loginBtnSpinner = document.getElementById('login-btn-spinner');
-      const pinInput        = document.getElementById('admin-pin');
-      const pinError        = document.getElementById('pin-error');
-      const sidebar         = document.getElementById('sidebar');
-      const main            = document.getElementById('main');
-      const navLinks        = document.querySelectorAll('.nav-link');
-      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
-      const addCustIcon     = document.getElementById('add-cust-icon');
-      const addCustBtn      = document.getElementById('add-cust-btn');
-      const addInvoiceBtn   = document.getElementById('add-invoice-btn');
-      const deleteCustBtn   = document.getElementById('delete-cust-btn');
-      const updateCustBtn   = document.getElementById('update-cust-btn');
-      const updateFieldsDiv = document.getElementById('update-fields');
-      const batchBar        = document.getElementById('batch-bar');
-      const batchPaidBtn    = document.getElementById('batch-paid');
-      const batchEmailBtn   = document.getElementById('batch-email');
-      const batchCount      = document.getElementById('batch-count');
-      let activeCustomer=null, selectedCustomerIds=[];
+    // 5) LOGOUT
+    logoutBtn.onclick = () => {
+      overlay.classList.remove('hidden');
+      main.classList.add('hidden');
+      pinInput.value = '';
+      pinError.textContent = '';
+    };
 
-      // Section switching
-      function showSection(id){
-        ['dashboard','customers','profile'].forEach(s=>{
-          document.getElementById(s).style.display=(s===id?'block':'none');
-        });
-        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
-      }
-      navLinks.forEach(link=>{
-        link.addEventListener('click',e=>{
-          e.preventDefault();
-          navLinks.forEach(l=>l.classList.remove('active'));
-          link.classList.add('active');
-          showSection(link.dataset.target);
-        });
-      });
+    // 6) Render customer & invoices
+    function renderCustomer() {
+      if (!currentCustomer) return;
+      welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+      welcomeID.textContent   = currentCustomer.id;
+      welcomePIN.textContent  = currentCustomer.pin;
+      document.getElementById('input-name').value    = currentCustomer.name;
+      document.getElementById('input-email').value   = currentCustomer.email;
+      document.getElementById('input-phone').value   = currentCustomer.phone;
+      document.getElementById('input-address').value = currentCustomer.address;
+      renderInvoices();
+    }
 
-      function customerHasMissingInfo(c){
-        return !c.email||!c.phone||!c.address;
-      }
-
-      // Sidebar and Profile render
-      async function populateSidebar(){
-        const emailLog = getEmailLog();
-        sidebarCustomerList.innerHTML = '';
-        const customers = await getCustomers();
-        customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
-          const btn=document.createElement('button');
-          btn.className='customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
-          btn.innerHTML=`<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`
-                     + (customerHasMissingInfo(c)? `<span class="customer-warning">!</span>`:'')
-                     + (emailLog[c.id]? ` <span class="email-check">&#10003;</span>`:'');
-          btn.onclick=()=>openCustomer(c.id);
-          const li=document.createElement('li');
-          li.appendChild(btn);
-          sidebarCustomerList.appendChild(li);
-        });
-      }
-
-      async function openCustomer(id){
-        const customers = await getCustomers();
-        activeCustomer = customers.find(c=>c.id===id);
-        if(!activeCustomer) return;
-        ['id','name','email','phone','address'].forEach(f=>{
-          document.getElementById('profile-'+f).textContent=activeCustomer[f]||'';
-        });
-        document.getElementById('profile-pin').textContent=activeCustomer.pin;
-        await renderBills();
-        renderEmailLog();
-        navLinks.forEach(l=>l.classList.remove('active'));
-        document.querySelectorAll('.customer-btn').forEach(b=>{
-          b.classList.toggle('active', b.textContent.trim().startsWith(activeCustomer.id+' -'));
-        });
-        showSection('profile');
-        updateFieldsDiv.innerHTML='';
-      }
-
-      function renderEmailLog(){
-        const log=getEmailLog();
-        const div=document.getElementById('profile-email-log');
-        div.innerHTML = activeCustomer && log[activeCustomer.id]
-          ? `<div class="log-entry">Last emailed: <span class="dt">${log[activeCustomer.id]}</span></div>`
-          : '';
-      }
-
-      async function renderBills(){
-        const list=document.getElementById('profile-bills-list');
-        list.innerHTML='';
-        const bills=await getBills();
-        bills.filter(b=>b.customerId===activeCustomer.id).forEach(b=>{
-          const li=document.createElement('li');
-          li.className='p-4 bg-gray-100 rounded';
-          li.innerHTML=`<p><strong>Amount:</strong> $${b.amount}</p>
-                        <p><strong>Due:</strong> ${b.dueDate}</p>
-                        <p><strong>Status:</strong> ${b.paid?'Paid':'Unpaid'}</p>`;
-          if(!b.paid){
-            const pay=document.createElement('button');
-            pay.textContent='Mark Paid';
-            pay.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
-            pay.onclick=async()=>{
-              await db.collection('bills').doc(b.id).update({paid:true});
-              await renderBills(); await updateMetrics(); await updateGrid();
-            };
-            li.appendChild(pay);
-          }
-          list.appendChild(li);
-        });
-      }
-
-      // Event handlers for Add/Update/Delete
-      addCustIcon.onclick=()=>{ showSection('customers'); };
-      addCustBtn.onclick=async()=>{
-        const id=document.getElementById('cust-id').value.trim();
-        const name=document.getElementById('cust-name').value.trim();
-        if(!id||!name){ alert('ID and name required'); return; }
-        const pins=(await getCustomers()).map(c=>c.pin);
-        const pin=generateUniquePin(pins);
-        await db.collection('customers').doc(id).set({
-          id,name,
-          email:document.getElementById('cust-email').value.trim(),
-          phone:document.getElementById('cust-phone').value.trim(),
-          address:document.getElementById('cust-address').value.trim(),
-          pin
-        });
-        ['cust-id','cust-name','cust-email','cust-phone','cust-address']
-          .forEach(f=>document.getElementById(f).value='');
-        await populateSidebar(); await updateMetrics(); await updateGrid();
-        showSection('dashboard');
-      };
-      addInvoiceBtn.onclick=async()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        const amt=document.getElementById('invoice-amount').value.trim();
-        if(!amt){ alert('Enter amount'); return; }
-        const due=new Date().toISOString().slice(0,10);
-        await db.collection('bills').add({
-          customerId:activeCustomer.id,
-          amount:parseFloat(amt),
-          dueDate:due,
-          paid:false,
-          createdAt:new Date().toISOString()
-        });
-        document.getElementById('invoice-amount').value='';
-        await renderBills(); await updateMetrics(); await updateGrid();
-      };
-      deleteCustBtn.onclick=async()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        if(!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
-        await db.collection('customers').doc(activeCustomer.id).delete();
-        const snap=await db.collection('bills').where('customerId','==',activeCustomer.id).get();
-        const batch=db.batch();
-        snap.forEach(d=>batch.delete(d.ref));
-        await batch.commit();
-        activeCustomer=null;
-        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin']
-          .forEach(f=>document.getElementById(f).textContent='');
-        document.getElementById('profile-bills-list').innerHTML='';
-        await populateSidebar(); await updateMetrics(); await updateGrid();
-        showSection('dashboard');
-      };
-      updateCustBtn.onclick=()=>{
-        const div=updateFieldsDiv;
-        if(div.innerHTML!==''){ div.innerHTML=''; return; }
-        if(!activeCustomer) return;
-        const fields=[{key:'email',label:'Email',type:'email'},
-                      {key:'phone',label:'Phone Number',type:'tel'},
-                      {key:'address',label:'Address',type:'text'}];
-        const missing=fields.filter(f=>!activeCustomer[f.key]?.trim());
-        if(!missing.length){
-          div.innerHTML='<div class="text-green-700 mt-2">No missing information!</div>';
+    async function renderInvoices() {
+      invoicesList.innerHTML = '';
+      try {
+        const snap = await db.collection('bills')
+                             .where('customerId','==',currentCustomer.id)
+                             .get();
+        if (snap.empty) {
+          invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">
+                                      No invoices found.
+                                   </div>`;
           return;
         }
-        div.innerHTML='';
-        missing.forEach(f=>{
-          const row=document.createElement('div'); row.className='update-row';
-          const inp=document.createElement('input');
-          inp.type=f.type; inp.placeholder=f.label; inp.className='border rounded px-2 py-1 flex-1';
-          const btn=document.createElement('button');
-          btn.textContent='Add'; btn.className='bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
-          btn.onclick=async()=>{
-            const val=inp.value.trim();
-            if(!val){ inp.classList.add('border-red-400'); return; }
-            await db.collection('customers').doc(activeCustomer.id)
-                    .update({[f.key]:val});
-            activeCustomer[f.key]=val;
-            document.getElementById('profile-'+f.key).textContent=val;
-            row.remove();
-            await populateSidebar(); await updateMetrics(); await updateGrid();
-            if(!fields.filter(ff=>!activeCustomer[ff.key]?.trim()).length){
-              div.innerHTML='<div class="text-green-700 mt-2">All information updated!</div>';
-              setTimeout(()=>div.innerHTML='',2000);
-            }
-          };
-          row.append(inp,btn); div.appendChild(row);
-        });
-      };
-
-      // Batch
-      function updateBatchBar(){
-        batchBar.classList.toggle('show', selectedCustomerIds.length>0);
-        batchCount.textContent=selectedCustomerIds.length;
-      }
-      batchPaidBtn.onclick=async()=>{
-        if(!selectedCustomerIds.length) return;
-        if(!confirm('Mark selected unpaid as paid?')) return;
-        const bills=await getBills();
-        const batch=db.batch();
-        bills.filter(b=>selectedCustomerIds.includes(b.customerId)&&!b.paid)
-             .forEach(b=>batch.update(db.collection('bills').doc(b.id),{paid:true}));
-        await batch.commit();
-        selectedCustomerIds=[];
-        await updateMetrics(); await updateGrid(); updateBatchBar();
-      };
-
-      // Login logic (this is why you only saw gray before!)
-      loginBtn.addEventListener('click', async () => {
-        pinError.textContent = '';
-        if (pinInput.value === '1234') {
-          loginBtnText.classList.add('hidden');
-          loginBtnSpinner.classList.remove('hidden');
-          loginBtn.disabled = true;
-          try {
-            await populateSidebar();
-            await updateMetrics();
-            await updateGrid();
-            loginOverlay.classList.add('hidden');
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
-            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-            showSection('dashboard');
-          } finally {
-            loginBtnText.classList.remove('hidden');
-            loginBtnSpinner.classList.add('hidden');
-            loginBtn.disabled = false;
-            pinInput.value = '';
+        let idx = 1;
+        snap.forEach(doc => {
+          const b = { id: doc.id, ...doc.data() };
+          const paid = !!b.paid;
+          const div = document.createElement('div');
+          div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
+                          (paid?'invoice-status-paid':'invoice-status-unpaid');
+          div.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-semibold">Invoice #${idx}</span>
+              <span class="text-xs">${paid?'Paid':'Unpaid'}</span>
+            </div>
+            <div>Amount: <span class="font-bold">$${b.amount}</span></div>
+            <div>Due: ${b.dueDate}</div>
+          `;
+          if (!paid) {
+            const stripeBtn = document.createElement('button');
+            stripeBtn.className = 'rounded bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-2 mb-1 font-semibold text-sm';
+            stripeBtn.textContent = 'Pay with Stripe';
+            stripeBtn.onclick = () => alert('Stripe checkout here');
+            const venmo = document.createElement('a');
+            venmo.href = 'https://venmo.com/';
+            venmo.target = '_blank';
+            venmo.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 mr-2 text-sm inline-block';
+            venmo.textContent = 'Venmo';
+            const cashapp = document.createElement('a');
+            cashapp.href = 'https://cash.app/';
+            cashapp.target = '_blank';
+            cashapp.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 text-sm inline-block';
+            cashapp.textContent = 'Cash App';
+            const row = document.createElement('div');
+            row.className = 'flex flex-wrap gap-2 items-center mt-2';
+            row.append(stripeBtn, venmo, cashapp);
+            div.appendChild(row);
+          } else {
+            const receiptBtn = document.createElement('span');
+            receiptBtn.className = 'receipt-link ml-1';
+            receiptBtn.textContent = 'Download Receipt';
+            receiptBtn.onclick = () => {
+              document.getElementById('receipt-content').innerHTML = `
+                <div class="font-bold mb-1 text-green-700">Invoice Receipt</div>
+                <div><strong>Invoice #:</strong> ${idx}</div>
+                <div><strong>Name:</strong> ${currentCustomer.name}</div>
+                <div><strong>ID:</strong> ${currentCustomer.id}</div>
+                <div><strong>Amount:</strong> $${b.amount}</div>
+                <div><strong>Status:</strong> Paid</div>
+                <div><strong>Date Paid:</strong> ${b.dueDate}</div>
+              `;
+              receiptBg.style.display = 'flex';
+            };
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 items-center mt-2';
+            row.appendChild(receiptBtn);
+            div.appendChild(row);
           }
-        } else {
-          pinError.textContent = 'Invalid PIN';
-        }
-      });
+          invoicesList.appendChild(div);
+          idx++;
+        });
+      } catch (e) {
+        console.error('Error loading invoices:', e);
+      }
+    }
 
-      // Initial state: overlay visible, sidebar/main hidden by Tailwind
-    });
+    // 7) Receipt modal
+    closeReceipt.onclick = () => receiptBg.style.display = 'none';
+    downloadReceipt.onclick = () => alert('Demo: Download PDF');
+
+    // 8) Update form
+    updateForm.onsubmit = e => {
+      e.preventDefault();
+      if (!currentCustomer) return;
+      const upd = {
+        name:    document.getElementById('input-name').value.trim(),
+        email:   document.getElementById('input-email').value.trim(),
+        phone:   document.getElementById('input-phone').value.trim(),
+        address: document.getElementById('input-address').value.trim(),
+        pin:     currentCustomer.pin
+      };
+      db.collection('customers').doc(currentCustomer.id).set(upd)
+        .then(() => {
+          currentCustomer = { ...currentCustomer, ...upd };
+          updateFeedback.textContent = 'Information updated!';
+          welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+          setTimeout(() => updateFeedback.textContent = '', 2000);
+        })
+        .catch(err => {
+          updateFeedback.textContent = 'Update failed.';
+          console.error(err);
+        });
+    };
   </script>
 </body>
 </html>
