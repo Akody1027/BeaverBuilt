@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Customer Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Firebase App (compat) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
@@ -22,17 +21,19 @@
     .modal .close-modal:hover { color:#b91c1c; }
     .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer; }
     .spinner { display:inline-block; width:1.4em; height:1.4em; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { 100% { transform:rotate(360deg); } }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
+
 <body class="h-screen flex flex-col">
 
   <!-- Login Overlay -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Customer Login</h2>
-      <input id="customer-pin" type="password" maxlength="4" placeholder="Enter your 4-digit PIN"
-             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
+      <input id="customer-pin" type="password" maxlength="4"
+             placeholder="Enter your 4-digit PIN"
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300"/>
       <button id="login-btn"
               class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 text-lg font-semibold flex justify-center items-center">
         <span id="login-btn-text">Login</span>
@@ -42,7 +43,7 @@
     </div>
   </div>
 
-  <!-- Main Layout -->
+  <!-- Main Content -->
   <div id="main" class="hidden flex-1 flex flex-col">
     <header class="bg-white shadow-md">
       <div class="px-4 py-3 flex items-center">
@@ -63,19 +64,21 @@
           </button>
         </div>
       </section>
+
       <!-- Invoices -->
       <section>
         <h3 class="text-lg font-bold mb-3">Your Invoices</h3>
         <div id="invoices-list" class="space-y-4"></div>
       </section>
+
       <!-- Update Info -->
       <section>
         <h3 class="text-lg font-bold mb-3">Update Your Info</h3>
         <form id="update-form" class="dashboard-card p-6 flex flex-col gap-3">
-          <input id="input-name" placeholder="Name" class="rounded border px-3 py-2" autocomplete="name">
-          <input id="input-email" type="email" placeholder="Email" class="rounded border px-3 py-2" autocomplete="email">
-          <input id="input-phone" type="tel" placeholder="Phone Number" class="rounded border px-3 py-2" autocomplete="tel">
-          <input id="input-address" placeholder="Address" class="rounded border px-3 py-2" autocomplete="street-address">
+          <input id="input-name" placeholder="Name" class="rounded border px-3 py-2" autocomplete="name"/>
+          <input id="input-email" type="email" placeholder="Email" class="rounded border px-3 py-2" autocomplete="email"/>
+          <input id="input-phone" type="tel" placeholder="Phone Number" class="rounded border px-3 py-2" autocomplete="tel"/>
+          <input id="input-address" placeholder="Address" class="rounded border px-3 py-2" autocomplete="street-address"/>
           <button type="submit"
                   class="rounded bg-gray-300 hover:bg-gray-400 text-black py-2 font-semibold mt-2">
             Update Info
@@ -100,7 +103,7 @@
   </div>
 
   <script>
-    // 1) Firebase init (with correct appspot.com bucket)
+    // 1) Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
       authDomain: "customerportal-3032d.firebaseapp.com",
@@ -113,39 +116,44 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // 2) Debug alerts on init
+    // 2) Debug: confirm connection & list first doc
     alert("Connected to Firebase project: " + firebase.app().options.projectId);
     db.collection("customers").get()
-      .then(snap => alert("Firestore has " + snap.size + " customer(s)"))
+      .then(snap => {
+        alert("Firestore has " + snap.size + " customer(s)");
+        if (!snap.empty) {
+          alert("First customer data: " + JSON.stringify(snap.docs[0].data()));
+        }
+      })
       .catch(err => alert("Error reading customers: " + err));
 
-    // 3) Spinner helper
+    // 3) Spinner toggle
     function toggleSpinner(show) {
       document.getElementById('login-btn-text').classList.toggle('hidden', show);
       document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
     }
 
-    // 4) DOM references
-    const overlay = document.getElementById('login-overlay'),
-          loginBtn = document.getElementById('login-btn'),
-          pinInput = document.getElementById('customer-pin'),
-          pinError = document.getElementById('pin-error'),
-          main = document.getElementById('main'),
-          logoutBtn = document.getElementById('logout-btn'),
-          welcomeName = document.getElementById('welcome-name'),
-          welcomeID = document.getElementById('welcome-id'),
-          welcomePIN = document.getElementById('welcome-pin'),
-          invoicesList = document.getElementById('invoices-list'),
-          updateForm = document.getElementById('update-form'),
+    // 4) DOM refs
+    const overlay        = document.getElementById('login-overlay'),
+          loginBtn       = document.getElementById('login-btn'),
+          pinInput       = document.getElementById('customer-pin'),
+          pinError       = document.getElementById('pin-error'),
+          main           = document.getElementById('main'),
+          logoutBtn      = document.getElementById('logout-btn'),
+          welcomeName    = document.getElementById('welcome-name'),
+          welcomeID      = document.getElementById('welcome-id'),
+          welcomePIN     = document.getElementById('welcome-pin'),
+          invoicesList   = document.getElementById('invoices-list'),
+          updateForm     = document.getElementById('update-form'),
           updateFeedback = document.getElementById('update-feedback'),
-          receiptBg = document.getElementById('receipt-modal-bg'),
+          receiptBg      = document.getElementById('receipt-modal-bg'),
           receiptContent = document.getElementById('receipt-content'),
-          closeReceipt = document.getElementById('close-receipt-modal'),
-          downloadReceipt = document.getElementById('download-receipt');
+          closeReceipt   = document.getElementById('close-receipt-modal'),
+          downloadReceipt= document.getElementById('download-receipt');
 
     let currentCustomer = null;
 
-    // 5) LOGIN handler with alert debug
+    // 5) LOGIN: alert count for PIN
     loginBtn.onclick = async () => {
       pinError.textContent = "";
       const pin = pinInput.value.trim();
@@ -156,19 +164,21 @@
       toggleSpinner(true);
       try {
         const snap = await db.collection('customers')
-                             .where('pin', '==', pin)
+                             .where('pin','==',pin)
                              .get();
-        alert("Firestore returned " + snap.size + " document(s) for PIN " + pin);
+        alert("Login query returned " + snap.size + " document(s) for PIN " + pin);
         if (snap.empty) {
-          pinError.textContent = "Invalid PIN (no matching document).";
+          pinError.textContent = "Invalid PIN (no match).";
         } else {
-          snap.forEach(doc => currentCustomer = { id: doc.id, ...doc.data() });
+          snap.forEach(doc => {
+            currentCustomer = { id: doc.id, ...doc.data() };
+          });
           overlay.classList.add('hidden');
           main.classList.remove('hidden');
           renderCustomer();
         }
       } catch (e) {
-        pinError.textContent = "Login error: see console";
+        pinError.textContent = "Login error";
         console.error(e);
       }
       toggleSpinner(false);
@@ -182,16 +192,16 @@
       pinError.textContent = '';
     };
 
-    // 7) Render customer info + invoices
+    // 7) Render customer & invoices
     function renderCustomer() {
       if (!currentCustomer) return;
-      welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
-      welcomeID.textContent = currentCustomer.id;
-      welcomePIN.textContent = currentCustomer.pin || '';
-      document.getElementById('input-name').value    = currentCustomer.name || '';
-      document.getElementById('input-email').value   = currentCustomer.email || '';
-      document.getElementById('input-phone').value   = currentCustomer.phone || '';
-      document.getElementById('input-address').value = currentCustomer.address || '';
+      welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
+      welcomeID.textContent   = currentCustomer.id;
+      welcomePIN.textContent  = currentCustomer.pin;
+      document.getElementById('input-name').value    = currentCustomer.name;
+      document.getElementById('input-email').value   = currentCustomer.email;
+      document.getElementById('input-phone').value   = currentCustomer.phone;
+      document.getElementById('input-address').value = currentCustomer.address;
       renderInvoices();
     }
 
@@ -202,7 +212,9 @@
                              .where('customerId','==',currentCustomer.id)
                              .get();
         if (snap.empty) {
-          invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
+          invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">
+                                      No invoices found.
+                                   </div>`;
           return;
         }
         let idx = 1;
@@ -244,7 +256,7 @@
             receiptBtn.className = 'receipt-link ml-1';
             receiptBtn.textContent = 'Download Receipt';
             receiptBtn.onclick = () => {
-              receiptContent.innerHTML = `
+              document.getElementById('receipt-content').innerHTML = `
                 <div class="font-bold mb-1 text-green-700">Invoice Receipt</div>
                 <div><strong>Invoice #:</strong> ${idx}</div>
                 <div><strong>Name:</strong> ${currentCustomer.name}</div>
@@ -268,11 +280,11 @@
       }
     }
 
-    // 8) Receipt modal events
+    // 8) Receipt modal
     closeReceipt.onclick = () => receiptBg.style.display = 'none';
     downloadReceipt.onclick = () => alert('Demo: Download PDF');
 
-    // 9) Update Info form
+    // 9) Update form
     updateForm.onsubmit = e => {
       e.preventDefault();
       if (!currentCustomer) return;
