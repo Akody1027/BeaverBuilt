@@ -16,13 +16,13 @@
     .dashboard-card { background: #fff; border-radius: 1rem; box-shadow: 0 2px 16px #0001; }
     .invoice-status-unpaid { background: #fecaca; color: #b91c1c; }
     .invoice-status-paid { background: #bbf7d0; color: #166534; }
-    .modal-bg { position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(31,41,55,0.7);}
-    .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative;}
-    .modal .close-modal { position:absolute;top:8px;right:18px;cursor:pointer;font-size:1.7rem;color:#e11d48;font-weight:700;}
+    .modal-bg { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; background:rgba(31,41,55,0.7); }
+    .modal { background:#fff; border-radius:1.2rem; max-width:96vw; width:420px; box-shadow:0 8px 32px #0002; padding:2rem 2rem 1.2rem 2rem; position:relative; }
+    .modal .close-modal { position:absolute; top:8px; right:18px; cursor:pointer; font-size:1.7rem; color:#e11d48; font-weight:700; }
     .modal .close-modal:hover { color:#b91c1c; }
-    .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer;}
-    .spinner{display:inline-block;width:1.4em;height:1.4em;border:3px solid #cbd5e1;border-top:3px solid #64748b;border-radius:50%;animation:spin 1s linear infinite;}
-    @keyframes spin{100%{transform:rotate(360deg);}}
+    .receipt-link { color: #06b6d4; text-decoration: underline; cursor: pointer; }
+    .spinner { display:inline-block; width:1.4em; height:1.4em; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { 100% { transform:rotate(360deg); } }
   </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -31,8 +31,10 @@
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Customer Login</h2>
-      <input id="customer-pin" type="password" maxlength="4" placeholder="Enter your 4-digit PIN" class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
-      <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 text-lg font-semibold flex justify-center items-center">
+      <input id="customer-pin" type="password" maxlength="4" placeholder="Enter your 4-digit PIN"
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-pink-300">
+      <button id="login-btn"
+              class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300 text-lg font-semibold flex justify-center items-center">
         <span id="login-btn-text">Login</span>
         <span id="login-btn-spinner" class="spinner hidden"></span>
       </button>
@@ -56,7 +58,9 @@
             <div class="text-gray-600 text-sm">Customer ID: <span id="welcome-id"></span></div>
             <div class="text-gray-600 text-sm">PIN: <span id="welcome-pin"></span></div>
           </div>
-          <button id="logout-btn" class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-2 text-gray-700 font-medium text-sm">Log Out</button>
+          <button id="logout-btn" class="rounded bg-gray-100 hover:bg-gray-200 px-3 py-2 text-gray-700 font-medium text-sm">
+            Log Out
+          </button>
         </div>
       </section>
       <!-- Invoices -->
@@ -72,25 +76,31 @@
           <input id="input-email" type="email" placeholder="Email" class="rounded border px-3 py-2" autocomplete="email">
           <input id="input-phone" type="tel" placeholder="Phone Number" class="rounded border px-3 py-2" autocomplete="tel">
           <input id="input-address" placeholder="Address" class="rounded border px-3 py-2" autocomplete="street-address">
-          <button class="rounded bg-gray-300 hover:bg-gray-400 text-black py-2 font-semibold mt-2" type="submit">Update Info</button>
+          <button type="submit"
+                  class="rounded bg-gray-300 hover:bg-gray-400 text-black py-2 font-semibold mt-2">
+            Update Info
+          </button>
           <div id="update-feedback" class="text-green-700 font-semibold"></div>
         </form>
       </section>
     </main>
   </div>
 
-  <!-- Modal (Receipt) -->
+  <!-- Receipt Modal -->
   <div id="receipt-modal-bg" class="modal-bg" style="display:none;">
     <div class="modal">
       <div class="close-modal" id="close-receipt-modal">&times;</div>
       <h4 class="text-lg font-bold mb-3">Your Receipt</h4>
       <div id="receipt-content" class="mb-2 text-gray-700"></div>
-      <button id="download-receipt" class="rounded bg-gray-300 hover:bg-gray-400 py-2 px-4 text-black font-semibold">Download PDF (Demo)</button>
+      <button id="download-receipt"
+              class="rounded bg-gray-300 hover:bg-gray-400 py-2 px-4 text-black font-semibold">
+        Download PDF (Demo)
+      </button>
     </div>
   </div>
 
   <script>
-    // Firebase config & init (with corrected storageBucket)
+    // 1) Firebase init (with correct appspot.com bucket)
     const firebaseConfig = {
       apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
       authDomain: "customerportal-3032d.firebaseapp.com",
@@ -103,24 +113,30 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Spinner toggle
+    // 2) Debug alerts on init
+    alert("Connected to Firebase project: " + firebase.app().options.projectId);
+    db.collection("customers").get()
+      .then(snap => alert("Firestore has " + snap.size + " customer(s)"))
+      .catch(err => alert("Error reading customers: " + err));
+
+    // 3) Spinner helper
     function toggleSpinner(show) {
       document.getElementById('login-btn-text').classList.toggle('hidden', show);
       document.getElementById('login-btn-spinner').classList.toggle('hidden', !show);
     }
 
-    // DOM references
+    // 4) DOM references
     const overlay = document.getElementById('login-overlay'),
           loginBtn = document.getElementById('login-btn'),
           pinInput = document.getElementById('customer-pin'),
           pinError = document.getElementById('pin-error'),
-          main    = document.getElementById('main'),
+          main = document.getElementById('main'),
           logoutBtn = document.getElementById('logout-btn'),
           welcomeName = document.getElementById('welcome-name'),
-          welcomeID   = document.getElementById('welcome-id'),
-          welcomePIN  = document.getElementById('welcome-pin'),
+          welcomeID = document.getElementById('welcome-id'),
+          welcomePIN = document.getElementById('welcome-pin'),
           invoicesList = document.getElementById('invoices-list'),
-          updateForm   = document.getElementById('update-form'),
+          updateForm = document.getElementById('update-form'),
           updateFeedback = document.getElementById('update-feedback'),
           receiptBg = document.getElementById('receipt-modal-bg'),
           receiptContent = document.getElementById('receipt-content'),
@@ -129,7 +145,7 @@
 
     let currentCustomer = null;
 
-    // LOGIN with logging
+    // 5) LOGIN handler with alert debug
     loginBtn.onclick = async () => {
       pinError.textContent = "";
       const pin = pinInput.value.trim();
@@ -139,9 +155,10 @@
       }
       toggleSpinner(true);
       try {
-        const snap = await db.collection('customers').where('pin','==',pin).get();
-        console.log('Firestore query for PIN', pin, 'returned', snap.size, 'docs');
-        snap.forEach(doc => console.log(' → doc:', doc.id, doc.data()));
+        const snap = await db.collection('customers')
+                             .where('pin', '==', pin)
+                             .get();
+        alert("Firestore returned " + snap.size + " document(s) for PIN " + pin);
         if (snap.empty) {
           pinError.textContent = "Invalid PIN (no matching document).";
         } else {
@@ -152,12 +169,12 @@
         }
       } catch (e) {
         pinError.textContent = "Login error: see console";
-        console.error('Login error:', e);
+        console.error(e);
       }
       toggleSpinner(false);
     };
 
-    // LOGOUT
+    // 6) LOGOUT
     logoutBtn.onclick = () => {
       overlay.classList.remove('hidden');
       main.classList.add('hidden');
@@ -165,12 +182,12 @@
       pinError.textContent = '';
     };
 
-    // Render customer & invoices
+    // 7) Render customer info + invoices
     function renderCustomer() {
       if (!currentCustomer) return;
-      welcomeName.textContent = `Welcome, ${ currentCustomer.name || 'Customer' }!`;
-      welcomeID.textContent   = currentCustomer.id;
-      welcomePIN.textContent  = currentCustomer.pin || '';
+      welcomeName.textContent = `Welcome, ${currentCustomer.name || 'Customer'}!`;
+      welcomeID.textContent = currentCustomer.id;
+      welcomePIN.textContent = currentCustomer.pin || '';
       document.getElementById('input-name').value    = currentCustomer.name || '';
       document.getElementById('input-email').value   = currentCustomer.email || '';
       document.getElementById('input-phone').value   = currentCustomer.phone || '';
@@ -184,10 +201,6 @@
         const snap = await db.collection('bills')
                              .where('customerId','==',currentCustomer.id)
                              .get();
-        alert("Firestore returned " + snap.size + " document(s) for PIN " + pin);
-
-
-        
         if (snap.empty) {
           invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
           return;
@@ -197,7 +210,8 @@
           const b = { id: doc.id, ...doc.data() };
           const paid = !!b.paid;
           const div = document.createElement('div');
-          div.className = 'dashboard-card p-5 flex flex-col gap-2 ' + (paid?'invoice-status-paid':'invoice-status-unpaid');
+          div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
+                          (paid?'invoice-status-paid':'invoice-status-unpaid');
           div.innerHTML = `
             <div class="flex justify-between items-center mb-1">
               <span class="font-semibold">Invoice #${idx}</span>
@@ -212,11 +226,13 @@
             stripeBtn.textContent = 'Pay with Stripe';
             stripeBtn.onclick = () => alert('Stripe checkout here');
             const venmo = document.createElement('a');
-            venmo.href = 'https://venmo.com/'; venmo.target = '_blank';
+            venmo.href = 'https://venmo.com/';
+            venmo.target = '_blank';
             venmo.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 mr-2 text-sm inline-block';
             venmo.textContent = 'Venmo';
             const cashapp = document.createElement('a');
-            cashapp.href = 'https://cash.app/'; cashapp.target = '_blank';
+            cashapp.href = 'https://cash.app/';
+            cashapp.target = '_blank';
             cashapp.className = 'rounded bg-gray-200 hover:bg-gray-300 text-black px-3 py-1 mt-1 text-sm inline-block';
             cashapp.textContent = 'Cash App';
             const row = document.createElement('div');
@@ -252,11 +268,11 @@
       }
     }
 
-    // Modal events
+    // 8) Receipt modal events
     closeReceipt.onclick = () => receiptBg.style.display = 'none';
     downloadReceipt.onclick = () => alert('Demo: Download PDF');
 
-    // Update form
+    // 9) Update Info form
     updateForm.onsubmit = e => {
       e.preventDefault();
       if (!currentCustomer) return;
@@ -272,7 +288,7 @@
           currentCustomer = { ...currentCustomer, ...upd };
           updateFeedback.textContent = 'Information updated!';
           welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
-          setTimeout(()=> updateFeedback.textContent = '', 2000);
+          setTimeout(() => updateFeedback.textContent = '', 2000);
         })
         .catch(err => {
           updateFeedback.textContent = 'Update failed.';
