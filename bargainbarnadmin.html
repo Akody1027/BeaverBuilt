@@ -6,12 +6,13 @@
   <title>Admin Dashboard</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase -->
+  <!-- Firebase App (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    /* ——— All your original CSS unchanged ——— */
-    /* (omitted for brevity; copy from your original) */
+    /* ——— All original CSS unchanged ——— */
+    /* (copy your full CSS block here) */
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -21,8 +22,9 @@
     <!-- … unchanged login markup … -->
   </div>
 
-  <!-- Modals -->
+  <!-- Email Modal -->
   <div id="email-modal-bg">…</div>
+  <!-- Batch Modal -->
   <div id="batch-modal-bg">…</div>
 
   <!-- Sidebar -->
@@ -39,52 +41,76 @@
 
   <!-- Main Content -->
   <div id="main" class="hidden flex flex-1 flex-col">
-    <!-- … all original dashboard, customers, profile sections … -->
-    <!-- Inside the profile section, immediately after <ul id="profile-bills-list">: -->
-    <!-- REQUESTED PAYMENT LINKS -->
-    <div id="payment-link-requests" class="mt-6 p-4 bg-yellow-50 rounded-lg shadow-sm">
-      <h4 class="font-semibold mb-2">Stripe Link Requests</h4>
-    </div>
+    <!-- … original panels, sections … -->
 
-    <!-- PENDING PAYMENTS -->
-    <div id="pending-payments-admin" class="mt-6 p-4 bg-yellow-50 rounded-lg shadow-sm">
-      <h4 class="font-semibold mb-2">Pending Payments</h4>
-    </div>
-    <!-- … rest unchanged … -->
+    <!-- Customer Profile (unchanged above this line) -->
+    <section id="profile" class="hidden space-y-6">
+      <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
+        <!-- … original profile fields … -->
+        <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
+
+        <!-- ⚡ New: Stripe Link Requests -->
+        <div id="payment-link-requests" class="mt-4 p-4 bg-yellow-50 rounded-lg">
+          <h4 class="font-semibold mb-2">Stripe Link Requests</h4>
+        </div>
+
+        <!-- ⚡ New: Pending Payments (yellow) -->
+        <div id="pending-payments-admin" class="mt-4 p-4 bg-yellow-50 rounded-lg">
+          <h4 class="font-semibold mb-2">Pending Payments</h4>
+        </div>
+
+        <!-- … rest of original profile … -->
+      </div>
+    </section>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
-      // ——— Firebase init ———
-      const firebaseConfig = { /* your config */ };
+      // Firestore init
+      const firebaseConfig = {
+        apiKey: "...", authDomain: "...",
+        projectId: "customerportal-3032d",
+        /* … */
+      };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // ——— Existing helpers & DOM refs unchanged ———
-      /* getCustomers, getBills, generateUniquePin, showSection, populateSidebar, openCustomer, renderBills, etc. */
+      // Helpers unchanged: generateUniquePin, etc.
 
-      // ——— Modify populateSidebar to flag customers with stripeRequested ———
+      // DOM refs unchanged…
+      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
+      let activeCustomer = null;
+
+      async function getCustomers(){ /* … */ }
+      async function getBills(){ /* … */ }
+
+      // 1) Sidebar: add flag for stripeRequested
       async function populateSidebar() {
-        const customers = await getCustomers();
         sidebarCustomerList.innerHTML = '';
-        for (let c of customers.sort((a,b)=>+a.id-+b.id)) {
+        const customers = await getCustomers();
+        const bills = await getBills();
+        customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
+          let hasRequest = bills.some(b=>b.customerId===c.id && b.stripeRequested);
           const btn = document.createElement('button');
-          /* … original button html … */
-          // if any bill stripeRequested:
-          const bills = await getBills();
-          if (bills.some(b=>b.customerId===c.id && b.stripeRequested)) {
-            btn.innerHTML += ' <span class="text-yellow-500 font-bold">!</span>';
+          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          if (hasRequest) {
+            html += ` <span class="text-yellow-500 font-bold">!</span>`;
           }
-          btn.onclick = ()=>openCustomer(c.id);
-          const li = document.createElement('li'); li.appendChild(btn);
+          btn.innerHTML = html;
+          btn.onclick = ()=> openCustomer(c.id);
+          const li = document.createElement('li');
+          li.appendChild(btn);
           sidebarCustomerList.appendChild(li);
-        }
+        });
       }
 
-      // ——— Render profile requests & pendings ———
+      // 2) Render bills in profile (unchanged)…
+
+      // 3) New: render Stripe Link Requests
       async function renderPaymentLinkRequests() {
-        const div = document.getElementById('payment-link-requests');
-        div.innerHTML = '<h4 class="font-semibold mb-2">Stripe Link Requests</h4>';
+        const container = document.getElementById('payment-link-requests');
+        container.innerHTML = '<h4 class="font-semibold mb-2">Stripe Link Requests</h4>';
         const bills = await getBills();
         for (let b of bills.filter(b=>b.customerId===activeCustomer.id && b.stripeRequested && !b.stripeLink)) {
           const row = document.createElement('div');
@@ -94,20 +120,22 @@
             <input type="url" placeholder="Paste Stripe link" class="flex-1 border px-2 py-1 rounded" id="link-${b.id}">
             <button class="bg-blue-500 text-white px-3 py-1 rounded" data-id="${b.id}">Submit</button>
           `;
-          div.appendChild(row);
+          container.append(row);
           row.querySelector('button').onclick = async e => {
             const id = e.target.dataset.id;
             const link = document.getElementById('link-'+id).value.trim();
             if (!link) return alert('Enter link');
             await db.collection('bills').doc(id).update({ stripeLink: link, stripeRequested: false });
             alert('Link saved');
-            await renderPaymentLinkRequests();
+            renderPaymentLinkRequests();
           };
         }
       }
+
+      // 4) New: render Pending Payments for admin
       async function renderPendingPaymentsAdmin() {
-        const div = document.getElementById('pending-payments-admin');
-        div.innerHTML = '<h4 class="font-semibold mb-2">Pending Payments</h4>';
+        const container = document.getElementById('pending-payments-admin');
+        container.innerHTML = '<h4 class="font-semibold mb-2">Pending Payments</h4>';
         const bills = await getBills();
         for (let b of bills.filter(b=>b.customerId===activeCustomer.id && b.paymentPending)) {
           const row = document.createElement('div');
@@ -115,141 +143,44 @@
           row.innerHTML = `
             <span>Invoice ${b.dueDate}</span>
             <button data-id="${b.id}" data-action="confirm" class="bg-green-500 text-white px-2 py-1 rounded">Confirm</button>
-            <button data-id="${b.id}" data-action="deny" class="bg-red-500 text-white px-2 py-1 rounded">Deny</button>
+            <button data-id="${b.id}" data-action="deny" class="bg-red-500   text-white px-2 py-1 rounded">Deny</button>
           `;
-          div.appendChild(row);
+          container.append(row);
           row.querySelectorAll('button').forEach(btn=>{
-            btn.onclick = async e => {
-              const { id, action } = e.target.dataset;
+            btn.onclick = async () => {
+              const {id,action} = btn.dataset;
               if (action==='confirm') {
-                await db.collection('bills').doc(id).update({ paid: true, paymentPending: false });
+                await db.collection('bills').doc(id).update({ paid:true, paymentPending:false });
                 alert('Payment confirmed');
               } else {
-                await db.collection('bills').doc(id).update({ paymentPending: false });
+                await db.collection('bills').doc(id).update({ paymentPending:false });
                 alert('Payment denied');
               }
-              await renderPendingPaymentsAdmin();
-              await renderBills(); // update profile UI
+              renderPendingPaymentsAdmin();
+              renderBills(); // re‐render profile list
             };
           });
         }
       }
 
-      // ——— Extend renderBills to include Stripe/CashApp UI & “Was payment made?” ———
-      async function renderBills() {
-        const listEl = document.getElementById('profile-bills-list');
-        listEl.innerHTML = '';
-        const bills = await getBills();
-        for (let b of bills.filter(b=>b.customerId===activeCustomer.id)) {
-          const li = document.createElement('li');
-          li.className = 'p-4 bg-gray-100 rounded mb-2';
-          const statusColor = b.paid ? 'paid' : (b.paymentPending ? 'bg-yellow-200' : 'unpaid');
-          li.innerHTML = `
-            <p><strong>Due:</strong> ${b.dueDate}</p>
-            <p class="py-1 ${statusColor}">${ b.paid ? 'Paid' : b.paymentPending ? 'Pending' : 'Unpaid' }</p>
-          `;
-
-          // Stripe link UI
-          if (!b.paid) {
-            if (b.stripeLink) {
-              li.innerHTML += `
-                <div class="mt-2">
-                  <a href="${b.stripeLink}" target="_blank" class="text-blue-600 underline">Pay with Stripe</a>
-                </div>
-              `;
-            } else if (b.stripeRequested) {
-              li.innerHTML += `<div class="mt-2 text-gray-600">Stripe link requested…</div>`;
-            } else {
-              li.innerHTML += `
-                <div class="mt-2">
-                  <small class="text-red-600">Request a Stripe payment link</small><br>
-                  <button class="mt-1 bg-red-500 text-white px-3 py-1 rounded" data-id="${b.id}" id="req-${b.id}">
-                    Request Stripe Link
-                  </button>
-                </div>
-              `;
-            }
-          }
-
-          // Cash App & Venmo
-          if (!b.paid) {
-            li.innerHTML += `
-              <div class="mt-2 space-x-2">
-                <button class="bg-gray-200 px-3 py-1 rounded" id="venmo-${b.id}">Venmo</button>
-                <button class="bg-gray-200 px-3 py-1 rounded" id="cashapp-${b.id}">Cash App</button>
-              </div>
-            `;
-          }
-
-          // Payment confirmation
-          if (!b.paid && !b.paymentPending) {
-            li.innerHTML += `
-              <div class="mt-2">
-                <span>Was payment made?</span>
-                <button class="ml-2 bg-green-400 text-white px-2 py-1 rounded" id="yes-${b.id}">Yes</button>
-                <button class="ml-1 bg-gray-400 text-white px-2 py-1 rounded" id="no-${b.id}">No</button>
-              </div>
-            `;
-          }
-
-          listEl.appendChild(li);
-
-          // Wire events:
-          if (!b.paid && !b.stripeLink && !b.stripeRequested) {
-            document.getElementById(`req-${b.id}`)
-              .onclick = async ()=>{
-                await db.collection('bills').doc(b.id).update({ stripeRequested: true });
-                await renderBills();
-                await renderPaymentLinkRequests();
-              };
-          }
-          // Venmo deep-link:
-          document.getElementById(`venmo-${b.id}`)
-            .onclick = ()=>{ 
-              const web = `https://venmo.com/?txn=pay&amount=${b.amount}&note=Invoice%20${b.id}`;
-              window.location = `venmo://paycharge?txn=pay&amount=${b.amount}&note=Invoice%20${b.id}`;
-              setTimeout(()=>window.location=web,500);
-            };
-          // Cash App deep-link:
-          document.getElementById(`cashapp-${b.id}`)
-            .onclick = ()=>{
-              const handle = 'YourCashTag';
-              const scheme = `cashapp://$${handle}/${b.amount}`;
-              window.location = scheme;
-              setTimeout(()=>window.location=`https://cash.app/$${handle}/${b.amount}`,500);
-            };
-          // Payment confirmation:
-          if (!b.paid && !b.paymentPending) {
-            document.getElementById(`yes-${b.id}`)
-              .onclick = async ()=>{
-                await db.collection('bills').doc(b.id).update({ paymentPending: true });
-                await renderBills();
-                await renderPendingPaymentsAdmin();
-              };
-            document.getElementById(`no-${b.id}`)
-              .onclick = ()=>{/* do nothing, remains unpaid */}
-          }
-        }
-      }
-
-      // ——— Extend openCustomer to re-render new sections ———
+      // 5) Extend openCustomer to rerender new sections
       async function openCustomer(id) {
-        /* your existing openCustomer code… */
+        /* … existing openCustomer code … */
         await renderBills();
-        await renderPaymentLinkRequests();
-        renderEmailLog();
-        await renderPendingPaymentsAdmin();
+        renderPaymentLinkRequests();
+        renderPendingPaymentsAdmin();
       }
 
-      // ——— Extend login flow to initial render ———
-      loginBtn.onclick = async ()=>{
-        /* existing login code… */
+      // 6) Extend login flow to initial render
+      loginBtn.onclick = async () => {
+        /* … existing login … */
         await populateSidebar();
-        await renderPaymentLinkRequests();
-        await renderPendingPaymentsAdmin();
+        renderPaymentLinkRequests();
+        renderPendingPaymentsAdmin();
       };
 
-      // Initial load hidden; login overlay shows
+      // 7) Boot
+      // login overlay shows first; admin panel hidden until login
     });
   </script>
 </body>
