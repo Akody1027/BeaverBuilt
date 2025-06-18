@@ -1,74 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase App (compat) -->
+  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <style>
-    /* ---------- Your original CSS (unchanged) ---------- */
+    /* --------- YOUR ORIGINAL CSS (UNCHANGED) --------- */
     #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
-    .grid-cell {
-      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
-      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
-      position: relative;
-    }
+    .grid-cell { aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; border:1px solid #CBD5E0; border-radius:.25rem; background:#fff; color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s; position: relative; }
     .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
     .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
     .grid-cell.selected { outline: 3px solid #000; z-index:2; }
-    .customer-warning {
-      display: inline-flex; align-items: center; margin-left: 0.5rem;
-      background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em;
-      justify-content: center; font-size: 0.8em; box-shadow: 0 0 2px #b91c1c88;
-    }
-    .customer-btn.active, #sidebar .customer-btn.active {
-      background: #E5E7EB !important;
-      border-radius: .375rem;
-    }
+    .customer-warning { display: inline-flex; align-items: center; margin-left: 0.5rem; background: #f87171; color: #fff; border-radius: 50%; width: 1.1em; height: 1.1em; justify-content: center; font-size: 0.8em; box-shadow: 0 0 2px #b91c1c88; }
+    .customer-btn.active, #sidebar .customer-btn.active { background: #E5E7EB !important; border-radius: .375rem; }
     .update-fields { margin-top: 1rem; }
     .update-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-    #batch-bar {
-      display:none; margin-top:1rem; background:#f3f4f6; border:2px solid #000;
-      border-radius:.5rem; padding:1rem; box-shadow:0 4px 24px #3332;
-      text-align:center; font-weight:600; color:#333; z-index:30;
-      align-items:center; justify-content:center; flex-direction:column;
-    }
+    #batch-bar { display:none; position:relative; margin-top:1rem; background:#f3f4f6; border:2px solid #000; border-radius:.5rem; padding:1rem; box-shadow:0 4px 24px #3332; text-align:center; font-weight:600; color:#333; z-index:30; align-items:center; justify-content:center; flex-direction:column; }
     #batch-bar.show { display:flex; }
     #batch-bar .bar-actions { display:flex; gap:1.5rem; justify-content:center; }
     #batch-bar .bar-actions button { min-width:120px; }
     #sidebar { width:auto!important; min-width:0; max-width:240px; padding-right:18px!important; padding-left:13px!important; }
     #sidebar .customer-btn { white-space: nowrap; }
     #sidebar h1 { white-space: nowrap; }
-    .sidebar-divider {
-      width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px;
-    }
-    #email-modal-bg, #batch-modal-bg {
-      display:none; position:fixed; inset:0; z-index:1000;
-      background:rgba(31,41,55,0.7); justify-content:center; align-items:center;
-    }
+    .sidebar-divider { width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px; }
+    #email-modal-bg, #batch-modal-bg { display:none; position:fixed; inset:0; z-index:1000; background:rgba(31,41,55,0.7); justify-content:center; align-items:center; }
     #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
-    #email-modal, #batch-modal {
-      background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw; max-height:80vh;
-      min-height:380px; box-shadow:0 8px 32px #0002; display:flex; flex-direction:column;
-      padding:2rem 2rem 1.2rem 2rem; position:relative; overflow:auto; border:3px solid #000;
-    }
-    #email-modal .close-modal, #batch-modal .close-modal {
-      position:absolute; top:12px; right:17px; font-size:2rem; font-weight:600; color:#e11d48;
-      cursor:pointer; line-height:1; transition:color .15s; z-index:2000;
-    }
+    #email-modal, #batch-modal { background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw; max-height:80vh; min-height:380px; box-shadow:0 8px 32px #0002; display:flex; flex-direction:column; padding:2rem 2rem 1.2rem 2rem; position:relative; overflow:auto; border:3px solid #000; }
+    #email-modal .close-modal, #batch-modal .close-modal { position:absolute; top:12px; right:17px; font-size:2rem; font-weight:600; color:#e11d48; cursor:pointer; line-height:1; transition:color .15s; z-index:2000; }
     #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
     #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
-    @media (max-width: 900px){ #email-modal,#batch-modal{padding:1rem;max-width:98vw;width:98vw;} }
-    @media (max-width: 500px){ #email-modal,#batch-modal{min-height:220px;} }
-    .spinner {
-      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
-      border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%;
-      animation:spin 1s linear infinite; margin:0 auto;
-    }
+    @media (max-width:900px){#email-modal,#batch-modal{padding:1rem;max-width:98vw;width:98vw;}}
+    @media (max-width:500px){#email-modal,#batch-modal{min-height:220px;}}
+    .spinner { display:inline-block; width:1.5em; height:1.5em; vertical-align:middle; border:3px solid #cbd5e1; border-top:3px solid #64748b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto; }
     @keyframes spin{100%{transform:rotate(360deg);}}
     .email-check { color:#22c55e; font-size:1.15em; margin-left:5px; vertical-align:middle; }
     .customer-id-label { font-weight:bold; margin-right:3px; }
@@ -78,7 +45,8 @@
 </head>
 <body class="flex h-screen bg-gray-50">
 
-  <!-- Login Overlay -->
+
+  <!-- ===== LOGIN OVERLAY ===== -->
   <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
@@ -91,7 +59,8 @@
     </div>
   </div>
 
-  <!-- Email Modal -->
+
+  <!-- ===== EMAIL MODAL ===== -->
   <div id="email-modal-bg">
     <div id="email-modal">
       <div class="close-modal" id="close-email-modal">&times;</div>
@@ -106,7 +75,7 @@
         <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
         <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin">
         <label class="block text-gray-600 font-semibold mb-1">Message:</label>
-        <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]">Dear Customer,
+        <textarea id="email-body" class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]" placeholder="Write your message...">Dear Customer,
 
 Your personalized payment link and PIN will be provided here.
 
@@ -118,7 +87,8 @@ Admin</textarea>
     </div>
   </div>
 
-  <!-- Batch Action Modal -->
+
+  <!-- ===== BATCH ACTION MODAL ===== -->
   <div id="batch-modal-bg">
     <div id="batch-modal">
       <div class="close-modal" id="close-batch-modal">&times;</div>
@@ -133,13 +103,16 @@ Admin</textarea>
     </div>
   </div>
 
-  <!-- Sidebar -->
+
+  <!-- ===== SIDEBAR ===== -->
   <nav id="sidebar" class="hidden flex-shrink-0 flex-col bg-white p-4 shadow-lg">
     <h1 class="mb-4 text-2xl font-bold">Admin</h1>
     <button data-target="dashboard" class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
+      <!-- home icon -->
       <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4.5l9 5.25V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
-      </svg>Dashboard
+      </svg>
+      Dashboard
     </button>
     <div class="sidebar-divider"></div>
     <div class="mb-2 flex items-center">
@@ -149,13 +122,15 @@ Admin</textarea>
     <ul id="sidebar-customer-list" class="space-y-1 text-gray-600"></ul>
   </nav>
 
-  <!-- Main -->
+
+  <!-- ===== MAIN CONTENT ===== -->
   <div id="main" class="hidden flex flex-1 flex-col">
     <header class="bg-white shadow-md">
       <div class="px-4 py-3"><h2 id="page-title" class="text-xl font-semibold">Dashboard</h2></div>
     </header>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
-      <!-- Dashboard -->
+
+      <!-- DASHBOARD -->
       <section id="dashboard" class="space-y-6">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div class="rounded-2xl bg-white p-6 shadow">
@@ -183,12 +158,14 @@ Admin</textarea>
               <button id="batch-email" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
                 <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16 12H8m8 0H8m12 4.5V9.75M12 4.5L3 9.75V21a.75.75 0 00.75.75H20.25A.75.75 0 0021 21V9.75L12 4.5z"/>
-                </svg>Send Email
+                </svg>
+                Send Email
               </button>
               <button id="batch-paid" class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg flex items-center justify-center">
                 <svg class="h-5 w-5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>Mark All Paid
+                </svg>
+                Mark All Paid
               </button>
             </div>
             <div class="mt-2"><span id="batch-count">0</span> selected.</div>
@@ -196,20 +173,20 @@ Admin</textarea>
         </div>
       </section>
 
-      <!-- Add Customer -->
+      <!-- ADD CUSTOMER -->
       <section id="customers" class="hidden space-y-8">
         <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
           <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
-          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4"/>
+          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4"/>
+          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4"/>
+          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4"/>
+          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4"/>
           <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
         </div>
       </section>
 
-      <!-- Profile -->
+      <!-- PROFILE -->
       <section id="profile" class="hidden space-y-6">
         <div class="mx-auto max-w-md space-y-4 rounded-2xl bg-white p-6 shadow">
           <h3 class="text-xl font-semibold">Customer Profile</h3>
@@ -219,7 +196,7 @@ Admin</textarea>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
-          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
+          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2"/>
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
@@ -230,12 +207,13 @@ Admin</textarea>
           <div id="profile-email-log" class="mt-4"></div>
         </div>
       </section>
+
     </main>
   </div>
 
-  <!-- ========== Firebase Sync & Your JS ========== -->
+  <!-- ===== FIREBASE SYNC & OVERRIDES ===== -->
   <script>
-    // Initialize Firebase
+    // 1) Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
       authDomain: "customerportal-3032d.firebaseapp.com",
@@ -248,16 +226,16 @@ Admin</textarea>
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Sync customers
+    // 2) Sync helpers
     function syncCustomersFromFirestore() {
-      db.collection('customers').get()
-        .then(snap => {
-          const arr = [];
-          snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-          localStorage.setItem('customers', JSON.stringify(arr));
-          populateSidebar(); updateMetrics(); updateGrid();
-        })
-        .catch(e => alert("Customers load error: "+e));
+      db.collection('customers').get().then(snap => {
+        const arr = [];
+        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+        localStorage.setItem('customers', JSON.stringify(arr));
+        if (typeof populateSidebar==='function') populateSidebar();
+        if (typeof updateMetrics==='function') updateMetrics();
+        if (typeof updateGrid==='function') updateGrid();
+      });
     }
     function syncCustomersToFirestore() {
       try {
@@ -267,78 +245,404 @@ Admin</textarea>
         batch.commit();
       } catch(e){ console.error(e); }
     }
-
-    // Sync email log
     function syncEmailLogFromFirestore() {
-      db.collection('emailLog').get()
-        .then(snap => {
-          const log = {};
-          snap.forEach(d => log[d.id] = d.data().lastEmailed);
-          localStorage.setItem('emailLog', JSON.stringify(log));
-          populateSidebar(); if(activeCustomer) renderEmailLog();
-        });
+      db.collection('emailLog').get().then(snap=>{
+        const log = {};
+        snap.forEach(d=> log[d.id]=d.data().lastEmailed);
+        localStorage.setItem('emailLog', JSON.stringify(log));
+        if (typeof populateSidebar==='function') populateSidebar();
+        if (typeof activeCustomer!=='undefined') renderEmailLog();
+      });
     }
     function syncEmailLogToFirestore() {
       try {
         const log = JSON.parse(localStorage.getItem('emailLog')||'{}');
         const batch = db.batch();
-        for(let id in log){
-          batch.set(db.collection('emailLog').doc(id), { lastEmailed: log[id] });
-        }
+        for(let id in log) batch.set(db.collection('emailLog').doc(id), { lastEmailed: log[id] });
         batch.commit();
       } catch(e){ console.error(e); }
     }
 
-    // Override storage funcs
+    // 3) Override storage funcs
     function getCustomers(){ try{return JSON.parse(localStorage.getItem('customers')||'[]')}catch{return[]} }
-    function saveCustomers(c){ localStorage.setItem('customers',JSON.stringify(c)); syncCustomersToFirestore(); }
+    function saveCustomers(arr){ localStorage.setItem('customers',JSON.stringify(arr)); syncCustomersToFirestore(); }
     function getEmailLog(){ try{return JSON.parse(localStorage.getItem('emailLog')||'{}')}catch{return{}} }
-    function saveEmailLog(l){ localStorage.setItem('emailLog',JSON.stringify(l)); syncEmailLogToFirestore(); }
+    function saveEmailLog(log){ localStorage.setItem('emailLog',JSON.stringify(log)); syncEmailLogToFirestore(); }
 
-    // On load: sync from Firestore
+    // 4) On load, pull from Firestore
     syncCustomersFromFirestore();
     syncEmailLogFromFirestore();
   </script>
 
+  <!-- ===== YOUR ORIGINAL JS LOGIC (UNCHANGED) ===== -->
   <script>
-    // ====== Your original JS logic exactly as before ======
     document.addEventListener('DOMContentLoaded', function() {
-      // Helper for bills (still localStorage)
+      // localStorage helpers for bills
       function getBills() { try{return JSON.parse(localStorage.getItem('bills')||'[]')}catch{return[]} }
-      function saveBills(b){ localStorage.setItem('bills', JSON.stringify(b)); }
-      // ... generateUniquePin, UI variables, event listeners, etc. exactly as you provided ...
+      function saveBills(b){ localStorage.setItem('bills',JSON.stringify(b)); }
 
-      // Login logic
-      var loginOverlay = document.getElementById('login-overlay'),
-          loginBtn = document.getElementById('login-btn'),
-          pinInput = document.getElementById('admin-pin'),
-          pinError = document.getElementById('pin-error'),
-          sidebar = document.getElementById('sidebar'),
-          main = document.getElementById('main');
-      loginBtn.addEventListener('click', function(){
+      // Unique PIN generator (unchanged)
+      function generateUniquePin(existingPins) {
+        let pin, tries=0;
+        do {
+          pin = String(Math.floor(1000+Math.random()*9000));
+          tries++;
+          if(tries>5000) throw new Error('Could not generate unique PIN');
+        } while(existingPins.includes(pin));
+        return pin;
+      }
+
+      // DOM refs
+      const loginOverlay=document.getElementById('login-overlay'),
+            loginBtn=document.getElementById('login-btn'),
+            pinInput=document.getElementById('admin-pin'),
+            pinError=document.getElementById('pin-error'),
+            sidebar=document.getElementById('sidebar'),
+            main=document.getElementById('main'),
+            navLinks=document.querySelectorAll('.nav-link'),
+            sidebarCustomerList=document.getElementById('sidebar-customer-list'),
+            addCustIcon=document.getElementById('add-cust-icon'),
+            addCustBtn=document.getElementById('add-cust-btn'),
+            addInvoiceBtn=document.getElementById('add-invoice-btn'),
+            deleteCustBtn=document.getElementById('delete-cust-btn'),
+            updateCustBtn=document.getElementById('update-cust-btn'),
+            updateFieldsDiv=document.getElementById('update-fields'),
+            batchBar=document.getElementById('batch-bar'),
+            batchPaidBtn=document.getElementById('batch-paid'),
+            batchEmailBtn=document.getElementById('batch-email'),
+            batchCount=document.getElementById('batch-count'),
+            emailModalBg=document.getElementById('email-modal-bg'),
+            emailModal=document.getElementById('email-modal'),
+            closeEmailModal=document.getElementById('close-email-modal'),
+            modalCustomersList=document.getElementById('modal-customers-list'),
+            emailModalFeedback=document.getElementById('email-modal-feedback'),
+            emailSubject=document.getElementById('email-subject'),
+            emailBody=document.getElementById('email-body'),
+            massEmailForm=document.getElementById('mass-email-form'),
+            batchModalBg=document.getElementById('batch-modal-bg'),
+            batchModal=document.getElementById('batch-modal'),
+            closeBatchModal=document.getElementById('close-batch-modal'),
+            batchModalPaid=document.getElementById('batch-modal-paid'),
+            batchModalEmail=document.getElementById('batch-modal-email'),
+            batchModalList=document.getElementById('batch-modal-list');
+
+      let selectedCustomerIds=[], activeCustomer=null;
+
+      // Show section helper
+      function showSection(id){
+        ['dashboard','customers','profile'].forEach(sec=>{
+          document.getElementById(sec).style.display=(sec===id?'block':'none');
+        });
+        document.getElementById('page-title').textContent=id.charAt(0).toUpperCase()+id.slice(1);
+        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
+        if(id==='dashboard') updatePendingPaymentsSection && updatePendingPaymentsSection();
+      }
+
+      // Navigation links
+      navLinks.forEach(link=>{
+        link.addEventListener('click',e=>{
+          e.preventDefault();
+          navLinks.forEach(l=>l.classList.remove('active'));
+          link.classList.add('active');
+          showSection(link.getAttribute('data-target'));
+        });
+      });
+
+      // Missing info warning
+      function customerHasMissingInfo(c){
+        return !(c.email&&c.email.trim())||!(c.phone&&c.phone.trim())||!(c.address&&c.address.trim());
+      }
+
+      // Populate sidebar
+      function populateSidebar(){
+        var emailLog=getEmailLog();
+        sidebarCustomerList.innerHTML='';
+        getCustomers().slice().sort((a,b)=>+a.id-+b.id).forEach(c=>{
+          var btn=document.createElement('button');
+          btn.className='customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
+          btn.style.position='relative';
+          var content=`<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+          if(customerHasMissingInfo(c)) content+=`<span class="customer-warning" title="Missing info">!</span>`;
+          if(emailLog[c.id]) content+=` <span class="email-check" title="Emailed">&#10003;</span>`;
+          btn.innerHTML=content;
+          btn.addEventListener('click',()=>{
+            document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            openCustomer(c.id);
+          });
+          var li=document.createElement('li'); li.appendChild(btn);
+          sidebarCustomerList.appendChild(li);
+        });
+      }
+
+      // Open customer profile
+      function openCustomer(id){
+        activeCustomer=getCustomers().find(c=>c.id===id);
+        if(!activeCustomer)return;
+        ['id','name','email','phone','address'].forEach(f=>{
+          document.getElementById('profile-'+f).textContent=activeCustomer[f]||'';
+        });
+        document.getElementById('profile-pin').textContent=activeCustomer.pin||'';
+        renderBills(); renderEmailLog();
+        document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+        document.querySelectorAll('.customer-btn').forEach(b=>{
+          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id+' -')) b.classList.add('active');
+          else b.classList.remove('active');
+        });
+        showSection('profile');
+        updateFieldsDiv.innerHTML='';
+      }
+
+      // Render email log
+      function renderEmailLog(){
+        var logDiv=document.getElementById('profile-email-log'); logDiv.innerHTML='';
+        var log=getEmailLog();
+        if(activeCustomer&&log[activeCustomer.id]){
+          logDiv.innerHTML=`<div class="log-entry">Last emailed: <span class="dt">${log[activeCustomer.id]}</span></div>`;
+        }
+      }
+
+      // Render bills
+      function renderBills(){
+        var listEl=document.getElementById('profile-bills-list');
+        if(!activeCustomer||!listEl)return; listEl.innerHTML='';
+        getBills().filter(b=>b.customerId===activeCustomer.id).forEach(b=>{
+          var li=document.createElement('li'); li.className='p-4 bg-gray-100 rounded';
+          li.innerHTML=`<p><strong>Amount:</strong> $${b.amount}</p><p><strong>Due:</strong> ${b.dueDate}</p><p><strong>Status:</strong> ${b.paid?'Paid':'Unpaid'}</p>`;
+          if(!b.paid){
+            var payBtn=document.createElement('button');
+            payBtn.textContent='Mark Paid';
+            payBtn.className='mt-2 bg-green-400 text-white px-3 py-1 rounded';
+            payBtn.addEventListener('click',()=>{
+              var all=getBills();
+              var idx=all.findIndex(x=>x.customerId===b.customerId&&x.amount===b.amount&&x.dueDate===b.dueDate&&x.createdAt===b.createdAt);
+              if(idx!==-1){ all[idx].paid=true; saveBills(all); renderBills(); updateMetrics(); updateGrid(); }
+            });
+            li.appendChild(payBtn);
+          }
+          listEl.appendChild(li);
+        });
+      }
+
+      // Add customer view
+      addCustIcon.addEventListener('click',()=>{
+        navLinks.forEach(l=>l.classList.remove('active'));
+        showSection('customers');
+      });
+
+      // Add customer logic
+      addCustBtn.addEventListener('click',()=>{
+        var id=document.getElementById('cust-id').value.trim(),
+            name=document.getElementById('cust-name').value.trim(),
+            email=document.getElementById('cust-email').value.trim(),
+            phone=document.getElementById('cust-phone').value.trim(),
+            address=document.getElementById('cust-address').value.trim();
+        if(!id||!name){ alert('ID and name required'); return; }
+        var cs=getCustomers(), existingPins=cs.map(c=>c.pin), pin=generateUniquePin(existingPins);
+        cs.push({ id,name,email,phone,address,pin });
+        saveCustomers(cs);
+        ['cust-id','cust-name','cust-email','cust-phone','cust-address'].forEach(f=>document.getElementById(f).value='');
+        populateSidebar(); updateMetrics(); updateGrid();
+        document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+        showSection('dashboard');
+      });
+
+      // Add invoice
+      addInvoiceBtn.addEventListener('click',()=>{
+        if(!activeCustomer){ alert('Select a customer'); return; }
+        var amt=document.getElementById('invoice-amount').value.trim();
+        if(!amt){ alert('Enter amount'); return; }
+        var due=new Date().toISOString().substring(0,10),
+            bs=getBills();
+        bs.push({ customerId:activeCustomer.id, amount:parseFloat(amt), dueDate:due, paid:false, createdAt:new Date().toISOString() });
+        saveBills(bs); renderBills(); updateMetrics(); updateGrid();
+        document.getElementById('invoice-amount').value='';
+      });
+
+      // Delete customer
+      deleteCustBtn.addEventListener('click',()=>{
+        if(!activeCustomer){ alert('Please select a customer first.'); return; }
+        if(!confirm(`Delete customer "${activeCustomer.name}" and all their invoices?`)) return;
+        var cs=getCustomers().filter(c=>c.id!==activeCustomer.id);
+        saveCustomers(cs);
+        saveBills(getBills().filter(b=>b.customerId!==activeCustomer.id));
+        activeCustomer=null;
+        document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
+        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin'].forEach(f=>document.getElementById(f).textContent='');
+        document.getElementById('profile-bills-list').innerHTML='';
+        updateFieldsDiv.innerHTML='';
+        populateSidebar(); updateMetrics(); updateGrid();
+        document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+        showSection('dashboard');
+      });
+
+      // Update customer missing info
+      updateCustBtn.addEventListener('click',()=>{
+        if(updateFieldsDiv.innerHTML!==''){ updateFieldsDiv.innerHTML=''; return; }
+        if(!activeCustomer)return;
+        const fields=[{key:'email',label:'Email',type:'email'},{key:'phone',label:'Phone Number',type:'tel'},{key:'address',label:'Address',type:'text'}],
+              missing=fields.filter(f=>!activeCustomer[f.key]||!activeCustomer[f.key].trim());
+        if(!missing.length){ updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">No missing information!</div>'; return; }
+        updateFieldsDiv.innerHTML='';
+        missing.forEach(f=>{
+          const row=document.createElement('div'); row.className='update-row';
+          const input=document.createElement('input'); input.type=f.type; input.placeholder=f.label; input.className='border rounded px-2 py-1 flex-1'; input.style.minWidth="0";
+          const btn=document.createElement('button'); btn.textContent='Add'; btn.className='bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
+          btn.onclick=()=>{
+            const val=input.value.trim(); if(!val){ input.classList.add('border-red-400'); return; }
+            const cs=getCustomers(), idx=cs.findIndex(c=>c.id===activeCustomer.id);
+            if(idx!==-1){ cs[idx][f.key]=val; saveCustomers(cs); activeCustomer=cs[idx]; document.getElementById('profile-'+f.key).textContent=val; row.remove();
+              populateSidebar(); updateMetrics(); updateGrid();
+              if(!fields.filter(ff=>!cs[idx][ff.key]||!cs[idx][ff.key].trim()).length){
+                updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">All information updated!</div>';
+                setTimeout(()=>updateFieldsDiv.innerHTML='',2000);
+              }
+            }
+          };
+          row.append(input,btn);
+          updateFieldsDiv.append(row);
+        });
+      });
+
+      // Batch bar
+      function updateBatchBar(){
+        if(selectedCustomerIds.length){
+          batchBar.classList.add('show'); batchCount.textContent=selectedCustomerIds.length;
+        }else{ batchBar.classList.remove('show'); batchCount.textContent='0'; }
+      }
+      batchPaidBtn.addEventListener('click',()=>{
+        if(!selectedCustomerIds.length)return;
+        if(!confirm('Are you sure you want to mark all unpaid invoices for selected customers as paid?'))return;
+        let bs=getBills(), changed=false;
+        bs.forEach(b=>{ if(selectedCustomerIds.includes(b.customerId)&&!b.paid){ b.paid=true; changed=true; }});
+        if(changed) saveBills(bs);
+        selectedCustomerIds=[]; updateGrid(); updateMetrics(); updateBatchBar();
+      });
+
+      // Email modal
+      function openEmailModal(ids){
+        modalCustomersList.innerHTML='';
+        const data=getCustomers().slice().sort((a,b)=>+a.id-+b.id);
+        ids.forEach(id=>{
+          const c=data.find(x=>x.id===id);
+          if(c){ const li=document.createElement('li'); li.textContent=`${c.id} - ${c.name}${c.email?' — '+c.email:''}`; modalCustomersList.append(li);}
+        });
+        emailModalFeedback.textContent=''; emailModalBg.classList.add('show');
+      }
+      batchEmailBtn.addEventListener('click',()=>{ if(selectedCustomerIds.length) openEmailModal(selectedCustomerIds); });
+      closeEmailModal.addEventListener('click',()=>emailModalBg.classList.remove('show'));
+      emailModalBg.addEventListener('click',e=>{ if(e.target===emailModalBg) emailModalBg.classList.remove('show'); });
+      massEmailForm.addEventListener('submit',e=>{
+        e.preventDefault();
+        const log=getEmailLog(), now=new Date().toLocaleString();
+        selectedCustomerIds.forEach(id=>log[id]=now);
+        saveEmailLog(log);
+        populateSidebar(); if(activeCustomer) renderEmailLog();
+        emailModalFeedback.textContent=`Emails sent to ${selectedCustomerIds.length} customer(s)!`;
+        setTimeout(()=>emailModalBg.classList.remove('show'),1300);
+      });
+
+      // Long-press batch modal
+      const gridEl=document.getElementById('invoice-grid'); let holdTimeout;
+      gridEl.addEventListener('mousedown',e=>{
+        const cell=e.target.closest('.grid-cell'); if(!cell)return;
+        holdTimeout=setTimeout(()=>showBatchModal(cell.textContent),700);
+      });
+      ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>gridEl.addEventListener(ev,()=>clearTimeout(holdTimeout)));
+      gridEl.addEventListener('touchstart',e=>{
+        const cell=e.target.closest('.grid-cell'); if(!cell)return;
+        holdTimeout=setTimeout(()=>showBatchModal(cell.textContent),700);
+      },{passive:true});
+
+      function showBatchModal(id){
+        const c=getCustomers().find(x=>x.id==id); if(!c)return;
+        batchModalList.innerHTML=`<strong class="mb-1">${c.id} - ${c.name}</strong>`;
+        batchModalBg.classList.add('show');
+        batchModalPaid.onclick=()=>{
+          if(confirm('Mark all invoices for this customer as paid?')){
+            const bs=getBills(); let ch=false;
+            bs.forEach(b=>{ if(b.customerId===c.id && !b.paid){ b.paid=true; ch=true; }});
+            if(ch) saveBills(bs);
+            updateGrid(); updateMetrics();
+          }
+          batchModalBg.classList.remove('show');
+        };
+        batchModalEmail.onclick=()=>{
+          openEmailModal([c.id]); batchModalBg.classList.remove('show');
+        };
+      }
+      closeBatchModal.addEventListener('click',()=>batchModalBg.classList.remove('show'));
+      batchModalBg.addEventListener('click',e=>{ if(e.target===batchModalBg)batchModalBg.classList.remove('show'); });
+
+      // Metrics & grid
+      function updateMetrics(){
+        const cs=getCustomers(), bs=getBills();
+        document.getElementById('customersCount').textContent=cs.length;
+        document.getElementById('outstandingCount').textContent=bs.filter(b=>!b.paid).length;
+        const unpaid=bs.filter(b=>!b.paid).reduce((s,b)=>s+Number(b.amount||0),0);
+        document.getElementById('unpaidAmount').textContent='$'+unpaid.toFixed(2);
+        const start=new Date(); start.setDate(1); start.setHours(0,0,0,0);
+        const rev=bs.filter(b=>b.paid&&new Date(b.createdAt)>=start).reduce((s,b)=>s+b.amount,0);
+        document.getElementById('revenueCount').textContent='$'+rev.toFixed(2);
+      }
+      function updateGrid(){
+        const grid=document.getElementById('invoice-grid'); grid.innerHTML='';
+        getCustomers().slice().sort((a,b)=>+a.id-+b.id).forEach(c=>{
+          const cell=document.createElement('div'); cell.className='grid-cell'; cell.textContent=c.id;
+          const bills=getBills().filter(b=>b.customerId===c.id);
+          if(bills.some(b=>!b.paid)) cell.classList.add('unpaid'); else cell.classList.add('paid');
+          if(selectedCustomerIds.includes(c.id)) cell.classList.add('selected');
+          cell.addEventListener('click',e=>{
+            e.preventDefault();
+            if(selectedCustomerIds.includes(c.id)) selectedCustomerIds=selectedCustomerIds.filter(x=>x!==c.id);
+            else selectedCustomerIds.push(c.id);
+            updateGrid(); updateBatchBar();
+          });
+          grid.appendChild(cell);
+        });
+        updateBatchBar();
+      }
+
+      // Login spinner + logic
+      loginBtn.addEventListener('click',()=>{
         pinError.textContent='';
         if(pinInput.value==='1234'){
           document.getElementById('login-btn-text').classList.add('hidden');
           document.getElementById('login-btn-spinner').classList.remove('hidden');
-          setTimeout(function(){
+          loginBtn.disabled=true;
+          setTimeout(()=>{
             loginOverlay.style.display='none';
             sidebar.style.display='flex';
             main.style.display='flex';
-            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
             populateSidebar(); updateMetrics(); updateGrid();
-          }, 500);
-        } else {
-          pinError.textContent='Invalid PIN';
-        }
+            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
+            document.getElementById('login-btn-text').classList.remove('hidden');
+            document.getElementById('login-btn-spinner').classList.add('hidden');
+            loginBtn.disabled=false;
+            pinInput.value='';
+          },1000);
+        } else pinError.textContent='Invalid PIN';
       });
 
-      // All other UI logic: populateSidebar, openCustomer, renderBills,
-      // renderEmailLog, addCustomer, addInvoice, deleteCustomer, updateCustomer,
-      // batch actions, calendar grid, modals, etc.
-      // Exactly as your original code, unchanged, calling getCustomers/saveCustomers
-      // and getEmailLog/saveEmailLog where appropriate.
+      // Demo autofill if empty
+      (function demoAutofill(){
+        let cs=getCustomers();
+        if(!cs.length){
+          cs=[
+            {id:"1",name:"John Doe",email:"john@email.com",phone:"123-456-7890",address:"123 Main St",pin:"1234"},
+            {id:"2",name:"Jane Smith",email:"jane@email.com",phone:"555-555-5555",address:"456 Elm St",pin:"4321"}
+          ];
+          saveCustomers(cs);
+          saveBills([
+            {customerId:"1",amount:120,dueDate:"2025-06-30",paid:false,createdAt:"2025-06-15T12:00:00Z"},
+            {customerId:"1",amount:75,dueDate:"2025-05-15",paid:true,createdAt:"2025-05-01T12:00:00Z"},
+            {customerId:"2",amount:99,dueDate:"2025-06-29",paid:false,createdAt:"2025-06-12T12:00:00Z"}
+          ]);
+        }
+      })();
 
-    });
+
+    }); // end DOMContentLoaded
   </script>
 </body>
 </html>
