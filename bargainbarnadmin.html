@@ -141,6 +141,14 @@
       opacity: 1;
     }
 
+    /* Red ! warning style for missing info */
+    .customer-warning {
+      color: #ef4444; /* red */
+      font-weight: 700;
+      margin-left: 6px;
+      user-select: none;
+    }
+
     /* New Email Options Dropdown */
     #email-options-dropdown {
       position: absolute;
@@ -151,7 +159,6 @@
       background: white;
       border: 2px solid black; /* thinner border */
       border-radius: 0.5rem; /* less rounded corners */
-     
       padding: 0.75rem 1rem 1rem 1rem;
       z-index: 2000;
       display: none;
@@ -574,7 +581,7 @@ Admin</textarea>
           phone: document.getElementById("cust-phone").value.trim(),
           address: document.getElementById("cust-address").value.trim(),
           pin,
-          adminPin: pin // store adminPin equal to pin initially
+          adminPin: pin
         });
         ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
           (f) => (document.getElementById(f).value = "")
