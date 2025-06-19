@@ -11,83 +11,215 @@
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldq&currency=USD"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldqxoWbk6Mo8m3Cq8eGKN8Ns_4e1JR_om6AVuMRBqkiCyxz0LvDz-lX2gpbO6o&currency=USD"></script>
   <style>
-    /* ——— All original CSS unchanged ——— */
-    #invoice-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .5rem; }
+    /* All original CSS unchanged */
+    #invoice-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
     .grid-cell {
-      aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
-      border:1px solid #CBD5E0; border-radius:.25rem; background:#fff;
-      color:#1A202C; font-size:.9rem; cursor:pointer; transition:box-shadow .12s;
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #CBD5E0;
+      border-radius: 0.25rem;
+      background: #fff;
+      color: #1A202C;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: box-shadow 0.12s;
       position: relative;
     }
-    .grid-cell.unpaid { background:#fecaca; border-color:#fecaca; color:#b91c1c; }
-    .grid-cell.paid   { background:#bbf7d0; border-color:#bbf7d0; color:#166534; }
-    .grid-cell.selected { outline: 3px solid #000; z-index:2; }
+    .grid-cell.unpaid {
+      background: #fecaca;
+      border-color: #fecaca;
+      color: #b91c1c;
+    }
+    .grid-cell.paid {
+      background: #bbf7d0;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+    .grid-cell.selected {
+      outline: 3px solid #000;
+      z-index: 2;
+    }
     .customer-warning {
-      display: inline-flex; align-items: center; margin-left: .5rem;
-      background: #f87171; color: #fff; border-radius: 50%; width:1.1em; height:1.1em;
-      justify-content:center; font-size:.8em; box-shadow:0 0 2px #b91c1c88;
+      display: inline-flex;
+      align-items: center;
+      margin-left: 0.5rem;
+      background: #f87171;
+      color: #fff;
+      border-radius: 50%;
+      width: 1.1em;
+      height: 1.1em;
+      justify-content: center;
+      font-size: 0.8em;
+      box-shadow: 0 0 2px #b91c1c88;
     }
-    .customer-btn.active, #sidebar .customer-btn.active {
-      background: #E5E7EB !important; border-radius: .375rem;
+    .customer-btn.active,
+    #sidebar .customer-btn.active {
+      background: #E5E7EB !important;
+      border-radius: 0.375rem;
     }
-    .update-fields { margin-top:1rem; }
-    .update-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; }
+    .update-fields {
+      margin-top: 1rem;
+    }
+    .update-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
     #batch-bar {
-      display:none; position:relative; margin-top:1rem; background:#f3f4f6;
-      border:2px solid #000; border-radius:.5rem; padding:1rem;
-      box-shadow:0 4px 24px #3332; text-align:center; font-weight:600;
-      color:#333; z-index:30; align-items:center; justify-content:center;
-      flex-direction:column;
+      display: none;
+      position: relative;
+      margin-top: 1rem;
+      background: #f3f4f6;
+      border: 2px solid #000;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: 0 4px 24px #3332;
+      text-align: center;
+      font-weight: 600;
+      color: #333;
+      z-index: 30;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
     }
-    #batch-bar.show { display:flex; }
-    #batch-bar .bar-actions { display:flex; gap:1.5rem; justify-content:center; }
+    #batch-bar.show {
+      display: flex;
+    }
+    #batch-bar .bar-actions {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+    }
     #sidebar {
-      width:auto!important; min-width:0; max-width:240px;
-      padding-right:18px!important; padding-left:13px!important;
+      width: auto !important;
+      min-width: 0;
+      max-width: 240px;
+      padding-right: 18px !important;
+      padding-left: 13px !important;
     }
-    #sidebar .customer-btn { white-space: nowrap; }
-    #sidebar h1 { white-space: nowrap; }
+    #sidebar .customer-btn {
+      white-space: nowrap;
+    }
+    #sidebar h1 {
+      white-space: nowrap;
+    }
     .sidebar-divider {
-      width:80%; height:2px; background:#e5e7eb; margin:12px auto 14px auto; border-radius:2px;
+      width: 80%;
+      height: 2px;
+      background: #e5e7eb;
+      margin: 12px auto 14px auto;
+      border-radius: 2px;
     }
-    #email-modal-bg, #batch-modal-bg {
-      display:none; position:fixed; inset:0; z-index:1000;
-      background:rgba(31,41,55,0.7); justify-content:center; align-items:center;
+    #email-modal-bg,
+    #batch-modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(31, 41, 55, 0.7);
+      justify-content: center;
+      align-items: center;
     }
-    #email-modal-bg.show, #batch-modal-bg.show { display:flex; }
-    #email-modal, #batch-modal {
-      background:#fff; border-radius:1.2rem; max-width:80vw; width:80vw;
-      max-height:80vh; min-height:380px; box-shadow:0 8px 32px #0002;
-      display:flex; flex-direction:column; padding:2rem 2rem 1.2rem 2rem;
-      position:relative; overflow:auto; border:3px solid #000;
+    #email-modal-bg.show,
+    #batch-modal-bg.show {
+      display: flex;
     }
-    #email-modal .close-modal, #batch-modal .close-modal {
-      position:absolute; top:12px; right:17px; cursor:pointer; font-size:2rem;
-      font-weight:600; color:#e11d48; line-height:1; transition:color .15s;
-      z-index:2000;
+    #email-modal,
+    #batch-modal {
+      background: #fff;
+      border-radius: 1.2rem;
+      max-width: 80vw;
+      width: 80vw;
+      max-height: 80vh;
+      min-height: 380px;
+      box-shadow: 0 8px 32px #0002;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 2rem 1.2rem 2rem;
+      position: relative;
+      overflow: auto;
+      border: 3px solid #000;
     }
-    #email-modal .close-modal:hover, #batch-modal .close-modal:hover { color:#b91c1c; }
-    #email-modal-list, #batch-modal-list { margin-bottom:1.5rem; }
-    @media (max-width:900px) {
-      #email-modal, #batch-modal { padding:1rem; max-width:98vw; width:98vw; }
+    #email-modal .close-modal,
+    #batch-modal .close-modal {
+      position: absolute;
+      top: 12px;
+      right: 17px;
+      cursor: pointer;
+      font-size: 2rem;
+      font-weight: 600;
+      color: #e11d48;
+      line-height: 1;
+      transition: color 0.15s;
+      z-index: 2000;
     }
-    @media (max-width:500px) {
-      #email-modal, #batch-modal { min-height:220px; }
+    #email-modal .close-modal:hover,
+    #batch-modal .close-modal:hover {
+      color: #b91c1c;
+    }
+    #email-modal-list,
+    #batch-modal-list {
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      #email-modal,
+      #batch-modal {
+        padding: 1rem;
+        max-width: 98vw;
+        width: 98vw;
+      }
+    }
+    @media (max-width: 500px) {
+      #email-modal,
+      #batch-modal {
+        min-height: 220px;
+      }
     }
     .spinner {
-      display:inline-block; width:1.5em; height:1.5em; vertical-align:middle;
-      border:3px solid #cbd5e1; border-top:3px solid #64748b;
-      border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;
+      display: inline-block;
+      width: 1.5em;
+      height: 1.5em;
+      vertical-align: middle;
+      border: 3px solid #cbd5e1;
+      border-top: 3px solid #64748b;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
     }
-    @keyframes spin { 100%{transform:rotate(360deg);} }
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
     .email-check {
-      color:#22c55e; font-size:1.15em; margin-left:5px; vertical-align:middle;
+      color: #22c55e;
+      font-size: 1.15em;
+      margin-left: 5px;
+      vertical-align: middle;
     }
-    .customer-id-label { font-weight:bold; margin-right:3px; }
-    .log-entry { font-size:.92em; color:#475569; margin-bottom:6px; }
-    .log-entry .dt { font-size:.85em; color:#999; margin-left:4px; }
+    .customer-id-label {
+      font-weight: bold;
+      margin-right: 3px;
+    }
+    .log-entry {
+      font-size: 0.92em;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .log-entry .dt {
+      font-size: 0.85em;
+      color: #999;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -227,11 +359,11 @@ Admin</textarea>
       <section id="customers" class="hidden space-y-8">
         <div class="mx-auto max-w-md rounded-2xl bg-white p-6 shadow">
           <h3 class="mb-4 text-xl font-semibold">+ Add Customer</h3>
-          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4">
-          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4">
+          <input id="cust-id" placeholder="Customer ID" class="mb-4 w-full rounded-lg border p-4" />
+          <input id="cust-name" placeholder="Customer Name" class="mb-4 w-full rounded-lg border p-4" />
+          <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4" />
+          <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4" />
+          <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4" />
           <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">
             Add Customer
           </button>
@@ -248,7 +380,7 @@ Admin</textarea>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
-          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2">
+          <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2" />
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
             Add Invoice
           </button>
@@ -269,7 +401,7 @@ Admin</textarea>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener("DOMContentLoaded", async function () {
       // Firestore initialization
       const firebaseConfig = {
         apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
@@ -278,334 +410,390 @@ Admin</textarea>
         storageBucket: "customerportal-3032d.appspot.com",
         messagingSenderId: "1003504088676",
         appId: "1:1003504088676:web:43453e986312257b2f5171",
-        measurementId: "G-CVC0HK0WP8"
+        measurementId: "G-CVC0HK0WP8",
       };
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
       // Helpers
       function generateUniquePin(existingPins) {
-        let pin, tries = 0;
+        let pin,
+          tries = 0;
         do {
           pin = String(Math.floor(1000 + Math.random() * 9000));
           tries++;
-          if (tries > 5000) throw new Error('Could not generate unique PIN');
+          if (tries > 5000) throw new Error("Could not generate unique PIN");
         } while (existingPins.includes(pin));
         return pin;
       }
+      async function getCustomers() {
+        const snap = await db.collection("customers").get();
+        return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      }
+      async function getBills() {
+        const snap = await db.collection("bills").get();
+        return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      }
       function getEmailLog() {
-        try { return JSON.parse(localStorage.getItem('emailLog') || '{}'); }
-        catch(e) { return {}; }
+        try {
+          return JSON.parse(localStorage.getItem("emailLog") || "{}");
+        } catch (e) {
+          return {};
+        }
       }
       function saveEmailLog(log) {
-        try { localStorage.setItem('emailLog', JSON.stringify(log)); }
-        catch(e) {}
-      }
-
-      // State variables
-      let customers = [];
-      let bills = [];
-      let activeCustomer = null;
-      let selectedCustomerIds = [];
-
-      let unsubscribeCustomers = null;
-      let unsubscribeBills = null;
-
-      // DOM refs
-      const loginOverlay    = document.getElementById('login-overlay');
-      const loginBtn        = document.getElementById('login-btn');
-      const loginBtnText    = document.getElementById('login-btn-text');
-      const loginBtnSpinner = document.getElementById('login-btn-spinner');
-      const pinInput        = document.getElementById('admin-pin');
-      const pinError        = document.getElementById('pin-error');
-      const sidebar         = document.getElementById('sidebar');
-      const main            = document.getElementById('main');
-      const navLinks        = document.querySelectorAll('.nav-link');
-      const sidebarCustomerList = document.getElementById('sidebar-customer-list');
-      const addCustIcon     = document.getElementById('add-cust-icon');
-      const addCustBtn      = document.getElementById('add-cust-btn');
-      const addInvoiceBtn   = document.getElementById('add-invoice-btn');
-      const deleteCustBtn   = document.getElementById('delete-cust-btn');
-      const updateCustBtn   = document.getElementById('update-cust-btn');
-      const updateFieldsDiv = document.getElementById('update-fields');
-      const batchBar        = document.getElementById('batch-bar');
-      const batchPaidBtn    = document.getElementById('batch-paid');
-      const batchEmailBtn   = document.getElementById('batch-email');
-      const batchCount      = document.getElementById('batch-count');
-
-      function showSection(id){
-        ['dashboard','customers','profile'].forEach(s=>{
-          document.getElementById(s).style.display = (s===id?'block':'none');
-        });
-        document.getElementById('page-title').textContent = id.charAt(0).toUpperCase()+id.slice(1);
-        if(id!=='profile') document.querySelectorAll('.customer-btn').forEach(b=>b.classList.remove('active'));
-      }
-      navLinks.forEach(link=>{
-        link.addEventListener('click',e=>{
-          e.preventDefault();
-          navLinks.forEach(l=>l.classList.remove('active'));
-          link.classList.add('active');
-          showSection(link.getAttribute('data-target'));
-        });
-      });
-      function customerHasMissingInfo(c){
-        return !c.email||!c.phone||!c.address;
-      }
-
-      // Real-time listeners
-
-      function subscribeCustomers() {
-        if(unsubscribeCustomers) unsubscribeCustomers();
-        unsubscribeCustomers = db.collection('customers').onSnapshot(snapshot => {
-          customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          populateSidebar();
-          updateMetrics();
-          if(activeCustomer){
-            const fresh = customers.find(c => c.id === activeCustomer.id);
-            if(fresh){
-              activeCustomer = fresh;
-              updateProfileDisplay();
-            }
-          }
-        });
-      }
-      function subscribeBills() {
-        if(unsubscribeBills) unsubscribeBills();
-        unsubscribeBills = db.collection('bills').onSnapshot(snapshot => {
-          bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          updateMetrics();
-          updateGrid();
-          if(activeCustomer) renderBills();
-        });
-      }
-
-      // Sidebar
-      function populateSidebar(){
-        const emailLog = getEmailLog();
-        sidebarCustomerList.innerHTML = '';
-        customers.sort((a,b)=>+a.id-+b.id).forEach(c=>{
-          const btn = document.createElement('button');
-          btn.className = 'customer-btn w-full text-left px-2 py-1 flex items-center justify-between';
-          let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
-          if(customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
-          if(emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
-          btn.innerHTML = html;
-          btn.onclick = () => openCustomer(c.id);
-          const li = document.createElement('li'); li.appendChild(btn);
-          sidebarCustomerList.appendChild(li);
-        });
-      }
-
-      function openCustomer(id){
-        activeCustomer = customers.find(c=>c.id===id);
-        if(!activeCustomer) return;
-        updateProfileDisplay();
-      }
-      function updateProfileDisplay(){
-        ['id','name','email','phone','address'].forEach(f=>{
-          document.getElementById('profile-'+f).textContent = activeCustomer[f]||'';
-        });
-        document.getElementById('profile-pin').textContent = activeCustomer.pin;
-        renderBills();
-        renderEmailLog();
-        navLinks.forEach(l=>l.classList.remove('active'));
-        document.querySelectorAll('.customer-btn').forEach(b=>{
-          if(b.textContent.replace('!','').replace('✓','').trim().startsWith(activeCustomer.id+' -'))
-            b.classList.add('active');
-          else b.classList.remove('active');
-        });
-        showSection('profile');
-        updateFieldsDiv.innerHTML = '';
-      }
-
-      function renderEmailLog(){
-        const log = getEmailLog();
-        const div = document.getElementById('profile-email-log');
-        div.innerHTML = activeCustomer && log[activeCustomer.id]
-          ? `<div class="log-entry">Last emailed: <span class="dt">${log[activeCustomer.id]}</span></div>`
-          : '';
-      }
-
-      function renderBills(){
-        const listEl = document.getElementById('profile-bills-list');
-        listEl.innerHTML = '';
-        bills.filter(b=>b.customerId===activeCustomer.id).forEach(b=>{
-          const li = document.createElement('li');
-          li.className = 'p-4 bg-gray-100 rounded';
-          li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
-                          <p><strong>Due:</strong> ${b.dueDate}</p>
-                          <p><strong>Status:</strong> ${b.paid?'Paid':'Unpaid'}</p>`;
-          if(!b.paid){
-            const payBtn = document.createElement('button');
-            payBtn.textContent = 'Mark Paid';
-            payBtn.className = 'mt-2 bg-green-400 text-white px-3 py-1 rounded';
-            payBtn.onclick = async ()=>{
-              await db.collection('bills').doc(b.id).update({paid:true});
-            };
-            li.appendChild(payBtn);
-          }
-          listEl.appendChild(li);
-        });
+        try {
+          localStorage.setItem("emailLog", JSON.stringify(log));
+        } catch (e) {}
       }
 
       // Metrics & calendar
-      function updateMetrics() {
-        document.getElementById('customersCount').textContent = customers.length;
-        const unpaid = bills.filter(b=>!b.paid);
-        document.getElementById('outstandingCount').textContent = unpaid.length;
-        document.getElementById('unpaidAmount').textContent =
-          '$' + unpaid.reduce((s,b)=>s+b.amount,0).toFixed(2);
-        const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+      async function updateMetrics() {
+        const customers = await getCustomers();
+        const bills = await getBills();
+        document.getElementById("customersCount").textContent = customers.length;
+        const unpaid = bills.filter((b) => !b.paid);
+        document.getElementById("outstandingCount").textContent = unpaid.length;
+        document.getElementById("unpaidAmount").textContent =
+          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
+        const now = new Date(),
+          m = now.getMonth(),
+          y = now.getFullYear();
         const revenue = bills
-          .filter(b=>b.paid && new Date(b.dueDate).getMonth()===m && new Date(b.dueDate).getFullYear()===y)
-          .reduce((s,b)=>s+b.amount,0);
-        document.getElementById('revenueCount').textContent = '$' + revenue.toFixed(2);
+          .filter(
+            (b) =>
+              b.paid &&
+              new Date(b.dueDate).getMonth() === m &&
+              new Date(b.dueDate).getFullYear() === y
+          )
+          .reduce((s, b) => s + b.amount, 0);
+        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
       }
-      function updateGrid() {
-        const grid = document.getElementById('invoice-grid');
-        grid.innerHTML = '';
-        const now = new Date(), y = now.getFullYear(), m = now.getMonth();
-        const firstDay = new Date(y,m,1).getDay();
-        const daysInMonth = new Date(y,m+1,0).getDate();
-        for(let i=0;i<firstDay;i++){
-          const c=document.createElement('div'); c.className='grid-cell'; grid.appendChild(c);
+      async function updateGrid() {
+        const grid = document.getElementById("invoice-grid");
+        grid.innerHTML = "";
+        const now = new Date(),
+          y = now.getFullYear(),
+          m = now.getMonth();
+        const firstDay = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        for (let i = 0; i < firstDay; i++) {
+          const c = document.createElement("div");
+          c.className = "grid-cell";
+          grid.appendChild(c);
         }
-        for(let d=1; d<=daysInMonth; d++){
-          const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const dayBills = bills.filter(b=>b.dueDate===dateStr);
-          const paidCount = dayBills.filter(b=>b.paid).length;
+        const bills = await getBills();
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(
+            2,
+            "0"
+          )}`;
+          const dayBills = bills.filter((b) => b.dueDate === dateStr);
+          const paidCount = dayBills.filter((b) => b.paid).length;
           const unpaidCount = dayBills.length - paidCount;
-          const cell=document.createElement('div');
-          cell.className='grid-cell '+(unpaidCount? 'unpaid': (dayBills.length?'paid':'' ));
-          cell.textContent = dayBills.length? (unpaidCount||'✓') : '';
+          const cell = document.createElement("div");
+          cell.className = "grid-cell " + (unpaidCount ? "unpaid" : dayBills.length ? "paid" : "");
+          cell.textContent = dayBills.length ? (unpaidCount || "✓") : "";
           grid.appendChild(cell);
         }
       }
 
-      // Button event handlers (unchanged)
-      addCustIcon.onclick = ()=> showSection('customers');
-      addCustBtn.onclick = async ()=>{
-        const id = document.getElementById('cust-id').value.trim();
-        const name = document.getElementById('cust-name').value.trim();
-        if(!id||!name){ alert('ID and name required'); return; }
-        const pins = customers.map(c=>c.pin);
-        const pin = generateUniquePin(pins);
-        await db.collection('customers').doc(id).set({
-          id,name,
-          email:document.getElementById('cust-email').value.trim(),
-          phone:document.getElementById('cust-phone').value.trim(),
-          address:document.getElementById('cust-address').value.trim(),
-          pin
+      // DOM refs
+      const loginOverlay = document.getElementById("login-overlay");
+      const loginBtn = document.getElementById("login-btn");
+      const loginBtnText = document.getElementById("login-btn-text");
+      const loginBtnSpinner = document.getElementById("login-btn-spinner");
+      const pinInput = document.getElementById("admin-pin");
+      const pinError = document.getElementById("pin-error");
+      const sidebar = document.getElementById("sidebar");
+      const main = document.getElementById("main");
+      const navLinks = document.querySelectorAll(".nav-link");
+      const sidebarCustomerList = document.getElementById("sidebar-customer-list");
+      const addCustIcon = document.getElementById("add-cust-icon");
+      const addCustBtn = document.getElementById("add-cust-btn");
+      const addInvoiceBtn = document.getElementById("add-invoice-btn");
+      const deleteCustBtn = document.getElementById("delete-cust-btn");
+      const updateCustBtn = document.getElementById("update-cust-btn");
+      const updateFieldsDiv = document.getElementById("update-fields");
+      const batchBar = document.getElementById("batch-bar");
+      const batchPaidBtn = document.getElementById("batch-paid");
+      const batchEmailBtn = document.getElementById("batch-email");
+      const batchCount = document.getElementById("batch-count");
+      let activeCustomer = null,
+        selectedCustomerIds = [];
+
+      function showSection(id) {
+        ["dashboard", "customers", "profile"].forEach((s) => {
+          document.getElementById(s).style.display = s === id ? "block" : "none";
         });
-        ['cust-id','cust-name','cust-email','cust-phone','cust-address']
-          .forEach(f=>document.getElementById(f).value='');
-        showSection('dashboard');
-      };
-
-      addInvoiceBtn.onclick = async ()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        const amt = document.getElementById('invoice-amount').value.trim();
-        if(!amt){ alert('Enter amount'); return; }
-        const due = new Date().toISOString().slice(0,10);
-        await db.collection('bills').add({
-          customerId:activeCustomer.id,
-          amount:parseFloat(amt),
-          dueDate:due,
-          paid:false,
-          createdAt:new Date().toISOString()
+        document.getElementById("page-title").textContent = id.charAt(0).toUpperCase() + id.slice(1);
+        if (id !== "profile")
+          document.querySelectorAll(".customer-btn").forEach((b) => b.classList.remove("active"));
+      }
+      navLinks.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          navLinks.forEach((l) => l.classList.remove("active"));
+          link.classList.add("active");
+          showSection(link.getAttribute("data-target"));
         });
-        document.getElementById('invoice-amount').value='';
-      };
+      });
+      function customerHasMissingInfo(c) {
+        return !c.email || !c.phone || !c.address;
+      }
 
-      deleteCustBtn.onclick = async ()=>{
-        if(!activeCustomer){ alert('Select a customer'); return; }
-        if(!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
-        await db.collection('customers').doc(activeCustomer.id).delete();
-        const snap = await db.collection('bills').where('customerId','==',activeCustomer.id).get();
-        const batch = db.batch();
-        snap.forEach(d=>batch.delete(d.ref));
-        await batch.commit();
-        activeCustomer = null;
-        ['profile-id','profile-name','profile-email','profile-phone','profile-address','profile-pin']
-          .forEach(f=>document.getElementById(f).textContent='');
-        document.getElementById('profile-bills-list').innerHTML='';
-        showSection('dashboard');
-      };
+      async function populateSidebar() {
+        const emailLog = getEmailLog();
+        sidebarCustomerList.innerHTML = "";
+        const customers = await getCustomers();
+        customers
+          .sort((a, b) => +a.id - +b.id)
+          .forEach((c) => {
+            const btn = document.createElement("button");
+            btn.className =
+              "customer-btn w-full text-left px-2 py-1 flex items-center justify-between";
+            let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
+            if (customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
+            if (emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
+            btn.innerHTML = html;
+            btn.onclick = () => openCustomer(c.id);
+            const li = document.createElement("li");
+            li.appendChild(btn);
+            sidebarCustomerList.appendChild(li);
+          });
+      }
 
-      updateCustBtn.onclick = ()=>{
-        if(updateFieldsDiv.innerHTML!==''){ updateFieldsDiv.innerHTML=''; return; }
-        if(!activeCustomer) return;
-        const fields = [
-          {key:'email',label:'Email',type:'email'},
-          {key:'phone',label:'Phone Number',type:'tel'},
-          {key:'address',label:'Address',type:'text'}
-        ];
-        const missing = fields.filter(f=>!activeCustomer[f.key]?.trim());
-        if(!missing.length){
-          updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">No missing information!</div>';
+      async function openCustomer(id) {
+        const customers = await getCustomers();
+        activeCustomer = customers.find((c) => c.id === id);
+        if (!activeCustomer) return;
+        ["id", "name", "email", "phone", "address"].forEach((f) => {
+          document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
+        });
+        document.getElementById("profile-pin").textContent = activeCustomer.pin;
+        await renderBills();
+        renderEmailLog();
+        navLinks.forEach((l) => l.classList.remove("active"));
+        document.querySelectorAll(".customer-btn").forEach((b) => {
+          if (
+            b.textContent
+              .replace("!", "")
+              .replace("✓", "")
+              .trim()
+              .startsWith(activeCustomer.id + " -")
+          )
+            b.classList.add("active");
+          else b.classList.remove("active");
+        });
+        showSection("profile");
+        updateFieldsDiv.innerHTML = "";
+      }
+
+      function renderEmailLog() {
+        const log = getEmailLog();
+        const div = document.getElementById("profile-email-log");
+        div.innerHTML =
+          activeCustomer && log[activeCustomer.id]
+            ? `<div class="log-entry">Last emailed: <span class="dt">${log[activeCustomer.id]}</span></div>`
+            : "";
+      }
+
+      async function renderBills() {
+        const listEl = document.getElementById("profile-bills-list");
+        listEl.innerHTML = "";
+        const bills = await getBills();
+        bills
+          .filter((b) => b.customerId === activeCustomer.id)
+          .forEach((b) => {
+            const li = document.createElement("li");
+            li.className = "p-4 bg-gray-100 rounded";
+            li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
+                              <p><strong>Due:</strong> ${b.dueDate}</p>
+                              <p><strong>Status:</strong> ${b.paid ? "Paid" : "Unpaid"}</p>`;
+            if (!b.paid) {
+              const payBtn = document.createElement("button");
+              payBtn.textContent = "Mark Paid";
+              payBtn.className = "mt-2 bg-green-400 text-white px-3 py-1 rounded";
+              payBtn.onclick = async () => {
+                await db.collection("bills").doc(b.id).update({ paid: true });
+                await renderBills();
+                await updateMetrics();
+                await updateGrid();
+              };
+              li.appendChild(payBtn);
+            }
+            listEl.appendChild(li);
+          });
+      }
+
+      addCustIcon.onclick = () => showSection("customers");
+      addCustBtn.onclick = async () => {
+        const id = document.getElementById("cust-id").value.trim();
+        const name = document.getElementById("cust-name").value.trim();
+        if (!id || !name) {
+          alert("ID and name required");
           return;
         }
-        updateFieldsDiv.innerHTML = '';
-        missing.forEach(f=>{
-          const row = document.createElement('div'); row.className='update-row';
-          const inp = document.createElement('input');
-          inp.type=f.type; inp.placeholder=f.label; inp.className='border rounded px-2 py-1 flex-1';
-          const btn = document.createElement('button');
-          btn.textContent='Add'; btn.className='bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2';
-          btn.onclick=async ()=>{
+        const pins = (await getCustomers()).map((c) => c.pin);
+        const pin = generateUniquePin(pins);
+        await db.collection("customers").doc(id).set({
+          id,
+          name,
+          email: document.getElementById("cust-email").value.trim(),
+          phone: document.getElementById("cust-phone").value.trim(),
+          address: document.getElementById("cust-address").value.trim(),
+          pin,
+        });
+        ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
+          (f) => (document.getElementById(f).value = "")
+        );
+        await populateSidebar();
+        await updateMetrics();
+        await updateGrid();
+        showSection("dashboard");
+      };
+
+      addInvoiceBtn.onclick = async () => {
+        if (!activeCustomer) {
+          alert("Select a customer");
+          return;
+        }
+        const amt = document.getElementById("invoice-amount").value.trim();
+        if (!amt) {
+          alert("Enter amount");
+          return;
+        }
+        const due = new Date().toISOString().slice(0, 10);
+        // <-- IMPORTANT FIX: set paid: false explicitly
+        await db.collection("bills").add({
+          customerId: activeCustomer.id,
+          amount: parseFloat(amt),
+          dueDate: due,
+          paid: false,
+          createdAt: new Date().toISOString(),
+        });
+        document.getElementById("invoice-amount").value = "";
+        await renderBills();
+        await updateMetrics();
+        await updateGrid();
+      };
+
+      deleteCustBtn.onclick = async () => {
+        if (!activeCustomer) {
+          alert("Select a customer");
+          return;
+        }
+        if (!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
+        await db.collection("customers").doc(activeCustomer.id).delete();
+        const snap = await db.collection("bills").where("customerId", "==", activeCustomer.id).get();
+        const batch = db.batch();
+        snap.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+        activeCustomer = null;
+        ["profile-id", "profile-name", "profile-email", "profile-phone", "profile-address", "profile-pin"].forEach(
+          (f) => (document.getElementById(f).textContent = "")
+        );
+        document.getElementById("profile-bills-list").innerHTML = "";
+        await populateSidebar();
+        await updateMetrics();
+        await updateGrid();
+        showSection("dashboard");
+      };
+
+      updateCustBtn.onclick = () => {
+        if (updateFieldsDiv.innerHTML !== "") {
+          updateFieldsDiv.innerHTML = "";
+          return;
+        }
+        if (!activeCustomer) return;
+        const fields = [
+          { key: "email", label: "Email", type: "email" },
+          { key: "phone", label: "Phone Number", type: "tel" },
+          { key: "address", label: "Address", type: "text" },
+        ];
+        const missing = fields.filter((f) => !activeCustomer[f.key]?.trim());
+        if (!missing.length) {
+          updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">No missing information!</div>';
+          return;
+        }
+        updateFieldsDiv.innerHTML = "";
+        missing.forEach((f) => {
+          const row = document.createElement("div");
+          row.className = "update-row";
+          const inp = document.createElement("input");
+          inp.type = f.type;
+          inp.placeholder = f.label;
+          inp.className = "border rounded px-2 py-1 flex-1";
+          const btn = document.createElement("button");
+          btn.textContent = "Add";
+          btn.className = "bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2";
+          btn.onclick = async () => {
             const val = inp.value.trim();
-            if(!val){ inp.classList.add('border-red-400'); return; }
-            await db.collection('customers').doc(activeCustomer.id).update({[f.key]:val});
-            activeCustomer[f.key]=val;
-            document.getElementById('profile-'+f.key).textContent=val;
+            if (!val) {
+              inp.classList.add("border-red-400");
+              return;
+            }
+            await db.collection("customers").doc(activeCustomer.id).update({ [f.key]: val });
+            activeCustomer[f.key] = val;
+            document.getElementById("profile-" + f.key).textContent = val;
             row.remove();
-            if(!fields.filter(ff=>!activeCustomer[ff.key]?.trim()).length){
-              updateFieldsDiv.innerHTML='<div class="text-green-700 mt-2">All information updated!</div>';
-              setTimeout(()=>updateFieldsDiv.innerHTML='',2000);
+            await populateSidebar();
+            await updateMetrics();
+            await updateGrid();
+            if (!fields.filter((ff) => !activeCustomer[ff.key]?.trim()).length) {
+              updateFieldsDiv.innerHTML =
+                '<div class="text-green-700 mt-2">All information updated!</div>';
+              setTimeout(() => (updateFieldsDiv.innerHTML = ""), 2000);
             }
           };
-          row.append(inp,btn); updateFieldsDiv.appendChild(row);
+          row.append(inp, btn);
+          updateFieldsDiv.appendChild(row);
         });
       };
 
-      function updateBatchBar(){
-        batchBar.classList.toggle('show', selectedCustomerIds.length>0);
+      function updateBatchBar() {
+        batchBar.classList.toggle("show", selectedCustomerIds.length > 0);
         batchCount.textContent = selectedCustomerIds.length;
       }
-      batchPaidBtn.onclick = async ()=>{
-        if(!selectedCustomerIds.length) return;
-        if(!confirm('Mark all unpaid for selected?')) return;
+      batchPaidBtn.onclick = async () => {
+        if (!selectedCustomerIds.length) return;
+        if (!confirm("Mark all unpaid for selected?")) return;
+        const bills = await getBills();
         const batch = db.batch();
-        bills.filter(b=>selectedCustomerIds.includes(b.customerId)&&!b.paid)
-             .forEach(b=>batch.update(db.collection('bills').doc(b.id),{paid:true}));
+        bills
+          .filter((b) => selectedCustomerIds.includes(b.customerId) && !b.paid)
+          .forEach((b) => batch.update(db.collection("bills").doc(b.id), { paid: true }));
         await batch.commit();
         selectedCustomerIds = [];
+        await updateMetrics();
+        await updateGrid();
         updateBatchBar();
       };
 
       // Login flow
-      loginBtn.onclick = async ()=>{
-        pinError.textContent = '';  
-        if(pinInput.value === '1234'){
-          loginBtnText.classList.add('hidden');
-          loginBtnSpinner.classList.remove('hidden');
+      loginBtn.onclick = async () => {
+        pinError.textContent = "";
+        if (pinInput.value === "1234") {
+          loginBtnText.classList.add("hidden");
+          loginBtnSpinner.classList.remove("hidden");
           loginBtn.disabled = true;
           try {
-            subscribeCustomers();
-            subscribeBills();
-            loginOverlay.classList.add('hidden');
-            sidebar.classList.remove('hidden');
-            main.classList.remove('hidden');
-            document.querySelector('.nav-link[data-target="dashboard"]').classList.add('active');
-            showSection('dashboard');
+            await populateSidebar();
+            await updateMetrics();
+            await updateGrid();
+            loginOverlay.classList.add("hidden");
+            sidebar.classList.remove("hidden");
+            main.classList.remove("hidden");
+            document.querySelector('.nav-link[data-target="dashboard"]').classList.add("active");
+            showSection("dashboard");
           } finally {
-            loginBtnText.classList.remove('hidden');
-            loginBtnSpinner.classList.add('hidden');
+            loginBtnText.classList.remove("hidden");
+            loginBtnSpinner.classList.add("hidden");
             loginBtn.disabled = false;
-            pinInput.value = '';
+            pinInput.value = "";
           }
         } else {
-          pinError.textContent = 'Invalid PIN';
+          pinError.textContent = "Invalid PIN";
         }
       };
 
