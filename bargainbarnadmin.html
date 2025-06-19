@@ -11,13 +11,19 @@
   <!-- Firestore (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <!-- PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldqxoWbk6Mo8m3Cq8eGKN8Ns_4e1JR_om6AVuMRBqkiCyxz0LvDz-lX2gpbO6o&currency=USD"></script>
+  <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldq&currency=USD"></script>
   <style>
-    /* All original CSS unchanged */
+    #invoice-container {
+      max-width: 800px;
+      margin: 2rem auto 0 auto;
+      position: relative;
+      display: none;
+    }
     #invoice-grid {
       display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 0.4rem;
+      user-select: none;
     }
     .grid-cell {
       aspect-ratio: 1/1;
@@ -28,208 +34,122 @@
       border-radius: 0.25rem;
       background: #fff;
       color: #1A202C;
-      font-size: 0.9rem;
+      font-size: 0.75rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: box-shadow 0.12s;
       position: relative;
+      padding: 0.1rem;
+      transition: box-shadow 0.12s;
     }
-    .grid-cell.unpaid {
+    .grid-cell.red {
       background: #fecaca;
       border-color: #fecaca;
       color: #b91c1c;
     }
-    .grid-cell.paid {
+    .grid-cell.green {
       background: #bbf7d0;
       border-color: #bbf7d0;
       color: #166534;
     }
     .grid-cell.selected {
       outline: 3px solid #000;
-      z-index: 2;
+      z-index: 10;
     }
-    .customer-warning {
-      display: inline-flex;
-      align-items: center;
-      margin-left: 0.5rem;
-      background: #f87171;
-      color: #fff;
-      border-radius: 50%;
-      width: 1.1em;
-      height: 1.1em;
-      justify-content: center;
-      font-size: 0.8em;
-      box-shadow: 0 0 2px #b91c1c88;
-    }
-    .customer-btn.active,
-    #sidebar .customer-btn.active {
-      background: #E5E7EB !important;
-      border-radius: 0.375rem;
-    }
-    .update-fields {
-      margin-top: 1rem;
-    }
-    .update-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
+
     #batch-bar {
-      display: none;
-      position: relative;
-      margin-top: 1rem;
       background: #f3f4f6;
       border: 2px solid #000;
       border-radius: 0.5rem;
-      padding: 1rem;
       box-shadow: 0 4px 24px #3332;
-      text-align: center;
-      font-weight: 600;
       color: #333;
-      z-index: 30;
+      font-weight: 600;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      margin-top: 0.5rem;
+      padding: 3rem 1rem 1rem 1rem; /* Increased top padding further */
+      position: relative;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      justify-content: space-between;
     }
     #batch-bar.show {
-      display: flex;
+      visibility: visible;
+      opacity: 1;
     }
-    #batch-bar .bar-actions {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-    }
-    #sidebar {
-      width: auto !important;
-      min-width: 0;
-      max-width: 240px;
-      padding-right: 18px !important;
-      padding-left: 13px !important;
-    }
-    #sidebar .customer-btn {
-      white-space: nowrap;
-    }
-    #sidebar h1 {
-      white-space: nowrap;
-    }
-    .sidebar-divider {
-      width: 80%;
-      height: 2px;
-      background: #e5e7eb;
-      margin: 12px auto 14px auto;
-      border-radius: 2px;
-    }
-    #email-modal-bg,
-    #batch-modal-bg {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(31, 41, 55, 0.7);
-      justify-content: center;
-      align-items: center;
-    }
-    #email-modal-bg.show,
-    #batch-modal-bg.show {
-      display: flex;
-    }
-    #email-modal,
-    #batch-modal {
-      background: #fff;
-      border-radius: 1.2rem;
-      max-width: 80vw;
-      width: 80vw;
-      max-height: 80vh;
-      min-height: 380px;
-      box-shadow: 0 8px 32px #0002;
-      display: flex;
-      flex-direction: column;
-      padding: 2rem 2rem 1.2rem 2rem;
-      position: relative;
-      overflow: auto;
-      border: 3px solid #000;
-    }
-    #email-modal .close-modal,
-    #batch-modal .close-modal {
+    #batch-clear {
       position: absolute;
-      top: 12px;
-      right: 17px;
-      cursor: pointer;
-      font-size: 2rem;
-      font-weight: 600;
-      color: #e11d48;
+      top: 8px;
+      right: 8px;
+      background: transparent !important;
+      border: none;
+      color: #ef4444;
+      font-weight: 700;
+      font-size: 1.5rem;
       line-height: 1;
-      transition: color 0.15s;
-      z-index: 2000;
+      cursor: pointer;
+      user-select: none;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0;
+      transition: color 0.2s ease;
+      z-index: 10;
     }
-    #email-modal .close-modal:hover,
-    #batch-modal .close-modal:hover {
+    #batch-clear:hover {
       color: #b91c1c;
     }
-    #email-modal-list,
-    #batch-modal-list {
-      margin-bottom: 1.5rem;
+    .bar-actions {
+      display: flex;
+      gap: 1rem;
+      flex-grow: 1;
+      justify-content: flex-end;
     }
-    @media (max-width: 900px) {
-      #email-modal,
-      #batch-modal {
-        padding: 1rem;
-        max-width: 98vw;
-        width: 98vw;
-      }
+    .bar-actions button {
+      flex: 1.2;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0.5rem 0;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 1rem;
+      background: #9ca3af;
+      color: black;
+      transition: background 0.2s ease;
+      user-select: none;
     }
-    @media (max-width: 500px) {
-      #email-modal,
-      #batch-modal {
-        min-height: 220px;
-      }
+    .bar-actions button:hover {
+      filter: brightness(0.9);
     }
-    .spinner {
-      display: inline-block;
-      width: 1.5em;
-      height: 1.5em;
-      vertical-align: middle;
-      border: 3px solid #cbd5e1;
-      border-top: 3px solid #64748b;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
+
+    #login-overlay {
+      z-index: 9999;
     }
-    @keyframes spin {
-      100% {
-        transform: rotate(360deg);
-      }
-    }
+
     .email-check {
       color: #22c55e;
       font-size: 1.15em;
       margin-left: 5px;
       vertical-align: middle;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
-    .customer-id-label {
-      font-weight: bold;
-      margin-right: 3px;
-    }
-    .log-entry {
-      font-size: 0.92em;
-      color: #475569;
-      margin-bottom: 6px;
-    }
-    .log-entry .dt {
-      font-size: 0.85em;
-      color: #999;
-      margin-left: 4px;
+    .email-check.show {
+      opacity: 1;
     }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
 
   <!-- Login Overlay -->
-  <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+  <div id="login-overlay" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
     <div class="bg-white rounded-2xl p-8 shadow-lg w-full max-w-sm">
       <h2 class="text-2xl font-semibold mb-4 text-gray-800">Admin Login</h2>
       <input id="admin-pin" type="password" maxlength="4" placeholder="4-digit PIN"
-             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300">
+             class="w-full p-4 border-2 rounded-lg mb-4 text-xl focus:outline-none focus:border-gray-300" />
       <button id="login-btn" class="w-full py-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300
                                   flex justify-center items-center text-lg font-semibold transition">
         <span id="login-btn-text">Login</span>
@@ -240,25 +160,22 @@
   </div>
 
   <!-- Email Modal -->
-  <div id="email-modal-bg">
-    <div id="email-modal">
-      <div class="close-modal" id="close-email-modal">&times;</div>
-      <h2 class="text-2xl mb-4 font-bold text-pink-700">Send Mass Email</h2>
+  <div id="email-modal-bg" class="hidden fixed inset-0 z-1000 bg-[rgba(31,41,55,0.7)] flex justify-center items-center">
+    <div id="email-modal" class="bg-white rounded-2xl max-w-[90vw] w-[400px] shadow-lg p-8 relative border-4 border-black overflow-auto">
+      <div id="close-email-modal" class="close-modal absolute top-3 right-4 cursor-pointer text-2xl font-bold text-red-600 hover:text-red-800">&times;</div>
+      <h2 class="text-2xl font-bold mb-4 text-pink-700">Send Mass Email</h2>
       <div id="email-modal-list" class="mb-4">
-        <strong class="mb-1 text-gray-700 block">Sending to:</strong>
+        <strong class="block mb-1 text-gray-700">Sending to:</strong>
         <ul id="modal-customers-list" class="mb-3 pl-4 list-disc text-pink-700"></ul>
       </div>
       <form id="mass-email-form" class="flex flex-col gap-3">
         <label class="block text-gray-600 font-semibold mb-1">From:</label>
         <input type="email" readonly value="Laramos@cox.net"
-               class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600">
+               class="mb-2 bg-gray-100 px-3 py-2 rounded border border-gray-300 text-gray-600" />
         <label class="block text-gray-600 font-semibold mb-1">Subject:</label>
-        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300"
-               value="Your Invoice from Admin">
+        <input id="email-subject" class="mb-2 px-3 py-2 rounded border border-gray-300" value="Your Invoice from Admin" />
         <label class="block text-gray-600 font-semibold mb-1">Message:</label>
-        <textarea id="email-body"
-                  class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]"
-                  placeholder="Write your message...">Dear Customer,
+        <textarea id="email-body" placeholder="Write your message..." class="mb-3 px-3 py-2 rounded border border-gray-300 min-h-[120px]">Dear Customer,
 
 Your personalized payment link and PIN will be provided here.
 
@@ -269,27 +186,6 @@ Admin</textarea>
         </button>
       </form>
       <div id="email-modal-feedback" class="mt-2 text-green-600 font-semibold"></div>
-    </div>
-  </div>
-
-  <!-- Batch Action Modal -->
-  <div id="batch-modal-bg">
-    <div id="batch-modal">
-      <div class="close-modal" id="close-batch-modal">&times;</div>
-      <div class="flex flex-col items-center justify-center">
-        <div class="text-lg font-semibold mb-4">Batch Actions</div>
-        <div id="batch-modal-list" class="mb-3"></div>
-        <div class="flex flex-col gap-4 w-full items-center">
-          <button id="batch-modal-paid"
-                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
-            Mark All Paid
-          </button>
-          <button id="batch-modal-email"
-                  class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-6 rounded-lg">
-            Send Email
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -318,7 +214,7 @@ Admin</textarea>
     <main class="mx-auto flex-1 max-w-4xl overflow-auto p-6 space-y-6 w-full">
       <!-- Dashboard Panels -->
       <section id="dashboard" class="space-y-6">
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div class="rounded-2xl bg-white p-6 shadow">
             <p class="text-sm text-gray-500">Total Customers</p>
             <p id="customersCount" class="text-3xl font-bold">0</p>
@@ -336,23 +232,19 @@ Admin</textarea>
             <p id="revenueCount" class="text-3xl font-bold">$0.00</p>
           </div>
         </div>
-        <div class="rounded-2xl bg-white p-6 shadow">
-          <h3 class="mb-4 text-lg font-semibold">Invoice Tracking Calendar</h3>
+
+        <!-- Invoice Tracking Calendar -->
+        <section id="invoice-container" class="space-y-2">
+          <h3 class="text-lg font-semibold">Invoice Tracking Calendar</h3>
           <div id="invoice-grid"></div>
-          <div id="batch-bar">
-            <div class="bar-actions w-full flex flex-row gap-4 justify-center">
-              <button id="batch-email"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Send Email
-              </button>
-              <button id="batch-paid"
-                      class="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-5 rounded-lg">
-                Mark All Paid
-              </button>
+          <div id="batch-bar" class="">
+            <button id="batch-clear" title="Deselect All">&times;</button>
+            <div class="bar-actions">
+              <button id="batch-email">Send Email</button>
+              <button id="batch-paid">Mark All Paid</button>
             </div>
-            <div class="mt-2"><span id="batch-count">0</span> selected.</div>
           </div>
-        </div>
+        </section>
       </section>
 
       <!-- Add Customer -->
@@ -364,9 +256,7 @@ Admin</textarea>
           <input id="cust-email" type="email" placeholder="Customer Email (optional)" class="mb-4 w-full rounded-lg border p-4" />
           <input id="cust-phone" type="tel" placeholder="Phone Number (optional)" class="mb-4 w-full rounded-lg border p-4" />
           <input id="cust-address" placeholder="Address (optional)" class="mb-4 w-full rounded-lg border p-4" />
-          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">
-            Add Customer
-          </button>
+          <button id="add-cust-btn" class="w-full rounded-lg bg-gray-300 py-3 text-black hover:bg-gray-400">Add Customer</button>
         </div>
       </section>
 
@@ -381,17 +271,11 @@ Admin</textarea>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2" />
-          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-            Add Invoice
-          </button>
+          <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">
-              Update
-            </button>
-            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">
-              Delete Customer
-            </button>
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
+            <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
           </div>
           <div id="update-fields" class="update-fields"></div>
           <div id="profile-email-log" class="mt-4"></div>
@@ -402,7 +286,6 @@ Admin</textarea>
 
   <script>
     document.addEventListener("DOMContentLoaded", async function () {
-      // Firestore initialization
       const firebaseConfig = {
         apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
         authDomain: "customerportal-3032d.firebaseapp.com",
@@ -415,7 +298,6 @@ Admin</textarea>
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      // Helpers
       function generateUniquePin(existingPins) {
         let pin,
           tries = 0;
@@ -447,58 +329,6 @@ Admin</textarea>
         } catch (e) {}
       }
 
-      // Metrics & calendar
-      async function updateMetrics() {
-        const customers = await getCustomers();
-        const bills = await getBills();
-        document.getElementById("customersCount").textContent = customers.length;
-        const unpaid = bills.filter((b) => !b.paid);
-        document.getElementById("outstandingCount").textContent = unpaid.length;
-        document.getElementById("unpaidAmount").textContent =
-          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
-        const now = new Date(),
-          m = now.getMonth(),
-          y = now.getFullYear();
-        const revenue = bills
-          .filter(
-            (b) =>
-              b.paid &&
-              new Date(b.dueDate).getMonth() === m &&
-              new Date(b.dueDate).getFullYear() === y
-          )
-          .reduce((s, b) => s + b.amount, 0);
-        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
-      }
-      async function updateGrid() {
-        const grid = document.getElementById("invoice-grid");
-        grid.innerHTML = "";
-        const now = new Date(),
-          y = now.getFullYear(),
-          m = now.getMonth();
-        const firstDay = new Date(y, m, 1).getDay();
-        const daysInMonth = new Date(y, m + 1, 0).getDate();
-        for (let i = 0; i < firstDay; i++) {
-          const c = document.createElement("div");
-          c.className = "grid-cell";
-          grid.appendChild(c);
-        }
-        const bills = await getBills();
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateStr = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(
-            2,
-            "0"
-          )}`;
-          const dayBills = bills.filter((b) => b.dueDate === dateStr);
-          const paidCount = dayBills.filter((b) => b.paid).length;
-          const unpaidCount = dayBills.length - paidCount;
-          const cell = document.createElement("div");
-          cell.className = "grid-cell " + (unpaidCount ? "unpaid" : dayBills.length ? "paid" : "");
-          cell.textContent = dayBills.length ? (unpaidCount || "✓") : "";
-          grid.appendChild(cell);
-        }
-      }
-
-      // DOM refs
       const loginOverlay = document.getElementById("login-overlay");
       const loginBtn = document.getElementById("login-btn");
       const loginBtnText = document.getElementById("login-btn-text");
@@ -518,18 +348,23 @@ Admin</textarea>
       const batchBar = document.getElementById("batch-bar");
       const batchPaidBtn = document.getElementById("batch-paid");
       const batchEmailBtn = document.getElementById("batch-email");
-      const batchCount = document.getElementById("batch-count");
-      let activeCustomer = null,
-        selectedCustomerIds = [];
+      const batchClearBtn = document.getElementById("batch-clear");
+      const invoiceGrid = document.getElementById("invoice-grid");
+      const invoiceContainer = document.getElementById("invoice-container");
+      const emailModalBg = document.getElementById("email-modal-bg");
+
+      let activeCustomer = null;
+      let selectedCustomerIds = new Set();
 
       function showSection(id) {
         ["dashboard", "customers", "profile"].forEach((s) => {
           document.getElementById(s).style.display = s === id ? "block" : "none";
         });
         document.getElementById("page-title").textContent = id.charAt(0).toUpperCase() + id.slice(1);
-        if (id !== "profile")
-          document.querySelectorAll(".customer-btn").forEach((b) => b.classList.remove("active"));
+        if (id !== "profile") document.querySelectorAll(".customer-btn").forEach((b) => b.classList.remove("active"));
+        invoiceContainer.style.display = id === "dashboard" ? "block" : "none";
       }
+
       navLinks.forEach((link) => {
         link.addEventListener("click", (e) => {
           e.preventDefault();
@@ -538,6 +373,7 @@ Admin</textarea>
           showSection(link.getAttribute("data-target"));
         });
       });
+
       function customerHasMissingInfo(c) {
         return !c.email || !c.phone || !c.address;
       }
@@ -550,12 +386,28 @@ Admin</textarea>
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
             const btn = document.createElement("button");
-            btn.className =
-              "customer-btn w-full text-left px-2 py-1 flex items-center justify-between";
-            let html = `<span><span class="customer-id-label">${c.id} -</span> ${c.name}</span>`;
-            if (customerHasMissingInfo(c)) html += `<span class="customer-warning" title="Missing info">!</span>`;
-            if (emailLog[c.id]) html += ` <span class="email-check" title="Emailed">&#10003;</span>`;
-            btn.innerHTML = html;
+            btn.className = "customer-btn flex items-center justify-between";
+            btn.style.position = "relative";
+            btn.textContent = `${c.id} - ${c.name}`;
+
+            if (customerHasMissingInfo(c)) {
+              const warning = document.createElement("span");
+              warning.className = "customer-warning";
+              warning.title = "Missing info";
+              warning.textContent = "!";
+              btn.appendChild(warning);
+            }
+
+            const emailCheck = document.createElement("span");
+            emailCheck.className = "email-check";
+            emailCheck.innerHTML = "&#10003;";
+
+            if (emailLog[c.id]) {
+              emailCheck.style.opacity = "0";
+            }
+
+            btn.appendChild(emailCheck);
+
             btn.onclick = () => openCustomer(c.id);
             const li = document.createElement("li");
             li.appendChild(btn);
@@ -575,14 +427,8 @@ Admin</textarea>
         renderEmailLog();
         navLinks.forEach((l) => l.classList.remove("active"));
         document.querySelectorAll(".customer-btn").forEach((b) => {
-          if (
-            b.textContent
-              .replace("!", "")
-              .replace("✓", "")
-              .trim()
-              .startsWith(activeCustomer.id + " -")
-          )
-            b.classList.add("active");
+          const text = b.textContent.replace("!", "").replace("✓", "").trim();
+          if (text.startsWith(activeCustomer.id + " -")) b.classList.add("active");
           else b.classList.remove("active");
         });
         showSection("profile");
@@ -608,8 +454,8 @@ Admin</textarea>
             const li = document.createElement("li");
             li.className = "p-4 bg-gray-100 rounded";
             li.innerHTML = `<p><strong>Amount:</strong> $${b.amount}</p>
-                              <p><strong>Due:</strong> ${b.dueDate}</p>
-                              <p><strong>Status:</strong> ${b.paid ? "Paid" : "Unpaid"}</p>`;
+                            <p><strong>Due:</strong> ${b.dueDate}</p>
+                            <p><strong>Status:</strong> ${b.paid ? "Paid" : "Unpaid"}</p>`;
             if (!b.paid) {
               const payBtn = document.createElement("button");
               payBtn.textContent = "Mark Paid";
@@ -664,7 +510,6 @@ Admin</textarea>
           return;
         }
         const due = new Date().toISOString().slice(0, 10);
-        // <-- IMPORTANT FIX: set paid: false explicitly
         await db.collection("bills").add({
           customerId: activeCustomer.id,
           amount: parseFloat(amt),
@@ -741,8 +586,7 @@ Admin</textarea>
             await updateMetrics();
             await updateGrid();
             if (!fields.filter((ff) => !activeCustomer[ff.key]?.trim()).length) {
-              updateFieldsDiv.innerHTML =
-                '<div class="text-green-700 mt-2">All information updated!</div>';
+              updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">All information updated!</div>';
               setTimeout(() => (updateFieldsDiv.innerHTML = ""), 2000);
             }
           };
@@ -752,22 +596,40 @@ Admin</textarea>
       };
 
       function updateBatchBar() {
-        batchBar.classList.toggle("show", selectedCustomerIds.length > 0);
-        batchCount.textContent = selectedCustomerIds.length;
+        if (selectedCustomerIds.size > 0) {
+          batchBar.classList.add("show");
+        } else {
+          batchBar.classList.remove("show");
+        }
       }
+
+      batchClearBtn.onclick = () => {
+        selectedCustomerIds.clear();
+        updateBatchBar();
+        renderInvoiceGridColors();
+        populateSidebar();
+      };
+
       batchPaidBtn.onclick = async () => {
-        if (!selectedCustomerIds.length) return;
+        if (selectedCustomerIds.size === 0) return;
+        batchBar.classList.remove("show");
         if (!confirm("Mark all unpaid for selected?")) return;
         const bills = await getBills();
         const batch = db.batch();
         bills
-          .filter((b) => selectedCustomerIds.includes(b.customerId) && !b.paid)
+          .filter((b) => selectedCustomerIds.has(b.customerId) && !b.paid)
           .forEach((b) => batch.update(db.collection("bills").doc(b.id), { paid: true }));
         await batch.commit();
-        selectedCustomerIds = [];
+        selectedCustomerIds.clear();
         await updateMetrics();
         await updateGrid();
         updateBatchBar();
+      };
+
+      batchEmailBtn.onclick = async () => {
+        if (selectedCustomerIds.size === 0) return;
+        batchBar.classList.remove("show");
+        openEmailModal(Array.from(selectedCustomerIds));
       };
 
       // Login flow
@@ -797,7 +659,167 @@ Admin</textarea>
         }
       };
 
-      // Initial state: overlay visible; sidebar/main hidden via Tailwind
+      async function updateMetrics() {
+        const customers = await getCustomers();
+        const bills = await getBills();
+        document.getElementById("customersCount").textContent = customers.length;
+        const unpaid = bills.filter((b) => !b.paid);
+        document.getElementById("outstandingCount").textContent = unpaid.length;
+        document.getElementById("unpaidAmount").textContent =
+          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
+        const now = new Date(),
+          m = now.getMonth(),
+          y = now.getFullYear();
+        const revenue = bills
+          .filter(
+            (b) =>
+              b.paid &&
+              new Date(b.dueDate).getMonth() === m &&
+              new Date(b.dueDate).getFullYear() === y
+          )
+          .reduce((s, b) => s + b.amount, 0);
+        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
+      }
+
+      async function updateGrid() {
+        const customers = await getCustomers();
+        invoiceGrid.innerHTML = "";
+        customers.forEach((c) => {
+          const cell = document.createElement("div");
+          cell.className = "grid-cell";
+          cell.textContent = c.id;
+          cell.setAttribute("data-customer-id", c.id);
+          invoiceGrid.appendChild(cell);
+        });
+        renderInvoiceGridColors();
+        attachGridLongPressHandlers();
+      }
+
+      async function renderInvoiceGridColors() {
+        const bills = await getBills();
+
+        document.querySelectorAll("#invoice-grid .grid-cell").forEach((cell) => {
+          const cid = cell.getAttribute("data-customer-id");
+          const custBills = bills.filter((b) => b.customerId === cid);
+          const hasUnpaid = custBills.some((b) => !b.paid);
+          if (hasUnpaid) {
+            cell.classList.add("red");
+            cell.classList.remove("green");
+          } else {
+            cell.classList.add("green");
+            cell.classList.remove("red");
+          }
+          cell.classList.toggle("selected", selectedCustomerIds.has(cid));
+        });
+      }
+
+      let longPressTimer = null;
+      const longPressDuration = 600;
+
+      function attachGridLongPressHandlers() {
+        document.querySelectorAll("#invoice-grid .grid-cell").forEach((cell) => {
+          cell.onpointerdown = (e) => {
+            e.preventDefault();
+            const customerId = cell.getAttribute("data-customer-id");
+            longPressTimer = setTimeout(() => {
+              toggleCustomerSelection(customerId);
+            }, longPressDuration);
+          };
+          cell.onpointerup = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          cell.onpointerleave = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          cell.onclick = (e) => {
+            e.preventDefault();
+            if (!longPressTimer) toggleCustomerSelection(cell.getAttribute("data-customer-id"));
+          };
+        });
+      }
+
+      function toggleCustomerSelection(customerId) {
+        if (selectedCustomerIds.has(customerId)) selectedCustomerIds.delete(customerId);
+        else selectedCustomerIds.add(customerId);
+        updateBatchBar();
+        renderInvoiceGridColors();
+      }
+
+      async function openEmailModal(customerIds) {
+        const modalCustomersList = document.getElementById("modal-customers-list");
+        const emailModalFeedback = document.getElementById("email-modal-feedback");
+
+        // Hide invoice container while modal is open
+        invoiceContainer.style.display = "none";
+
+        emailModalFeedback.textContent = "";
+        modalCustomersList.innerHTML = "";
+
+        const customers = await getCustomers();
+        const toSend = customers.filter((c) => customerIds.includes(c.id));
+        toSend.forEach((c) => {
+          const li = document.createElement("li");
+          li.textContent = `${c.id} - ${c.name}`;
+          modalCustomersList.appendChild(li);
+        });
+
+        emailModalBg.classList.remove("hidden");
+
+        const form = document.getElementById("mass-email-form");
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+
+        newForm.onsubmit = async (e) => {
+          e.preventDefault();
+          emailModalFeedback.textContent = "Sending emails...";
+
+          await new Promise((r) => setTimeout(r, 1000));
+
+          const emailLog = getEmailLog();
+          const nowStr = new Date().toLocaleString();
+          customerIds.forEach((id) => {
+            emailLog[id] = nowStr;
+          });
+          saveEmailLog(emailLog);
+
+          showEmailCheckmarks(customerIds);
+
+          emailModalFeedback.textContent = "Emails sent!";
+          setTimeout(() => {
+            emailModalFeedback.textContent = "";
+            emailModalBg.classList.add("hidden");
+            // Restore invoice container display
+            invoiceContainer.style.display = "block";
+          }, 2000);
+        };
+      }
+
+      document.getElementById("close-email-modal").onclick = () => {
+        emailModalBg.classList.add("hidden");
+        invoiceContainer.style.display = "block";
+      };
+
+      function showEmailCheckmarks(customerIds) {
+        customerIds.forEach((id) => {
+          const buttons = Array.from(sidebarCustomerList.querySelectorAll("button.customer-btn"));
+          buttons.forEach((btn) => {
+            if (btn.textContent.trim().startsWith(id + " -")) {
+              const check = btn.querySelector(".email-check");
+              if (check) {
+                check.classList.add("show");
+                setTimeout(() => {
+                  check.classList.remove("show");
+                }, 5000);
+              }
+            }
+          });
+        });
+      }
+
+      await populateSidebar();
+      await updateMetrics();
     });
   </script>
 </body>
