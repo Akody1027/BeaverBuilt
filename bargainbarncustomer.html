@@ -282,7 +282,7 @@
             const amount = b.amount;
             const note = encodeURIComponent(`Invoice #${idx + 1}`);
             window.location = `venmo://paycharge?txn=pay&recipients=@Lylia-Cruz&amount=${amount}&note=${note}`;
-            setTimeout(() => window.open(`https://venmo.com/@Lylia-Cruz?txn=pay&amount=${amount}&note=${note}`, '_blank'), 500);
+            setTimeout(() => window.open(`https://venmo.com/Lylia-Cruz?txn=pay&amount=${amount}&note=${note}`, '_blank'), 500);
           };
 
           const cashBtn = document.createElement('button');
