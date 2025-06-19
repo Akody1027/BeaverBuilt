@@ -66,6 +66,20 @@
         <span id="login-btn-spinner" class="spinner hidden"></span>
       </button>
       <p id="pin-error" class="mt-2 text-red-600"></p>
+
+      <div class="mt-8 pt-4 border-t border-gray-300 text-center">
+        <h3 class="text-lg font-semibold mb-2">First time? Create a login PIN below</h3>
+        <input id="bin-input" type="text" maxlength="10" placeholder="Enter your BIN number"
+               class="w-full p-3 border-2 rounded-lg mb-4 text-lg focus:outline-none focus:border-pink-300" />
+        <input id="new-pin-input" type="password" maxlength="4" placeholder="Create a 4-digit PIN"
+               class="w-full p-3 border-2 rounded-lg mb-4 text-lg focus:outline-none focus:border-pink-300" />
+        <button id="create-pin-btn"
+                class="w-full py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-semibold">
+          Create PIN
+        </button>
+        <p id="create-pin-error" class="mt-2 text-red-600"></p>
+        <p id="create-pin-success" class="mt-2 text-green-600"></p>
+      </div>
     </div>
   </div>
 
@@ -141,8 +155,12 @@
           welcomePIN     = document.getElementById('welcome-pin'),
           invoicesList   = document.getElementById('invoices-list'),
           updateForm     = document.getElementById('update-form'),
-          updateFeedback = document.getElementById('update-feedback');
-          
+          updateFeedback = document.getElementById('update-feedback'),
+          binInput       = document.getElementById('bin-input'),
+          newPinInput    = document.getElementById('new-pin-input'),
+          createPinBtn   = document.getElementById('create-pin-btn'),
+          createPinError = document.getElementById('create-pin-error'),
+          createPinSuccess = document.getElementById('create-pin-success');
 
     let currentCustomer = null;
     let unsubscribeInvoices = null;
@@ -161,11 +179,19 @@
       }
       toggleSpinner(true);
       try {
-        const snap = await db.collection('customers').where('pin','==',pin).get();
-        if (snap.empty) {
+        const snap = await db.collection('customers').get();
+        let found = false;
+        snap.forEach(doc => {
+          const data = doc.data();
+          // Accept either customer pin or admin pin
+          if (data.pin === pin || data.adminPin === pin) {
+            currentCustomer = { id: doc.id, ...data };
+            found = true;
+          }
+        });
+        if (!found) {
           pinError.textContent = "Invalid PIN.";
         } else {
-          snap.forEach(doc => { currentCustomer = { id: doc.id, ...doc.data() }; });
           overlay.classList.add('hidden');
           main.classList.remove('hidden');
           renderCustomer();
@@ -185,7 +211,10 @@
       pinInput.value = '';
       pinError.textContent = '';
       invoicesList.innerHTML = '';
-      debugArea.textContent = 'No data yet.';
+      createPinError.textContent = '';
+      createPinSuccess.textContent = '';
+      binInput.value = '';
+      newPinInput.value = '';
       currentCustomer = null;
     };
 
@@ -193,11 +222,11 @@
       if (!currentCustomer) return;
       welcomeName.textContent = `Welcome, ${currentCustomer.name}!`;
       welcomeID.textContent   = currentCustomer.id;
-      welcomePIN.textContent  = currentCustomer.pin;
-      document.getElementById('input-name').value    = currentCustomer.name;
-      document.getElementById('input-email').value   = currentCustomer.email;
-      document.getElementById('input-phone').value   = currentCustomer.phone;
-      document.getElementById('input-address').value = currentCustomer.address;
+      welcomePIN.textContent  = currentCustomer.pin || "(No PIN set)";
+      document.getElementById('input-name').value    = currentCustomer.name || '';
+      document.getElementById('input-email').value   = currentCustomer.email || '';
+      document.getElementById('input-phone').value   = currentCustomer.phone || '';
+      document.getElementById('input-address').value = currentCustomer.address || '';
     }
 
     function subscribeInvoices() {
@@ -206,10 +235,8 @@
         .where('customerId', '==', currentCustomer.id)
         .onSnapshot(snapshot => {
           const bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          
           renderInvoices(bills);
         }, err => {
-          debugArea.textContent = 'Error: ' + err.message;
           console.error('Error fetching invoices:', err);
         });
     }
@@ -220,13 +247,11 @@
         invoicesList.innerHTML = `<div class="dashboard-card p-4 text-gray-500">No invoices found.</div>`;
         return;
       }
-
       bills.forEach((b, idx) => {
         const paid = b.paid === true;
         const div = document.createElement('div');
         div.className = 'dashboard-card p-5 flex flex-col gap-2 ' +
                         (paid ? 'invoice-status-paid' : 'invoice-status-unpaid');
-
         div.innerHTML = `
           <div class="flex justify-between items-center mb-1">
             <span class="font-semibold">Invoice #${idx + 1}</span>
@@ -235,7 +260,6 @@
           <div>Amount: <span class="font-bold">$${b.amount}</span></div>
           <div>Due: ${b.dueDate}</div>
         `;
-
         if (!paid) {
           const payStack = document.createElement('div');
           payStack.className = 'pay-btn-stack';
@@ -299,7 +323,6 @@
 
           div.appendChild(payStack);
         }
-
         invoicesList.appendChild(div);
       });
     }
@@ -312,7 +335,7 @@
         email:   document.getElementById('input-email').value.trim(),
         phone:   document.getElementById('input-phone').value.trim(),
         address: document.getElementById('input-address').value.trim(),
-        pin:     currentCustomer.pin
+        pin:     currentCustomer.pin || ""  // preserve current pin
       };
       db.collection('customers').doc(currentCustomer.id).set(upd)
         .then(() => {
@@ -325,6 +348,41 @@
           updateFeedback.textContent = 'Update failed.';
           console.error(err);
         });
+    };
+
+    createPinBtn.onclick = async () => {
+      createPinError.textContent = "";
+      createPinSuccess.textContent = "";
+      const bin = binInput.value.trim();
+      const newPin = newPinInput.value.trim();
+
+      if (!bin) {
+        createPinError.textContent = "Please enter your BIN number.";
+        return;
+      }
+      if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+        createPinError.textContent = "Please enter a valid 4-digit PIN.";
+        return;
+      }
+
+      try {
+        // Find customer by bin (bin = doc id)
+        const docRef = db.collection('customers').doc(bin);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          createPinError.textContent = "BIN number not found.";
+          return;
+        }
+
+        // Update the 'pin' field with new PIN
+        await docRef.update({ pin: newPin });
+        createPinSuccess.textContent = "PIN successfully created/updated! Please log in.";
+        binInput.value = "";
+        newPinInput.value = "";
+      } catch (e) {
+        createPinError.textContent = "Error creating PIN.";
+        console.error(e);
+      }
     };
   </script>
 </body>
