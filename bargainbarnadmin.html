@@ -67,7 +67,7 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       margin-top: 0.5rem;
-      padding: 3rem 1rem 1rem 1rem; /* Increased top padding further */
+      padding: 3rem 1rem 1rem 1rem;
       position: relative;
       display: flex;
       align-items: center;
@@ -139,6 +139,74 @@
     }
     .email-check.show {
       opacity: 1;
+    }
+
+    /* New Email Options Dropdown */
+    #email-options-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-width: 380px;
+      background: white;
+      border: 2px solid black; /* thinner border */
+      border-radius: 0.5rem; /* less rounded corners */
+     
+      padding: 0.75rem 1rem 1rem 1rem;
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 110px;
+    }
+    #email-options-dropdown.show {
+      display: flex;
+    }
+    #email-options-dropdown h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: black;
+      user-select: none;
+    }
+    #email-options-dropdown .options-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: space-between;
+      margin-top: auto; /* push buttons to bottom */
+    }
+    #email-options-dropdown button {
+      flex: 1;
+      padding: 0.3rem 0;
+      border-radius: 0.5rem;
+      border: none;
+      font-weight: 600;
+      font-size: .95rem;
+      cursor: pointer;
+      user-select: none;
+      background: #9ca3af;
+      color: black;
+      transition: background 0.2s ease;
+    }
+    #email-options-dropdown button:hover {
+      filter: brightness(0.9);
+    }
+    #email-options-dropdown .close-btn {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ef4444;
+      cursor: pointer;
+      user-select: none;
+      background: transparent !important;
+      border: none;
+      padding: 0;
+      line-height: 1;
+    }
+    #email-options-dropdown .close-btn:hover {
+      color: #b91c1c;
     }
   </style>
 </head>
@@ -234,7 +302,7 @@ Admin</textarea>
         </div>
 
         <!-- Invoice Tracking Calendar -->
-        <section id="invoice-container" class="space-y-2">
+        <section id="invoice-container" class="space-y-2 relative" style="max-width: 380px; margin-top: 1rem;">
           <h3 class="text-lg font-semibold">Invoice Tracking Calendar</h3>
           <div id="invoice-grid"></div>
           <div id="batch-bar" class="">
@@ -242,6 +310,16 @@ Admin</textarea>
             <div class="bar-actions">
               <button id="batch-email">Send Email</button>
               <button id="batch-paid">Mark All Paid</button>
+            </div>
+          </div>
+
+          <!-- New Email Options Dropdown -->
+          <div id="email-options-dropdown" aria-hidden="true">
+            <button class="close-btn" id="close-email-options">&times;</button>
+            <h3>Email Options</h3>
+            <div class="options-buttons">
+              <button id="email-new-customer">New Customer</button>
+              <button id="email-new-invoice">New Invoice</button>
             </div>
           </div>
         </section>
@@ -269,7 +347,8 @@ Admin</textarea>
           <p><strong>Email:</strong> <span id="profile-email"></span></p>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
-          <p><strong>Customer PIN number:</strong> <span id="profile-pin"></span></p>
+          <p><strong>Admin PIN:</strong> <span id="profile-admin-pin"></span></p>
+          <p><strong>Customer PIN:</strong> <span id="profile-pin"></span> <button id="reset-pin-btn" class="text-red-600 hover:text-red-800 text-sm font-semibold ml-2">Reset</button></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2" />
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
@@ -353,6 +432,11 @@ Admin</textarea>
       const invoiceContainer = document.getElementById("invoice-container");
       const emailModalBg = document.getElementById("email-modal-bg");
 
+      const emailOptionsDropdown = document.getElementById("email-options-dropdown");
+      const closeEmailOptionsBtn = document.getElementById("close-email-options");
+      const emailNewCustomerBtn = document.getElementById("email-new-customer");
+      const emailNewInvoiceBtn = document.getElementById("email-new-invoice");
+
       let activeCustomer = null;
       let selectedCustomerIds = new Set();
 
@@ -422,7 +506,8 @@ Admin</textarea>
         ["id", "name", "email", "phone", "address"].forEach((f) => {
           document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
         });
-        document.getElementById("profile-pin").textContent = activeCustomer.pin;
+        document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || activeCustomer.pin || "";
+        document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
         await renderBills();
         renderEmailLog();
         navLinks.forEach((l) => l.classList.remove("active"));
@@ -489,6 +574,7 @@ Admin</textarea>
           phone: document.getElementById("cust-phone").value.trim(),
           address: document.getElementById("cust-address").value.trim(),
           pin,
+          adminPin: pin // store adminPin equal to pin initially
         });
         ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
           (f) => (document.getElementById(f).value = "")
@@ -535,7 +621,7 @@ Admin</textarea>
         snap.forEach((d) => batch.delete(d.ref));
         await batch.commit();
         activeCustomer = null;
-        ["profile-id", "profile-name", "profile-email", "profile-phone", "profile-address", "profile-pin"].forEach(
+        ["profile-id", "profile-name", "profile-email", "profile-phone", "profile-address", "profile-pin", "profile-admin-pin"].forEach(
           (f) => (document.getElementById(f).textContent = "")
         );
         document.getElementById("profile-bills-list").innerHTML = "";
@@ -608,6 +694,7 @@ Admin</textarea>
         updateBatchBar();
         renderInvoiceGridColors();
         populateSidebar();
+        hideEmailOptionsDropdown();
       };
 
       batchPaidBtn.onclick = async () => {
@@ -624,13 +711,62 @@ Admin</textarea>
         await updateMetrics();
         await updateGrid();
         updateBatchBar();
+        hideEmailOptionsDropdown();
       };
 
-      batchEmailBtn.onclick = async () => {
+      batchEmailBtn.onclick = () => {
         if (selectedCustomerIds.size === 0) return;
-        batchBar.classList.remove("show");
-        openEmailModal(Array.from(selectedCustomerIds));
+        showEmailOptionsDropdown();
       };
+
+      // Email options dropdown handlers
+      function showEmailOptionsDropdown() {
+        emailOptionsDropdown.classList.add("show");
+      }
+      function hideEmailOptionsDropdown() {
+        emailOptionsDropdown.classList.remove("show");
+      }
+      closeEmailOptionsBtn.onclick = () => {
+        hideEmailOptionsDropdown();
+      };
+
+      async function sendNewCustomerEmail() {
+        const customers = await getCustomers();
+        const toSend = customers.filter((c) => selectedCustomerIds.has(c.id));
+        const mailtoLinks = toSend.map(c => {
+          const subject = encodeURIComponent("Welcome to Customer Portal");
+          const body = encodeURIComponent(`Hello ${c.name},
+
+Please create your login PIN at the customer portal using this link: [INSERT_PORTAL_LINK]
+
+Thank you!`);
+          return `mailto:${c.email}?subject=${subject}&body=${body}`;
+        });
+        for (const mailto of mailtoLinks) {
+          window.open(mailto);
+        }
+        hideEmailOptionsDropdown();
+      }
+      async function sendNewInvoiceEmail() {
+        const customers = await getCustomers();
+        const toSend = customers.filter((c) => selectedCustomerIds.has(c.id));
+        const mailtoLinks = toSend.map(c => {
+          const subject = encodeURIComponent("Your Invoice is Ready");
+          const body = encodeURIComponent(`Hello ${c.name},
+
+Your new invoice is available to view. Please log in to your customer portal.
+
+Thank you!`);
+          return `mailto:${c.email}?subject=${subject}&body=${body}`;
+        });
+        for (const mailto of mailtoLinks) {
+          window.open(mailto);
+        }
+        hideEmailOptionsDropdown();
+      }
+
+      emailNewCustomerBtn.onclick = () => sendNewCustomerEmail();
+      emailNewInvoiceBtn.onclick = () => sendNewInvoiceEmail();
 
       // Login flow
       loginBtn.onclick = async () => {
@@ -745,81 +881,12 @@ Admin</textarea>
         else selectedCustomerIds.add(customerId);
         updateBatchBar();
         renderInvoiceGridColors();
-      }
-
-      async function openEmailModal(customerIds) {
-        const modalCustomersList = document.getElementById("modal-customers-list");
-        const emailModalFeedback = document.getElementById("email-modal-feedback");
-
-        // Hide invoice container while modal is open
-        invoiceContainer.style.display = "none";
-
-        emailModalFeedback.textContent = "";
-        modalCustomersList.innerHTML = "";
-
-        const customers = await getCustomers();
-        const toSend = customers.filter((c) => customerIds.includes(c.id));
-        toSend.forEach((c) => {
-          const li = document.createElement("li");
-          li.textContent = `${c.id} - ${c.name}`;
-          modalCustomersList.appendChild(li);
-        });
-
-        emailModalBg.classList.remove("hidden");
-
-        const form = document.getElementById("mass-email-form");
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-
-        newForm.onsubmit = async (e) => {
-          e.preventDefault();
-          emailModalFeedback.textContent = "Sending emails...";
-
-          await new Promise((r) => setTimeout(r, 1000));
-
-          const emailLog = getEmailLog();
-          const nowStr = new Date().toLocaleString();
-          customerIds.forEach((id) => {
-            emailLog[id] = nowStr;
-          });
-          saveEmailLog(emailLog);
-
-          showEmailCheckmarks(customerIds);
-
-          emailModalFeedback.textContent = "Emails sent!";
-          setTimeout(() => {
-            emailModalFeedback.textContent = "";
-            emailModalBg.classList.add("hidden");
-            // Restore invoice container display
-            invoiceContainer.style.display = "block";
-          }, 2000);
-        };
-      }
-
-      document.getElementById("close-email-modal").onclick = () => {
-        emailModalBg.classList.add("hidden");
-        invoiceContainer.style.display = "block";
-      };
-
-      function showEmailCheckmarks(customerIds) {
-        customerIds.forEach((id) => {
-          const buttons = Array.from(sidebarCustomerList.querySelectorAll("button.customer-btn"));
-          buttons.forEach((btn) => {
-            if (btn.textContent.trim().startsWith(id + " -")) {
-              const check = btn.querySelector(".email-check");
-              if (check) {
-                check.classList.add("show");
-                setTimeout(() => {
-                  check.classList.remove("show");
-                }, 5000);
-              }
-            }
-          });
-        });
+        hideEmailOptionsDropdown();
       }
 
       await populateSidebar();
       await updateMetrics();
+      await updateGrid();
     });
   </script>
 </body>
