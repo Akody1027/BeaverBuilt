@@ -140,13 +140,6 @@
     .email-check.show {
       opacity: 1;
     }
-    .customer-warning {
-      color: red;
-      font-weight: bold;
-      margin-left: 5px;
-      font-size: 1.2rem;
-      user-select: none;
-    }
 
     /* New Email Options Dropdown */
     #email-options-dropdown {
@@ -158,6 +151,7 @@
       background: white;
       border: 2px solid black; /* thinner border */
       border-radius: 0.5rem; /* less rounded corners */
+     
       padding: 0.75rem 1rem 1rem 1rem;
       z-index: 2000;
       display: none;
@@ -213,15 +207,6 @@
     }
     #email-options-dropdown .close-btn:hover {
       color: #b91c1c;
-    }
-
-    #reset-pin-feedback {
-      display: inline-block;
-      margin-left: 10px;
-      color: #22c55e;
-      font-weight: 600;
-      font-size: 0.9rem;
-      user-select: none;
     }
   </style>
 </head>
@@ -363,7 +348,7 @@ Admin</textarea>
           <p><strong>Phone:</strong> <span id="profile-phone"></span></p>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Admin PIN:</strong> <span id="profile-admin-pin"></span></p>
-          <p><strong>Customer PIN:</strong> <span id="profile-pin"></span> <button id="reset-pin-btn" class="text-red-600 hover:text-red-800 text-sm font-semibold ml-2">Reset</button><span id="reset-pin-feedback"></span></p>
+          <p><strong>Customer PIN:</strong> <span id="profile-pin"></span> <button id="reset-pin-btn" class="text-red-600 hover:text-red-800 text-sm font-semibold ml-2">Reset</button></p>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2" />
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
@@ -452,11 +437,6 @@ Admin</textarea>
       const emailNewCustomerBtn = document.getElementById("email-new-customer");
       const emailNewInvoiceBtn = document.getElementById("email-new-invoice");
 
-      const resetPinBtn = document.getElementById("reset-pin-btn");
-      const profileAdminPinSpan = document.getElementById("profile-admin-pin");
-      const profilePinSpan = document.getElementById("profile-pin");
-      const resetPinFeedbackSpan = document.getElementById("reset-pin-feedback");
-
       let activeCustomer = null;
       let selectedCustomerIds = new Set();
 
@@ -499,6 +479,7 @@ Admin</textarea>
               warning.className = "customer-warning";
               warning.title = "Missing info";
               warning.textContent = "!";
+              warning.style.color = "red"; // Red color for missing info
               btn.appendChild(warning);
             }
 
@@ -526,9 +507,9 @@ Admin</textarea>
         ["id", "name", "email", "phone", "address"].forEach((f) => {
           document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
         });
-        profileAdminPinSpan.textContent = activeCustomer.adminPin || "";
-        profilePinSpan.textContent = activeCustomer.pin || "";
-        resetPinFeedbackSpan.textContent = "";
+        // Properly display adminPin and customer pin
+        document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || "";
+        document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
         await renderBills();
         renderEmailLog();
         navLinks.forEach((l) => l.classList.remove("active"));
@@ -702,22 +683,18 @@ Admin</textarea>
         });
       };
 
-      // Reset customer pin button handler
-      resetPinBtn.onclick = async () => {
+      // Reset customer PIN button handler
+      document.getElementById("reset-pin-btn").onclick = async () => {
         if (!activeCustomer) return;
+        if (!confirm(`Reset customer PIN for "${activeCustomer.name}"?`)) return;
         try {
-          // Reset customer PIN by setting pin field to null or empty string
           await db.collection("customers").doc(activeCustomer.id).update({ pin: "" });
           activeCustomer.pin = "";
-          profilePinSpan.textContent = "";
-          resetPinFeedbackSpan.textContent = "Customer PIN reset";
-          setTimeout(() => {
-            resetPinFeedbackSpan.textContent = "";
-          }, 3000);
-          await populateSidebar();
-        } catch (err) {
+          document.getElementById("profile-pin").textContent = "";
+          alert("Customer PIN has been reset.");
+        } catch (e) {
           alert("Failed to reset PIN.");
-          console.error(err);
+          console.error(e);
         }
       };
 
