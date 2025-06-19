@@ -151,7 +151,6 @@
       background: white;
       border: 2px solid black; /* thinner border */
       border-radius: 0.5rem; /* less rounded corners */
-     
       padding: 0.75rem 1rem 1rem 1rem;
       z-index: 2000;
       display: none;
@@ -207,6 +206,30 @@
     }
     #email-options-dropdown .close-btn:hover {
       color: #b91c1c;
+    }
+
+    /* New styling for warning ! */
+    .customer-warning {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ef4444; /* red background */
+      color: white; /* black text */
+      font-weight: 900;
+      font-size: 1rem;
+      border-radius: 9999px; /* fully rounded circle */
+      width: 15px;
+      height: 15px;
+      position: absolute;
+      right: 8px; /* far right within sidebar */
+      top: 50%;
+      transform: translateY(-50%);
+      user-select: none;
+      pointer-events: none;
+    }
+    .sidebar-customer-item {
+      position: relative;
+      padding-right: 18px; /* space to right for warning circle */
     }
   </style>
 </head>
@@ -469,9 +492,11 @@ Admin</textarea>
         customers
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
+            const li = document.createElement("li");
+            li.classList.add("sidebar-customer-item");
+
             const btn = document.createElement("button");
             btn.className = "customer-btn flex items-center justify-between";
-            btn.style.position = "relative";
             btn.textContent = `${c.id} - ${c.name}`;
 
             if (customerHasMissingInfo(c)) {
@@ -479,7 +504,6 @@ Admin</textarea>
               warning.className = "customer-warning";
               warning.title = "Missing info";
               warning.textContent = "!";
-              warning.style.color = "red"; // Red color for missing info
               btn.appendChild(warning);
             }
 
@@ -494,7 +518,6 @@ Admin</textarea>
             btn.appendChild(emailCheck);
 
             btn.onclick = () => openCustomer(c.id);
-            const li = document.createElement("li");
             li.appendChild(btn);
             sidebarCustomerList.appendChild(li);
           });
@@ -507,7 +530,7 @@ Admin</textarea>
         ["id", "name", "email", "phone", "address"].forEach((f) => {
           document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
         });
-        // Properly display adminPin and customer pin
+        // Show adminPin and customer pin separately
         document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || "";
         document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
         await renderBills();
@@ -683,18 +706,24 @@ Admin</textarea>
         });
       };
 
-      // Reset customer PIN button handler
-      document.getElementById("reset-pin-btn").onclick = async () => {
+      // Reset Customer PIN button functionality
+      const resetPinBtn = document.getElementById("reset-pin-btn");
+      resetPinBtn.onclick = async () => {
         if (!activeCustomer) return;
-        if (!confirm(`Reset customer PIN for "${activeCustomer.name}"?`)) return;
+        if (!confirm("Reset customer's PIN? This will require them to create a new PIN on login.")) return;
         try {
+          // Reset customer PIN by clearing the customer-created pin field only (not adminPin)
           await db.collection("customers").doc(activeCustomer.id).update({ pin: "" });
+          // Update local object and UI
           activeCustomer.pin = "";
           document.getElementById("profile-pin").textContent = "";
-          alert("Customer PIN has been reset.");
-        } catch (e) {
+          alert("Customer PIN has been reset. They must create a new PIN to log in.");
+          // Refresh sidebar and profile display
+          await populateSidebar();
+          openCustomer(activeCustomer.id);
+        } catch (error) {
           alert("Failed to reset PIN.");
-          console.error(e);
+          console.error(error);
         }
       };
 
