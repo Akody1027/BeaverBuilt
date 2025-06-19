@@ -113,7 +113,11 @@
         </form>
       </section>
 
-
+      <!-- Debug info -->
+      <section>
+        <h3 class="text-lg font-bold mb-2 text-red-600">Debug Invoice Snapshot Data</h3>
+        <pre id="debug-area">No data yet.</pre>
+      </section>
     </main>
   </div>
 
@@ -142,8 +146,8 @@
           welcomePIN     = document.getElementById('welcome-pin'),
           invoicesList   = document.getElementById('invoices-list'),
           updateForm     = document.getElementById('update-form'),
-          updateFeedback = document.getElementById('update-feedback');
-          
+          updateFeedback = document.getElementById('update-feedback'),
+          debugArea      = document.getElementById('debug-area');
 
     let currentCustomer = null;
     let unsubscribeInvoices = null;
