@@ -141,8 +141,8 @@
           welcomePIN     = document.getElementById('welcome-pin'),
           invoicesList   = document.getElementById('invoices-list'),
           updateForm     = document.getElementById('update-form'),
-          updateFeedback = document.getElementById('update-feedback'),
-          debugArea      = document.getElementById('debug-area');
+          updateFeedback = document.getElementById('update-feedback');
+          
 
     let currentCustomer = null;
     let unsubscribeInvoices = null;
@@ -206,7 +206,7 @@
         .where('customerId', '==', currentCustomer.id)
         .onSnapshot(snapshot => {
           const bills = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          debugArea.textContent = JSON.stringify(bills, null, 2);
+          
           renderInvoices(bills);
         }, err => {
           debugArea.textContent = 'Error: ' + err.message;
