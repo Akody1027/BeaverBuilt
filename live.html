@@ -1,117 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Live Code Editor with Preview</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css" />
-  <style>
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      font-family: monospace;
-      background: #f3f4f6;
-      overflow: hidden;
-    }
-    #container {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-    }
-    #editor {
-      width: 50%;
-      height: 100vh;
-      border-right: 2px solid #ddd;
-      background: #1e1e1e;
-      display: flex;
-      flex-direction: column;
-      transition: width 0.4s ease;
-      position: relative;
-    }
-    #editor-header {
-      background: #282c34;
-      padding: 12px 16px;
-      border-bottom: 1px solid #444;
-      color: #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      user-select: none;
-      font-weight: 600;
-      font-size: 1.05em;
-    }
-    #toggle-btn {
-      cursor: pointer;
-      background: none;
-      border: none;
-      font-size: 1.3rem;
-      color: #888;
-      transition: transform 0.3s ease;
-      padding: 4px 8px;
-      user-select: none;
-    }
-    #toggle-btn:hover {
-      color: #eee;
-    }
-    #toggle-btn.closed {
-      transform: rotate(180deg);
-    }
-    #editor-content {
-      flex: 1;
-    }
-    .CodeMirror {
-      height: 100% !important;
-      font-family: 'Fira Code', monospace;
-      font-size: 14px;
-    }
-    #preview {
-      width: 50%;
-      height: 100vh;
-      border: none;
-      background: #fff;
-      transition: width 0.4s ease;
-      flex-shrink: 0;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Live Code Editor with Preview & Refresh Confirm</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css" />
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: monospace;
+    background: #f3f4f6;
+    overflow: hidden;
+  }
+  #container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  #editor {
+    width: 50%;
+    height: 100vh;
+    border-right: 2px solid #ddd;
+    background: #1e1e1e;
+    display: flex;
+    flex-direction: column;
+    transition: width 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  #editor-header {
+    background: #282c34;
+    padding: 12px 16px;
+    border-bottom: 1px solid #444;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    font-weight: 600;
+    font-size: 1.05em;
+  }
+  #toggle-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: #888;
+    transition: transform 0.3s ease;
+    padding: 4px 8px;
+    user-select: none;
+  }
+  #toggle-btn:hover {
+    color: #eee;
+  }
+  #toggle-btn.closed {
+    transform: rotate(180deg);
+  }
+  #editor-content {
+    flex: 1;
+  }
+  .CodeMirror {
+    height: 100% !important;
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+  }
+  #preview {
+    width: 50%;
+    height: 100vh;
+    border: none;
+    background: #fff;
+    transition: width 0.4s ease;
+    flex-shrink: 0;
+  }
+</style>
 </head>
 <body>
 
-  <div id="container">
-    <div id="editor">
-      <div id="editor-header">
-        HTML/CSS/JS Editor
-        <button id="toggle-btn" aria-label="Toggle Editor Panel" title="Toggle Editor Panel">&#9664;</button>
-      </div>
-      <textarea id="editor-content"></textarea>
+<div id="container">
+  <div id="editor">
+    <div id="editor-header">
+      HTML/CSS/JS Editor
+      <button id="toggle-btn" aria-label="Toggle Editor Panel" title="Toggle Editor Panel">&#9664;</button>
     </div>
-    <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+    <textarea id="editor-content"></textarea>
   </div>
+  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
 
-  <script>
-    const editorTextarea = document.getElementById('editor-content');
-    const preview = document.getElementById('preview');
-    const editorWrapper = document.getElementById('editor');
-    const toggleBtn = document.getElementById('toggle-btn');
+<script>
+  const editorTextarea = document.getElementById('editor-content');
+  const preview = document.getElementById('preview');
+  const editorWrapper = document.getElementById('editor');
+  const toggleBtn = document.getElementById('toggle-btn');
 
-    // Initialize CodeMirror editor
-    const editor = CodeMirror.fromTextArea(editorTextarea, {
-      mode: "htmlmixed",
-      theme: "material-darker",
-      lineNumbers: true,
-      tabSize: 2,
-      lineWrapping: true,
-      autoCloseTags: true,
-      autofocus: true
-    });
+  // Initialize CodeMirror editor
+  const editor = CodeMirror.fromTextArea(editorTextarea, {
+    mode: "htmlmixed",
+    theme: "material-darker",
+    lineNumbers: true,
+    tabSize: 2,
+    lineWrapping: true,
+    autoCloseTags: true,
+    autofocus: true
+  });
 
-    // Set initial content
-    const initialCode = `<!DOCTYPE html>
+  // Initial content
+  const initialCode = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -125,36 +126,41 @@
   <h1>Hello, world!</h1>
   <script>
     document.body.onclick = () => alert('Clicked!');
-  </script>
-</body>
-</html>`;
-    editor.setValue(initialCode);
-    preview.srcdoc = initialCode;
+  
+  editor.setValue(initialCode);
+  preview.srcdoc = initialCode;
 
-    // Update preview iframe on editor changes
-    editor.on("change", () => {
-      preview.srcdoc = editor.getValue();
-    });
+  // Update preview iframe on editor changes
+  editor.on("change", () => {
+    preview.srcdoc = editor.getValue();
+  });
 
-    // Toggle editor pane open/close
-    toggleBtn.onclick = () => {
-      const isClosed = editorWrapper.style.width === '0px' || editorWrapper.style.width === '0';
+  // Toggle editor pane open/close fully
+  toggleBtn.onclick = () => {
+    const isClosed = editorWrapper.style.width === '0px' || editorWrapper.style.width === '0';
+    if (isClosed) {
+      // Open editor
+      editorWrapper.style.width = '50%';
+      preview.style.width = '50%';
+      toggleBtn.classList.remove('closed');
+      toggleBtn.innerHTML = '&#9664;';
+      editor.refresh();
+    } else {
+      // Close editor fully
+      editorWrapper.style.width = '0';
+      preview.style.width = '100%';
+      toggleBtn.classList.add('closed');
+      toggleBtn.innerHTML = '&#9654;';
+    }
+  };
 
-      if (isClosed) {
-        // Open editor
-        editorWrapper.style.width = '50%';
-        preview.style.width = '50%';
-        toggleBtn.classList.remove('closed');
-        toggleBtn.innerHTML = '&#9664;';
-        editor.refresh();
-      } else {
-        // Close editor
-        editorWrapper.style.width = '0';
-        preview.style.width = '100%';
-        toggleBtn.classList.add('closed');
-        toggleBtn.innerHTML = '&#9654;';
-      }
-    };
-  </script>
+  // Show confirmation alert before page unload (refresh/close)
+  window.addEventListener('beforeunload', (e) => {
+    e.preventDefault();
+    e.returnValue = ''; // Chrome requires returnValue to be set
+  });
+</script>
+
 </body>
 </html>
+
