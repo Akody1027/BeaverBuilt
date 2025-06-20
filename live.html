@@ -1,195 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Live HTML Previewer - Fixed Fullscreen & Zoom</title>
-<style>
-  * {
-    box-sizing: border-box;
-  }
-  body, html {
-    margin: 0; padding: 0; height: 100%;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-  }
-  #container {
-    display: flex;
-    height: 100vh;
-    width: 100vw;
-  }
-  #sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    background: #f0f0f0;
-    padding: 1rem 0.5rem;
-    width: 120px;
-    border-right: 1px solid #ccc;
-  }
-  #sidebar button {
-    padding: 0.5rem;
-    font-size: 14px;
-    cursor: pointer;
-    width: 100%;
-    user-select: none;
-  }
-  #main {
-    flex-grow: 1;
-    position: relative;
-    height: 100%;
-  }
-  #editor, #preview {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-  #editor textarea {
-    width: 100%;
-    height: 100%;
-    font-family: monospace;
-    font-size: 14px;
-    padding: 0.5rem;
-    border: none;
-    resize: none;
-    outline: none;
-    box-sizing: border-box;
-    line-height: 1.4;
-  }
-  #preview {
-    display: none;
-  }
-  /* Fullscreen overlay styles */
-  #fullscreenOverlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: white;
-    z-index: 9999;
-  }
-  #fullscreenFrame {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Live HTML/CSS/JS Editor with Fullscreen & Zoom</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      font-family: sans-serif;
+      background: #f3f4f6;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    #container {
+      display: flex;
+      flex: 1;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #editor {
+      width: 50%;
+      height: 100vh;
+      border-right: 2px solid #ddd;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    #bar {
+      background: #f3f4f6;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    #bar strong {
+      font-size: 1.05em;
+      color: #1e293b;
+      flex-shrink: 0;
+    }
+    button {
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #e5e7eb;
+    }
+    #code {
+      flex: 1;
+      width: 100%;
+      font-family: "Fira Mono", monospace;
+      font-size: 15px;
+      border: none;
+      outline: none;
+      padding: 16px;
+      resize: none;
+      background: #f9fafb;
+      line-height: 1.4;
+      overflow: auto;
+    }
+    #preview {
+      width: 50%;
+      height: 100vh;
+      border: none;
+      background: #fff;
+    }
+    /* Fullscreen overlay */
+    #fullscreenOverlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      z-index: 9999;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+    #fullscreenFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
 </head>
 <body>
-
-<div id="container">
-  <div id="sidebar">
-    <button id="previewBtn" title="Toggle Preview">Preview</button>
-    <button id="toggleFullscreenBtn" title="Toggle fullscreen preview">Fullscreen Preview</button>
-    <button id="zoomInBtn" title="Zoom in editor code">Zoom In</button>
-    <button id="zoomOutBtn" title="Zoom out editor code">Zoom Out</button>
-  </div>
-
-  <div id="main">
+  <div id="container">
     <div id="editor">
-      <textarea id="htmlInput" placeholder="Paste your full HTML code here..."></textarea>
+      <div id="bar">
+        <strong>HTML/CSS/JS Editor</strong>
+        <button id="zoomInBtn" title="Zoom In">Zoom In</button>
+        <button id="zoomOutBtn" title="Zoom Out">Zoom Out</button>
+        <button id="fullscreenBtn" title="Toggle Fullscreen Preview">Fullscreen Preview</button>
+      </div>
+      <textarea id="code" spellcheck="false" autofocus><!-- Type or paste your HTML, CSS, and JavaScript here -->
+<h1 style="color: #e11d48;">Hello, world!</h1>
+<style>
+  body { background: #f9fafb; }
+  h1 { font-size: 2.5em; text-align: center; }
+</style>
+<script>
+  document.body.onclick = () => alert('Clicked!');
+</script>
+      </textarea>
     </div>
     <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
   </div>
-</div>
 
-<!-- Fullscreen preview overlay -->
-<div id="fullscreenOverlay">
-  <iframe id="fullscreenFrame" sandbox="allow-scripts allow-same-origin"></iframe>
-</div>
+  <div id="fullscreenOverlay">
+    <iframe id="fullscreenFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+  </div>
 
-<script>
-  (function() {
-    const textarea = document.getElementById('htmlInput');
-    const previewBtn = document.getElementById('previewBtn');
-    const toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
-    const zoomInBtn = document.getElementById('zoomInBtn');
-    const zoomOutBtn = document.getElementById('zoomOutBtn');
+  <script>
+    (function() {
+      const code = document.getElementById('code');
+      const preview = document.getElementById('preview');
+      const fullscreenOverlay = document.getElementById('fullscreenOverlay');
+      const fullscreenFrame = document.getElementById('fullscreenFrame');
+      const zoomInBtn = document.getElementById('zoomInBtn');
+      const zoomOutBtn = document.getElementById('zoomOutBtn');
+      const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    const previewIframe = document.getElementById('preview');
-    const editorDiv = document.getElementById('editor');
-    const fullscreenOverlay = document.getElementById('fullscreenOverlay');
-    const fullscreenFrame = document.getElementById('fullscreenFrame');
+      let fontSize = 15;
+      const minFontSize = 8;
+      const maxFontSize = 36;
 
-    let fontSize = 14;
-    const minFontSize = 8;
-    const maxFontSize = 36;
-
-    let previewVisible = false;
-    let fullscreenVisible = false;
-
-    function renderPreview() {
-      const content = textarea.value;
-      previewIframe.srcdoc = content;
-      fullscreenFrame.srcdoc = content;
-    }
-
-    previewBtn.addEventListener('click', () => {
-      if (!previewVisible) {
-        renderPreview();
-        editorDiv.style.display = 'none';
-        previewIframe.style.display = 'block';
-        previewBtn.textContent = 'Edit Code';
-        previewVisible = true;
-      } else {
-        previewIframe.style.display = 'none';
-        editorDiv.style.display = 'block';
-        previewBtn.textContent = 'Preview';
-        previewVisible = false;
+      function updatePreview() {
+        preview.srcdoc = code.value;
+        if (fullscreenOverlay.style.display === 'block') {
+          fullscreenFrame.srcdoc = code.value;
+        }
       }
-    });
 
-    toggleFullscreenBtn.addEventListener('click', () => {
-      if (!fullscreenVisible) {
-        // Show fullscreen preview overlay
-        fullscreenOverlay.style.display = 'block';
-        fullscreenFrame.srcdoc = textarea.value;
-        toggleFullscreenBtn.textContent = 'Exit Fullscreen';
-        fullscreenVisible = true;
-      } else {
-        // Hide fullscreen preview overlay
-        fullscreenOverlay.style.display = 'none';
-        toggleFullscreenBtn.textContent = 'Fullscreen Preview';
-        fullscreenVisible = false;
-      }
-    });
+      // Update preview on input immediately
+      code.addEventListener('input', updatePreview);
 
-    zoomInBtn.addEventListener('click', () => {
-      if (fontSize < maxFontSize) {
-        fontSize++;
-        textarea.style.fontSize = fontSize + 'px';
-      }
-    });
+      // Initial preview update on page load
+      window.addEventListener('DOMContentLoaded', updatePreview);
 
-    zoomOutBtn.addEventListener('click', () => {
-      if (fontSize > minFontSize) {
-        fontSize--;
-        textarea.style.fontSize = fontSize + 'px';
-      }
-    });
+      // Zoom In
+      zoomInBtn.addEventListener('click', () => {
+        if (fontSize < maxFontSize) {
+          fontSize++;
+          code.style.fontSize = fontSize + 'px';
+        }
+      });
 
-    // Initialize textarea with sample HTML and initial font size
-    textarea.value = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Sample</title>
-  <style>body { font-family: Arial; }</style>
-</head>
-<body>
-  <h1>Hello, Live Preview!</h1>
-  <script>console.log('JS running inside preview');</script>
-</body>
-</html>`;
-    editorDiv.style.display = 'block';
-    previewIframe.style.display = 'none';
-    previewBtn.textContent = 'Preview';
-    fontSize = 14;
-    textarea.style.fontSize = fontSize + 'px';
-  })();
-</script>
+      // Zoom Out
+      zoomOutBtn.addEventListener('click', () => {
+        if (fontSize > minFontSize) {
+          fontSize--;
+          code.style.fontSize = fontSize + 'px';
+        }
+      });
 
+      // Toggle fullscreen preview
+      fullscreenBtn.addEventListener('click', () => {
+        if (fullscreenOverlay.style.display === 'block') {
+          fullscreenOverlay.style.display = 'none';
+          fullscreenFrame.srcdoc = '';
+        } else {
+          fullscreenOverlay.style.display = 'block';
+          fullscreenFrame.srcdoc = code.value;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
