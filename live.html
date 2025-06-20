@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Live HTML Previewer with Fullscreen & Zoom</title>
+<title>Live HTML Previewer - Rebuilt</title>
 <style>
   * {
     box-sizing: border-box;
@@ -35,14 +35,17 @@
   }
   #main {
     flex-grow: 1;
-    display: flex;
+    position: relative;
     height: 100%;
   }
-  #editor {
-    width: 50%;
+  #editor, #preview {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
     height: 100%;
+    border: none;
   }
-  textarea {
+  #editor textarea {
     width: 100%;
     height: 100%;
     font-family: monospace;
@@ -51,10 +54,10 @@
     border: none;
     resize: none;
     outline: none;
+    box-sizing: border-box;
   }
   #preview {
-    width: 50%;
-    border: none;
+    display: none;
   }
   /* Fullscreen overlay styles */
   #fullscreenOverlay {
@@ -76,7 +79,7 @@
 
 <div id="container">
   <div id="sidebar">
-    <button id="previewBtn" title="Render the preview">Preview</button>
+    <button id="previewBtn" title="Toggle Preview">Preview</button>
     <button id="toggleFullscreenBtn" title="Toggle fullscreen preview">Fullscreen Preview</button>
     <button id="zoomInBtn" title="Zoom in editor code">Zoom In</button>
     <button id="zoomOutBtn" title="Zoom out editor code">Zoom Out</button>
@@ -103,41 +106,44 @@
   const zoomOutBtn = document.getElementById('zoomOutBtn');
 
   const previewIframe = document.getElementById('preview');
+  const editorDiv = document.getElementById('editor');
   const fullscreenOverlay = document.getElementById('fullscreenOverlay');
   const fullscreenFrame = document.getElementById('fullscreenFrame');
 
-  // Initial font size for textarea
   let fontSize = 14;
   const minFontSize = 8;
   const maxFontSize = 24;
 
-  // Render preview into normal iframe and fullscreen iframe (if visible)
+  let previewVisible = false;
+
   function renderPreview() {
     const content = textarea.value;
     previewIframe.srcdoc = content;
-    if (fullscreenOverlay.style.display === 'block') {
-      fullscreenFrame.srcdoc = content;
-    }
+    fullscreenFrame.srcdoc = content;
   }
 
   previewBtn.addEventListener('click', () => {
-    renderPreview();
+    if (!previewVisible) {
+      renderPreview();
+      editorDiv.style.display = 'none';
+      previewIframe.style.display = 'block';
+      previewBtn.textContent = 'Edit Code';
+      previewVisible = true;
+    } else {
+      previewIframe.style.display = 'none';
+      editorDiv.style.display = 'block';
+      previewBtn.textContent = 'Preview';
+      previewVisible = false;
+    }
   });
 
   toggleFullscreenBtn.addEventListener('click', () => {
     if (fullscreenOverlay.style.display === 'block') {
-      // Hide fullscreen
       fullscreenOverlay.style.display = 'none';
       toggleFullscreenBtn.textContent = 'Fullscreen Preview';
-      // Show editor and sidebar
-      document.getElementById('container').style.display = 'flex';
     } else {
-      // Show fullscreen
       fullscreenOverlay.style.display = 'block';
       toggleFullscreenBtn.textContent = 'Exit Fullscreen';
-      // Hide editor and sidebar
-      document.getElementById('container').style.display = 'none';
-      // Render preview to fullscreen iframe
       fullscreenFrame.srcdoc = textarea.value;
     }
   });
@@ -156,7 +162,7 @@
     }
   });
 
-  // Optional: Load a sample HTML code on page load for convenience
+  // Initialize textarea with sample HTML and preview hidden
   textarea.value = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,7 +175,11 @@
   <script>console.log('JS running inside preview');</script>
 </body>
 </html>`;
-  renderPreview();
+  editorDiv.style.display = 'block';
+  previewIframe.style.display = 'none';
+  previewBtn.textContent = 'Preview';
+  fontSize = 14;
+  textarea.style.fontSize = fontSize + 'px';
 </script>
 
 </body>
