@@ -1,171 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Code Editor with Fixed Header & Preview</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css" />
-<style>
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    overflow: hidden;
-    font-family: monospace;
-    background: #f3f4f6;
-  }
+  <meta charset="UTF-8" />
+  <title>Code Editor with Preview and Controls</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css"
+  />
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: monospace;
+      background: #f3f4f6;
+    }
 
-  /* Fixed header bar */
-  #header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 50px;
-    background: #1e1e1e;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    gap: 8px;
-    z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  }
-  #header .left-controls,
-  #header .right-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  button.control-btn {
-    background: rgba(31, 41, 55, 0.85);
-    border: none;
-    color: #ddd;
-    font-size: 1.5rem;
-    cursor: pointer;
-    border-radius: 5px;
-    padding: 6px 14px;
-    user-select: none;
-    transition: background-color 0.3s ease;
-  }
-  button.control-btn:hover {
-    background: rgba(31, 41, 55, 1);
-  }
+    /* Fixed header bar */
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      gap: 8px;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
 
-  /* Main container fills below header */
-  #container {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    overflow: hidden;
-  }
-  /* Editor styles */
-  #editor {
-    position: relative;
-    height: 100%;
-    background: #1e1e1e;
-    display: flex;
-    flex-direction: column;
-    transition: width 0.4s ease;
-    z-index: 10;
-    width: 50%;
-  }
-  #editor.closed {
-    width: 0 !important;
-  }
+    #header .left-controls,
+    #header .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  #editor-content {
-    flex: 1;
-  }
-  .CodeMirror {
-    height: 100% !important;
-    font-family: 'Fira Code', monospace;
-    font-size: 14px; /* default font size */
-  }
+    button.control-btn {
+      background: rgba(31, 41, 55, 0.85);
+      border: none;
+      color: #ddd;
+      font-size: 1.5rem;
+      cursor: pointer;
+      border-radius: 5px;
+      padding: 6px 14px;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
 
-  /* Preview fills container always */
-  #preview {
-    position: relative;
-    height: 100%;
-    border: none;
-    background: white;
-    z-index: 5;
-    transition: width 0.4s ease;
-    width: 50%;
-  }
-</style>
+    button.control-btn:hover {
+      background: rgba(31, 41, 55, 1);
+    }
+
+    /* Container fills below header */
+    #container {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      overflow: hidden;
+      height: calc(100vh - 50px);
+    }
+
+    /* Editor styles */
+    #editor {
+      position: relative;
+      height: 100%;
+      background: #1e1e1e;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.4s ease;
+      z-index: 10;
+      width: 50%;
+    }
+
+    #editor.closed {
+      width: 0 !important;
+    }
+
+    #editor-content {
+      flex: 1;
+    }
+
+    .CodeMirror {
+      height: 100% !important;
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+    }
+
+    /* Preview styles */
+    #preview {
+      position: relative;
+      height: 100%;
+      border: none;
+      background: white;
+      z-index: 5;
+      transition: width 0.4s ease;
+      width: 50%;
+    }
+  </style>
 </head>
 <body>
-
-<!-- Fixed header with zoom on left, toggle on right -->
-<div id="header">
-  <div class="left-controls">
-    <button id="zoom-in" class="control-btn" title="Zoom In">+</button>
-    <button id="zoom-out" class="control-btn" title="Zoom Out">−</button>
+  <!-- Fixed header with controls -->
+  <div id="header">
+    <div class="left-controls">
+      <button id="zoom-in" class="control-btn" title="Zoom In">+</button>
+      <button id="zoom-out" class="control-btn" title="Zoom Out">−</button>
+    </div>
+    <div class="right-controls">
+      <button id="toggle-btn" class="control-btn" title="Toggle Editor">&times;</button>
+    </div>
   </div>
-  <div class="right-controls">
-    <button id="toggle-btn" class="control-btn" title="Toggle Editor">&times;</button>
+
+  <!-- Main container -->
+  <div id="container">
+    <div id="editor">
+      <textarea id="editor-content"></textarea>
+    </div>
+    <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
   </div>
-</div>
 
-<!-- Main container below header -->
-<div id="container">
-  <div id="editor">
-    <textarea id="editor-content"></textarea>
-  </div>
-  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
-</div>
+  <!-- CodeMirror scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
+  <script>
+    const editorTextarea = document.getElementById('editor-content');
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const zoomInBtn = document.getElementById('zoom-in');
+    const zoomOutBtn = document.getElementById('zoom-out');
 
-<script>
-  const editorTextarea = document.getElementById('editor-content');
-  const editor = document.getElementById('editor');
-  const preview = document.getElementById('preview');
-  const toggleBtn = document.getElementById('toggle-btn');
-  const zoomInBtn = document.getElementById('zoom-in');
-  const zoomOutBtn = document.getElementById('zoom-out');
+    // Initialize CodeMirror
+    const codeMirror = CodeMirror.fromTextArea(editorTextarea, {
+      mode: 'htmlmixed',
+      theme: 'material-darker',
+      lineNumbers: true,
+      tabSize: 2,
+      lineWrapping: true,
+      autoCloseTags: true,
+      autofocus: true,
+    });
 
-  // Initialize CodeMirror
-  const codeMirror = CodeMirror.fromTextArea(editorTextarea, {
-    mode: "htmlmixed",
-    theme: "material-darker",
-    lineNumbers: true,
-    tabSize: 2,
-    lineWrapping: true,
-    autoCloseTags: true,
-    autofocus: true
-  });
-
-  // Font size state
-  let fontSize = 14;
-  function updateFontSize() {
-    const cm = codeMirror.getWrapperElement();
-    cm.style.fontSize = fontSize + 'px';
-    codeMirror.refresh();
-  }
-  updateFontSize();
-
-  // Zoom handlers
-  zoomInBtn.onclick = () => {
-    if (fontSize < 30) {
-      fontSize++;
-      updateFontSize();
+    // Font size control
+    let fontSize = 14;
+    function updateFontSize() {
+      const cmWrapper = codeMirror.getWrapperElement();
+      cmWrapper.style.fontSize = fontSize + 'px';
+      codeMirror.refresh();
     }
-  };
-  zoomOutBtn.onclick = () => {
-    if (fontSize > 8) {
-      fontSize--;
-      updateFontSize();
-    }
-  };
+    updateFontSize();
 
-  // Initial code content
-  const initialCode = `<!DOCTYPE html>
+    zoomInBtn.onclick = () => {
+      if (fontSize < 30) {
+        fontSize++;
+        updateFontSize();
+      }
+    };
+    zoomOutBtn.onclick = () => {
+      if (fontSize > 8) {
+        fontSize--;
+        updateFontSize();
+      }
+    };
+
+    // Initial HTML code
+    const initialCode = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -179,45 +196,46 @@
   <h1>Hello, world!</h1>
   <script>
     document.body.onclick = () => alert('Clicked!');
-    
-  codeMirror.setValue(initialCode);
-  preview.srcdoc = initialCode;
+  </script>
+</body>
+</html>`;
+    codeMirror.setValue(initialCode);
+    preview.srcdoc = initialCode;
 
-  // Live preview update
-  codeMirror.on('change', () => {
-    preview.srcdoc = codeMirror.getValue();
-  });
+    // Live preview update on editor changes
+    codeMirror.on('change', () => {
+      preview.srcdoc = codeMirror.getValue();
+    });
 
-  // Toggle editor open/close
-  toggleBtn.onclick = () => {
-    if (editor.classList.contains('closed')) {
-      // Open editor (editor half width, preview half width)
-      editor.classList.remove('closed');
-      editor.style.width = '50%';
-      preview.style.width = '50%';
-      toggleBtn.innerHTML = '&times;';
-    } else {
-      // Close editor (preview full width)
-      editor.classList.add('closed');
-      editor.style.width = '0';
-      preview.style.width = '100%';
-      toggleBtn.innerHTML = '&#9654;'; // right arrow
-    }
-    codeMirror.refresh();
-  };
+    // Toggle editor open/close
+    toggleBtn.onclick = () => {
+      if (editor.classList.contains('closed')) {
+        // Open editor
+        editor.classList.remove('closed');
+        editor.style.width = '50%';
+        preview.style.width = '50%';
+        toggleBtn.innerHTML = '&times;';
+      } else {
+        // Close editor
+        editor.classList.add('closed');
+        editor.style.width = '0';
+        preview.style.width = '100%';
+        toggleBtn.innerHTML = '&#9654;';
+      }
+      codeMirror.refresh();
+    };
 
-  // Start with editor open
-  editor.classList.remove('closed');
-  editor.style.width = '50%';
-  preview.style.width = '50%';
-  toggleBtn.innerHTML = '&times;';
+    // Start with editor open
+    editor.classList.remove('closed');
+    editor.style.width = '50%';
+    preview.style.width = '50%';
+    toggleBtn.innerHTML = '&times;';
 
-  // Confirm before page unload (refresh/close)
-  window.addEventListener('beforeunload', e => {
-    e.preventDefault();
-    e.returnValue = '';
-  });
-</script>
-
+    // Confirm before page unload (refresh/close)
+    window.addEventListener('beforeunload', (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  </script>
 </body>
 </html>
