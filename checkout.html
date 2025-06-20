@@ -51,18 +51,101 @@
     }
 
     .totals {
-      display: flex; justify-content: flex-end; margin-bottom: 30px;
+      display: flex;
+  Margin-left:255px;
+ margin-bottom: 15px;
       font-size: 1.1rem; font-weight: 600;
     }
     .totals span:last-child { margin-left: 10px; }
 
-    .checkout-btn {
-      display: block; width: 100%; max-width: 300px; margin: 0 auto;
-      padding: 12px; background: #1f2937; color: #fff;
-      text-align: center; border: none; border-radius: 6px;
-      font-size: 1rem; cursor: pointer;
+    /* Receipt checkbox styling */
+    .receipt-checkbox {
+      margin-bottom: 20px;
+      Margin-left:35px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .checkout-btn:hover { background: #374151; }
+
+    /* Shipping form - centered and modern button */
+    #shipping-calculator {
+      max-width: 400px;
+      margin: 0 auto 20px auto;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      position: relative;
+      Left:0px; /* shift right slightly */
+      text-align: center;
+    }
+    #shipping-calculator label {
+      margin-bottom: 6px;
+      font-weight: 600;
+      display: block;
+      text-align: left;
+    }
+    #shipping-calculator input[type="text"],
+    #shipping-calculator select {
+      width: 100%;
+      padding: 6px 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    #shipping-options {
+      margin-bottom: 15px;
+    }
+    #shipping-options label {
+      display: block;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+
+    #get-rates-btn {
+      display: block;
+      margin: 12px auto 0 auto;
+      padding: 10px 25px;
+      background-color: #1f2937;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(31, 41, 55, 0.2);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+    }
+
+    #get-rates-btn:hover {
+      background-color: #374151;
+      box-shadow: 0 6px 12px rgba(31, 41, 55, 0.3);
+    }
+
+    /* PayPal button container */
+    #paypal-button-container {
+      max-width: 300px;
+      margin-left:80px;
+    }
+
+    /* Messages */
+    #payment-message {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      color: green;
+    }
+    #payment-error {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -92,18 +175,81 @@
   </table>
 
   <div class="totals">
-    <span>Total:</span><span id="cart-total">$0.00</span>
+    <span>Items Total:</span><span id="cart-total">$0.00</span>
   </div>
 
-  <button class="checkout-btn" id="to-checkout">Proceed to Checkout</button>
+  <div id="shipping-calculator">
+    <label for="zip">Enter Shipping ZIP/Postal Code:</label>
+    <input type="text" id="zip" placeholder="e.g. 90210" maxlength="10" />
+
+    <label for="country">Country:</label>
+    <select id="country">
+      <option value="US" selected>United States</option>
+      <option value="CA">Canada</option>
+      <!-- Add more countries as needed -->
+    </select>
+
+    <button id="get-rates-btn" type="button">Get Shipping Rates</button>
+
+    <div id="shipping-options"></div>
+
+    <div class="totals">
+      <span>Shipping:</span><span id="shipping-cost">$0.00</span>
+    </div>
+
+    <div class="totals">
+      <span><strong>Order Total:</strong></span><span id="order-total">$0.00</span>
+    </div>
+  </div>
+
+  <label class="receipt-checkbox">
+    <input type="checkbox" id="download-receipt" />
+    Download receipt after purchase
+  </label>
+
+  <div id="paypal-button-container"></div>
+
+  <div id="payment-message"></div>
+  <div id="payment-error"></div>
+
+  <!-- Load jsPDF library for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Load PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
 
   <script>
-    // Load cart from localStorage
+    // Your Shippo Test API Key (do NOT expose your live key on client side in production)
+    const SHIPPO_API_KEY = 'shippo_test_e547ccec30861ed9dd6d18130ff3fe7ba7151f85';
+
+    // Cart and shipping cost state
     let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
+    let shippingCost = 0;
+    let selectedShippingOption = null;
 
+    // Package size tiers by price range
+    const priceTiers = [
+      { min: 0, max: 100, weight: 2, dimensions: [8,6,4], name: "Small Package" },
+      { min: 101, max: 300, weight: 5, dimensions: [14,10,8], name: "Medium Package" },
+      { min: 301, max: 700, weight: 10, dimensions: [20,14,10], name: "Large Package" },
+      { min: 701, max: 1500, weight: 50, dimensions: [72,24,18], name: "Outdoor Bench" },
+      { min: 1501, max: Infinity, weight: 150, dimensions: [72,40,30], name: "Dining Table" }
+    ];
+
+    // Elements
     const cartBody = document.getElementById('cart-body');
-    const totalEl  = document.getElementById('cart-total');
+    const cartTotalEl = document.getElementById('cart-total');
+    const paymentMessage = document.getElementById('payment-message');
+    const paymentError = document.getElementById('payment-error');
+    const downloadReceiptCheckbox = document.getElementById('download-receipt');
+    const zipInput = document.getElementById('zip');
+    const countrySelect = document.getElementById('country');
+    const getRatesBtn = document.getElementById('get-rates-btn');
+    const shippingOptionsDiv = document.getElementById('shipping-options');
+    const shippingCostEl = document.getElementById('shipping-cost');
+    const orderTotalEl = document.getElementById('order-total');
 
+    // Render cart UI
     function renderCart() {
       cartBody.innerHTML = '';
       let total = 0;
@@ -128,7 +274,8 @@
         `;
         cartBody.appendChild(tr);
       });
-      totalEl.textContent = '$' + total.toFixed(2);
+      cartTotalEl.textContent = '$' + total.toFixed(2);
+      updateOrderTotal();
       attachQtyHandlers();
     }
 
@@ -150,14 +297,227 @@
       renderCart();
     }
 
-    // initial render
-    renderCart();
+    // Map item price to package tier (weight, dims)
+    function assignPackageForItem(price) {
+      for(let tier of priceTiers) {
+        if(price >= tier.min && price <= tier.max) return tier;
+      }
+      // fallback small
+      return priceTiers[0];
+    }
 
-    // proceed to checkout
-    document.getElementById('to-checkout').onclick = () => {
-      window.location.href = 'checkout.html';
+    // Calculate shipping package info for the whole cart aggregated
+    // We will combine all items into a single package for simplicity,
+    // using the heaviest tier found among items.
+    function calculatePackageFromCart() {
+      if(cart.length === 0) return null;
+      let heaviestTier = priceTiers[0];
+      cart.forEach(item => {
+        const tier = assignPackageForItem(item.price);
+        if(tier.weight > heaviestTier.weight) heaviestTier = tier;
+      });
+      return heaviestTier;
+    }
+
+    // Update displayed order total (items + shipping)
+    function updateOrderTotal() {
+      const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      const orderTotal = itemsTotal + shippingCost;
+      orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
+    }
+
+    // Generate PDF receipt using jsPDF
+    function generatePDFReceipt(orderData) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Beaver Built Furniture", 10, 20);
+      doc.setFontSize(14);
+      doc.text("Purchase Receipt", 10, 30);
+      doc.setFontSize(12);
+      doc.text(`Date: ${new Date().toLocaleString()}`, 10, 40);
+
+      let y = 55;
+      doc.text("Items Purchased:", 10, y);
+      y += 10;
+
+      orderData.items.forEach(item => {
+        const line = `${item.name} (ID: ${item.itemNum}) x${item.quantity} - $${item.unit_amount.value}`;
+        doc.text(line, 10, y);
+        y += 10;
+      });
+
+      y += 10;
+      doc.text(`Shipping Method: ${selectedShippingOption ? selectedShippingOption.label : 'N/A'}`, 10, y);
+      y += 10;
+      doc.text(`Shipping Cost: $${shippingCost.toFixed(2)}`, 10, y);
+
+      y += 10;
+      doc.text(`Total Paid: $${orderData.purchase_units[0].amount.value}`, 10, y);
+
+      doc.save(`Receipt_${Date.now()}.pdf`);
+    }
+
+    // Simulated fetch shipping rates (replace with real backend call)
+    async function fetchShippingRates(zip, country, packageInfo) {
+      await new Promise(r=>setTimeout(r, 500)); // simulate network delay
+
+      const base = packageInfo.weight;
+      return [
+        { id: 'standard', label: 'Standard Shipping (5-7 days)', amount: (5 + base * 0.5).toFixed(2) },
+        { id: 'express', label: 'Express Shipping (2-3 days)', amount: (15 + base * 1.0).toFixed(2) },
+        { id: 'overnight', label: 'Overnight Shipping', amount: (30 + base * 2.0).toFixed(2) },
+      ];
+    }
+
+    // Render shipping options radios
+    function renderShippingOptions(options) {
+      shippingOptionsDiv.innerHTML = '';
+      if(options.length === 0) {
+        shippingOptionsDiv.textContent = 'No shipping options found for this address/package.';
+        return;
+      }
+      options.forEach(opt => {
+        const id = 'ship_opt_' + opt.id;
+        const label = document.createElement('label');
+        label.htmlFor = id;
+        label.textContent = `${opt.label} - $${opt.amount}`;
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'shipping_option';
+        radio.id = id;
+        radio.value = opt.amount;
+        if(opt === options[0]) {
+          radio.checked = true;
+          selectedShippingOption = opt;
+          shippingCost = parseFloat(opt.amount);
+          updateOrderTotal();
+        }
+        radio.onchange = () => {
+          shippingCost = parseFloat(radio.value);
+          selectedShippingOption = opt;
+          shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+          updateOrderTotal();
+        };
+        label.prepend(radio);
+        shippingOptionsDiv.appendChild(label);
+      });
+      shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+    }
+
+    // Get Shipping Rates button handler
+    getRatesBtn.onclick = async () => {
+      paymentMessage.textContent = '';
+      paymentError.textContent = '';
+
+      const zip = zipInput.value.trim();
+      const country = countrySelect.value;
+      if(!zip) {
+        alert('Please enter your ZIP/postal code');
+        return;
+      }
+      if(cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+
+      const packageInfo = calculatePackageFromCart();
+      if(!packageInfo) {
+        alert('Could not determine package information');
+        return;
+      }
+
+      try {
+        const rates = await fetchShippingRates(zip, country, packageInfo);
+        renderShippingOptions(rates);
+      } catch(err) {
+        paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
+        console.error(err);
+      }
     };
-  </script>
 
+    // PayPal Buttons
+    paypal.Buttons({
+      createOrder: function(data, actions) {
+        if(cart.length === 0) {
+          alert("Your cart is empty!");
+          return;
+        }
+        if(!selectedShippingOption) {
+          alert("Please select a shipping option.");
+          return;
+        }
+
+        const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        const orderTotal = itemsTotal + shippingCost;
+
+        const purchaseUnits = [{
+          amount: {
+            currency_code: "USD",
+            value: orderTotal.toFixed(2),
+            breakdown: {
+              item_total: {
+                currency_code: "USD",
+                value: itemsTotal.toFixed(2)
+              },
+              shipping: {
+                currency_code: "USD",
+                value: shippingCost.toFixed(2)
+              }
+            }
+          },
+          items: cart.map(item => ({
+            name: item.itemNum,
+            unit_amount: {
+              currency_code: "USD",
+              value: item.price.toFixed(2)
+            },
+            quantity: item.qty.toString(),
+            item_category: "PHYSICAL_GOODS",
+            sku: item.itemNum
+          })),
+          shipping: {
+            method: selectedShippingOption.label,
+            address: {
+              postal_code: zipInput.value.trim(),
+              country_code: countrySelect.value
+            }
+          }
+        }];
+
+        return actions.order.create({
+          purchase_units: purchaseUnits
+        });
+      },
+
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          paymentMessage.textContent = "Payment completed successfully! Thank you.";
+          paymentError.textContent = "";
+
+          // Clear cart
+          localStorage.removeItem('bbf_cart');
+          cart = [];
+          renderCart();
+
+          // Download receipt if checked
+          if(downloadReceiptCheckbox.checked) {
+            generatePDFReceipt(details);
+          }
+        });
+      },
+
+      onError: function(err) {
+        paymentError.textContent = "An error occurred during payment. Please try again.";
+        paymentMessage.textContent = "";
+        console.error(err);
+      }
+
+    }).render('#paypal-button-container');
+
+    // Initial render
+    renderCart();
+  </script>
 </body>
 </html>
