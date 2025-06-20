@@ -22,36 +22,28 @@
     height: 100vh;
     border-right: 2px solid #ddd;
     background: #1e1e1e;
+    position: relative;
     display: flex;
     flex-direction: column;
     transition: width 0.4s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  #editor-header {
-    background: #282c34;
-    padding: 12px 16px;
-    border-bottom: 1px solid #444;
-    color: #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    user-select: none;
-    font-weight: 600;
-    font-size: 1.05em;
   }
   #toggle-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     cursor: pointer;
-    background: none;
+    background: rgba(31, 41, 55, 0.8);
     border: none;
-    font-size: 1.3rem;
-    color: #888;
-    transition: transform 0.3s ease;
-    padding: 4px 8px;
+    font-size: 1.6rem;
+    color: #ddd;
+    padding: 4px 10px;
+    border-radius: 4px;
     user-select: none;
+    transition: background-color 0.3s ease;
+    z-index: 10;
   }
   #toggle-btn:hover {
-    color: #eee;
+    background: rgba(31, 41, 55, 1);
   }
   #toggle-btn.closed {
     transform: rotate(180deg);
@@ -70,7 +62,6 @@
     border: none;
     background: #fff;
     transition: width 0.4s ease;
-    flex-shrink: 0;
   }
 </style>
 </head>
@@ -78,10 +69,7 @@
 
 <div id="container">
   <div id="editor">
-    <div id="editor-header">
-      HTML/CSS/JS Editor
-      <button id="toggle-btn" aria-label="Toggle Editor Panel" title="Toggle Editor Panel">&#9664;</button>
-    </div>
+    <button id="toggle-btn" aria-label="Toggle Editor" title="Toggle Editor">&#10094;</button>
     <textarea id="editor-content"></textarea>
   </div>
   <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -126,7 +114,9 @@
   <h1>Hello, world!</h1>
   <script>
     document.body.onclick = () => alert('Clicked!');
-  
+  </script>
+</body>
+</html>`;
   editor.setValue(initialCode);
   preview.srcdoc = initialCode;
 
@@ -135,7 +125,7 @@
     preview.srcdoc = editor.getValue();
   });
 
-  // Toggle editor pane open/close fully
+  // Toggle editor open/close fully
   toggleBtn.onclick = () => {
     const isClosed = editorWrapper.style.width === '0px' || editorWrapper.style.width === '0';
     if (isClosed) {
@@ -143,24 +133,24 @@
       editorWrapper.style.width = '50%';
       preview.style.width = '50%';
       toggleBtn.classList.remove('closed');
-      toggleBtn.innerHTML = '&#9664;';
+      toggleBtn.innerHTML = '&#10094;'; // left arrow
       editor.refresh();
     } else {
       // Close editor fully
       editorWrapper.style.width = '0';
       preview.style.width = '100%';
       toggleBtn.classList.add('closed');
-      toggleBtn.innerHTML = '&#9654;';
+      toggleBtn.innerHTML = '&#10095;'; // right arrow
     }
   };
 
   // Show confirmation alert before page unload (refresh/close)
   window.addEventListener('beforeunload', (e) => {
+    // Modern browsers ignore custom messages, but show default confirmation dialog
     e.preventDefault();
-    e.returnValue = ''; // Chrome requires returnValue to be set
+    e.returnValue = '';
   });
 </script>
 
 </body>
 </html>
-
