@@ -62,6 +62,7 @@
     border: none;
     background: #fff;
     transition: width 0.4s ease;
+    flex-grow: 1;
   }
 </style>
 </head>
@@ -72,7 +73,7 @@
     <button id="toggle-btn" aria-label="Toggle Editor" title="Toggle Editor">&#10094;</button>
     <textarea id="editor-content"></textarea>
   </div>
-  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+  <iframe id="preview" sandbox="allow-scripts allow-same-origin" style="flex-grow:1"></iframe>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -118,14 +119,21 @@
 </body>
 </html>`;
   editor.setValue(initialCode);
-  preview.srcdoc = initialCode;
 
-  // Update preview iframe on editor changes
-  editor.on("change", () => {
-    preview.srcdoc = editor.getValue();
-  });
+  // Function to update iframe preview and log
+  function updatePreview() {
+    const content = editor.getValue();
+    preview.srcdoc = content;
+    console.log('Preview updated');
+  }
 
-  // Toggle editor open/close fully
+  // Update preview on editor changes
+  editor.on("change", updatePreview);
+
+  // Initial update (delay slightly to ensure editor ready)
+  setTimeout(updatePreview, 100);
+
+  // Toggle editor pane open/close fully
   toggleBtn.onclick = () => {
     const isClosed = editorWrapper.style.width === '0px' || editorWrapper.style.width === '0';
     if (isClosed) {
@@ -146,7 +154,6 @@
 
   // Show confirmation alert before page unload (refresh/close)
   window.addEventListener('beforeunload', (e) => {
-    // Modern browsers ignore custom messages, but show default confirmation dialog
     e.preventDefault();
     e.returnValue = '';
   });
