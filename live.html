@@ -2,26 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Full Screen Code Editor with Toggle Preview</title>
+<title>Full Screen Code Editor with Preview, Close & Zoom</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css" />
 <style>
-  /* Reset and base */
   html, body {
     margin: 0; padding: 0; height: 100%;
     overflow: hidden;
     font-family: monospace;
     background: #f3f4f6;
   }
-
-  /* Container fills viewport */
   #container {
     position: relative;
     width: 100vw;
     height: 100vh;
   }
-
-  /* Code editor styles */
   #editor {
     position: absolute;
     top: 0; left: 0;
@@ -33,29 +28,32 @@
     transition: transform 0.4s ease;
     z-index: 10;
   }
-
-  /* Editor hidden by sliding out to left */
   #editor.closed {
     transform: translateX(-100%);
   }
 
-  /* Toggle buttons */
-  #close-btn {
+  /* Controls container top right */
+  #editor-controls {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 8px;
+    z-index: 20;
+  }
+
+  button.control-btn {
     background: rgba(31, 41, 55, 0.85);
     border: none;
     color: #ddd;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     cursor: pointer;
     border-radius: 5px;
     padding: 6px 12px;
     user-select: none;
-    z-index: 20;
     transition: background-color 0.3s ease;
   }
-  #close-btn:hover {
+  button.control-btn:hover {
     background: rgba(31, 41, 55, 1);
   }
 
@@ -74,25 +72,21 @@
     user-select: none;
     z-index: 15;
     transition: background-color 0.3s ease;
-    display: none; /* Hidden initially */
+    display: none;
   }
   #open-btn:hover {
     background: rgba(31, 41, 55, 1);
   }
 
-  /* Editor content takes full remaining space */
   #editor-content {
     flex: 1;
   }
-
-  /* CodeMirror editor full size */
   .CodeMirror {
     height: 100% !important;
     font-family: 'Fira Code', monospace;
-    font-size: 14px;
+    font-size: 14px; /* Default font size */
   }
 
-  /* Preview fills screen always */
   #preview {
     position: absolute;
     top: 0; left: 0;
@@ -107,20 +101,20 @@
 <body>
 
 <div id="container">
-  <!-- Code Editor Container -->
   <div id="editor">
-    <button id="close-btn" title="Close Editor">&times;</button>
+    <div id="editor-controls">
+      <button id="zoom-in" class="control-btn" title="Zoom In">+</button>
+      <button id="zoom-out" class="control-btn" title="Zoom Out">−</button>
+      <button id="close-btn" class="control-btn" title="Close Editor">&times;</button>
+    </div>
     <textarea id="editor-content"></textarea>
   </div>
 
-  <!-- Live Preview iframe -->
   <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
 
-  <!-- Open button (hidden initially) -->
   <button id="open-btn" title="Open Editor">&#9654;</button>
 </div>
 
-<!-- CodeMirror scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
@@ -134,6 +128,8 @@
   const preview = document.getElementById('preview');
   const closeBtn = document.getElementById('close-btn');
   const openBtn = document.getElementById('open-btn');
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
 
   // Initialize CodeMirror
   const codeMirror = CodeMirror.fromTextArea(editorTextarea, {
@@ -145,6 +141,29 @@
     autoCloseTags: true,
     autofocus: true
   });
+
+  // Track current font size in px
+  let fontSize = 14;
+  function updateFontSize() {
+    const cm = codeMirror.getWrapperElement();
+    cm.style.fontSize = fontSize + 'px';
+    codeMirror.refresh();
+  }
+  updateFontSize();
+
+  // Zoom in/out handlers
+  zoomInBtn.onclick = () => {
+    if (fontSize < 30) {
+      fontSize += 1;
+      updateFontSize();
+    }
+  };
+  zoomOutBtn.onclick = () => {
+    if (fontSize > 8) {
+      fontSize -= 1;
+      updateFontSize();
+    }
+  };
 
   // Initial code content
   const initialCode = `<!DOCTYPE html>
