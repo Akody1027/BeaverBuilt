@@ -11,19 +11,28 @@
   *, *::before, *::after {
     box-sizing: border-box;
   }
-  body, html {
+  /* Background logo on body */
+  body {
+    background: url('dudelogo.png') no-repeat center center fixed;
+    background-size: cover;
     margin: 0; padding: 0; height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #e1e1e1;
     color: #222;
     overflow-x: hidden;
     scroll-behavior: smooth;
   }
+
+  /* Overlay container with semi-transparent background */
+  #page-overlay {
+    background: rgba(225, 225, 225, 0.85);
+    min-height: 100vh;
+  }
+
   /* Loading Spinner */
   #loading {
     position: fixed;
     inset: 0;
-    background: #e1e1e1;
+    background: rgba(225, 225, 225, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -136,7 +145,7 @@
     margin-bottom: 4rem;
   }
   .product-card {
-    background: ; 
+    background: transparent; 
     width: 280px;
     box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     overflow: hidden;
@@ -173,7 +182,7 @@
     border-radius: 0; /* remove border radius */
   }
   .product-front {
-    background: ;
+    background: #fff;
     color: #222;
   }
   .product-front img {
@@ -264,7 +273,6 @@
     font-size: 1rem;
     user-select: text;
   }
-
   @keyframes strokeDash {
     from {
       stroke-dasharray: 0 150;
@@ -276,7 +284,7 @@
 
   /* Newsletter signup at bottom */
   .newsletter {
-    background: ;
+    background: #f7f7f7;
     padding: 2.5rem 1.5rem;
     max-width: 480px;
     margin: 0 auto 2rem;
@@ -345,7 +353,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     padding: 1rem 2rem;
-    background: ;
+    background: #f0f0f0;
     color: #444;
     font-style: italic;
     min-height: 110px;
@@ -383,6 +391,18 @@
       justify-content: center;
     }
   }
+
+  /* Transparent crack div */
+  #logo-crack {
+    position: fixed;
+    top: 200px; /* adjust vertical position here if needed */
+    left: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+    background: transparent;
+    z-index: 2000;
+  }
 </style>
 </head>
 <body>
@@ -397,170 +417,170 @@
     <div id="loading-text">LOADING</div>
   </div>
 
-  <!-- Header -->
-  <header role="banner" aria-label="Store name">
-    <h1>Dude Proof Apparel</h1>
-  </header>
+  <!-- Overlay container -->
+  <div id="page-overlay">
 
-  <main class="container" tabindex="-1" aria-label="Dude Proof Apparel Store">
+    <!-- Header -->
+    <header role="banner" aria-label="Store name">
+      <h1>Dude Proof Apparel</h1>
+    </header>
 
-    <!-- Hero Section -->
-    <section class="hero" aria-label="Store introduction">
+    <main class="container" tabindex="-1" aria-label="Dude Proof Apparel Store">
 
-      <!-- Image Slider -->
-      <div class="slider" aria-label="Featured images">
-        <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=720&q=80" alt="Man wearing black t-shirt" class="slide active" />
-        <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=720&q=80" alt="Man wearing grey t-shirt" class="slide" />
-        <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=720&q=80" alt="Man modeling casual tee" class="slide" />
-      </div>
-      <img src="dudelogo.png" style="width:100%; position:fix; z-index:-100;">
+      <!-- Hero Section -->
+      <section class="hero" aria-label="Store introduction">
 
-       <div class="divider" style="width:100%; height:25px; background-color: transparent;">
-
-       </div>
-
-
-      
-      <p>Built to last. Designed for the modern man.</p>
-      <button type="button" onclick="scrollToProducts()" aria-label="Shop now">Shop Now</button>
-    </section>
-
-    <!-- Products Section -->
-    <section class="products" aria-label="Featured products">
-      <article class="product-card" tabindex="0" aria-describedby="product1-desc">
-        <div class="product-inner">
-          <div class="product-front">
-            <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80" alt="Minimal black men's t-shirt" />
-            <h3>Black Minimal Tee</h3>
-            <p>Classic fit, durable cotton fabric.</p>
-          </div>
-          <div class="product-back">
-            <h4>Details</h4>
-            <p>100% cotton, pre-shrunk, machine washable.</p>
-            <button type="button" aria-label="Add Black Minimal Tee to cart">Add to Cart</button>
-          </div>
+        <!-- Image Slider -->
+        <div class="slider" aria-label="Featured images">
+          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=720&q=80" alt="Man wearing black t-shirt" class="slide active" />
+          <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=720&q=80" alt="Man wearing grey t-shirt" class="slide" />
+          <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=720&q=80" alt="Man modeling casual tee" class="slide" />
         </div>
-      </article>
-      <article class="product-card" tabindex="0" aria-describedby="product2-desc">
-        <div class="product-inner">
-          <div class="product-front">
-            <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80" alt="Gray men's t-shirt" />
-            <h3>Heather Gray Tee</h3>
-            <p>Soft feel with a modern look.</p>
-          </div>
-          <div class="product-back">
-            <h4>Details</h4>
-            <p>Blend of cotton and polyester for comfort.</p>
-            <button type="button" aria-label="Add Heather Gray Tee to cart">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-      <article class="product-card" tabindex="0" aria-describedby="product3-desc">
-        <div class="product-inner">
-          <div class="product-front">
-            <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=600&q=80" alt="Casual white men's t-shirt" />
-            <h3>White Casual Tee</h3>
-            <p>Lightweight and breathable fabric.</p>
-          </div>
-          <div class="product-back">
-            <h4>Details</h4>
-            <p>100% cotton, soft touch finish.</p>
-            <button type="button" aria-label="Add White Casual Tee to cart">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-      <article class="product-card" tabindex="0" aria-describedby="product4-desc">
-        <div class="product-inner">
-          <div class="product-front">
-            <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=600&q=80" alt="Navy blue men's t-shirt" />
-            <h3>Navy Blue Tee</h3>
-            <p>Durable fabric with classic style.</p>
-          </div>
-          <div class="product-back">
-            <h4>Details</h4>
-            <p>Soft cotton blend, machine washable.</p>
-            <button type="button" aria-label="Add Navy Blue Tee to cart">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-      <article class="product-card" tabindex="0" aria-describedby="product5-desc">
-        <div class="product-inner">
-          <div class="product-front">
-            <img src="https://images.unsplash.com/photo-1494411375821-6d68ce7c63a9?auto=format&fit=crop&w=600&q=80" alt="Dark green men's t-shirt" />
-            <h3>Dark Green Tee</h3>
-            <p>Rugged style with great comfort.</p>
-          </div>
-          <div class="product-back">
-            <h4>Details</h4>
-            <p>Premium cotton, designed for durability.</p>
-            <button type="button" aria-label="Add Dark Green Tee to cart">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-    </section>
 
-    <!-- Features Section -->
-    <section class="features" aria-label="Store features">
-      <div class="feature-item" tabindex="0" aria-describedby="feature1-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-          <circle cx="32" cy="32" r="30" />
-          <path d="M20 32l10 10 14-18" stroke="#222" stroke-width="4" fill="none" />
-        </svg>
-        <span id="feature1-desc">Quality Tested</span>
-      </div>
-      <div class="feature-item" tabindex="0" aria-describedby="feature2-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-          <rect x="12" y="20" width="40" height="24" rx="0" ry="0" />
-          <path d="M32 20v24" stroke="#222" stroke-width="4" fill="none" />
-        </svg>
-        <span id="feature2-desc">Durable Fabric</span>
-      </div>
-      <div class="feature-item" tabindex="0" aria-describedby="feature3-desc">
-        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-          <circle cx="32" cy="32" r="28" />
-          <path d="M20 32h24" stroke="#222" stroke-width="4" fill="none" />
-          <path d="M32 20v24" stroke="#222" stroke-width="4" fill="none" />
-        </svg>
-        <span id="feature3-desc">Free Shipping</span>
-      </div>
-    </section>
+        <p>Built to last. Designed for the modern man.</p>
+        <button type="button" onclick="scrollToProducts()" aria-label="Shop now">Shop Now</button>
+      </section>
 
-    <!-- Testimonials -->
-    <section class="testimonials" aria-label="Customer testimonials">
-      <blockquote class="testimonial-slide active" tabindex="0">
-        <p class="testimonial-quote">"Best t-shirts I've ever owned — tough, comfy, and stylish."</p>
-        <footer class="testimonial-author">— Jake M.</footer>
-      </blockquote>
-      <blockquote class="testimonial-slide" tabindex="0">
-        <p class="testimonial-quote">"Dude Proof Apparel nails durability without sacrificing comfort."</p>
-        <footer class="testimonial-author">— Chris P.</footer>
-      </blockquote>
-      <blockquote class="testimonial-slide" tabindex="0">
-        <p class="testimonial-quote">"I wear mine everywhere. Highly recommend!"</p>
-        <footer class="testimonial-author">— Alex R.</footer>
-      </blockquote>
-    </section>
+      <!-- Products Section -->
+      <section class="products" aria-label="Featured products">
+        <article class="product-card" tabindex="0" aria-describedby="product1-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80" alt="Minimal black men's t-shirt" />
+              <h3>Black Minimal Tee</h3>
+              <p>Classic fit, durable cotton fabric.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>100% cotton, pre-shrunk, machine washable.</p>
+              <button type="button" aria-label="Add Black Minimal Tee to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+        <article class="product-card" tabindex="0" aria-describedby="product2-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80" alt="Gray men's t-shirt" />
+              <h3>Heather Gray Tee</h3>
+              <p>Soft feel with a modern look.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Blend of cotton and polyester for comfort.</p>
+              <button type="button" aria-label="Add Heather Gray Tee to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+        <article class="product-card" tabindex="0" aria-describedby="product3-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=600&q=80" alt="Casual white men's t-shirt" />
+              <h3>White Casual Tee</h3>
+              <p>Lightweight and breathable fabric.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>100% cotton, soft touch finish.</p>
+              <button type="button" aria-label="Add White Casual Tee to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+        <article class="product-card" tabindex="0" aria-describedby="product4-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=600&q=80" alt="Navy blue men's t-shirt" />
+              <h3>Navy Blue Tee</h3>
+              <p>Durable fabric with classic style.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Soft cotton blend, machine washable.</p>
+              <button type="button" aria-label="Add Navy Blue Tee to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+        <article class="product-card" tabindex="0" aria-describedby="product5-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="https://images.unsplash.com/photo-1494411375821-6d68ce7c63a9?auto=format&fit=crop&w=600&q=80" alt="Dark green men's t-shirt" />
+              <h3>Dark Green Tee</h3>
+              <p>Rugged style with great comfort.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Premium cotton, designed for durability.</p>
+              <button type="button" aria-label="Add Dark Green Tee to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+      </section>
 
-    <!-- Newsletter Signup moved to bottom -->
-    <section class="newsletter" aria-label="Newsletter signup">
-      <h2>Stay Updated</h2>
-      <p>Join our mailing list for exclusive offers and new arrivals.</p>
-      <form id="newsletter-form" novalidate>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="Enter your email"
-          required
-          aria-required="true"
-          aria-label="Email address"
-        />
-        <button type="submit" aria-label="Subscribe to newsletter">Subscribe</button>
-      </form>
-      <p id="newsletter-feedback" role="alert" style="margin-top:1rem; color:#cc4444; display:none;"></p>
-    </section>
+      <!-- Features Section -->
+      <section class="features" aria-label="Store features">
+        <div class="feature-item" tabindex="0" aria-describedby="feature1-desc">
+          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <circle cx="32" cy="32" r="30" />
+            <path d="M20 32l10 10 14-18" stroke="#222" stroke-width="4" fill="none" />
+          </svg>
+          <span id="feature1-desc">Quality Tested</span>
+        </div>
+        <div class="feature-item" tabindex="0" aria-describedby="feature2-desc">
+          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <rect x="12" y="20" width="40" height="24" rx="0" ry="0" />
+            <path d="M32 20v24" stroke="#222" stroke-width="4" fill="none" />
+          </svg>
+          <span id="feature2-desc">Durable Fabric</span>
+        </div>
+        <div class="feature-item" tabindex="0" aria-describedby="feature3-desc">
+          <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <circle cx="32" cy="32" r="28" />
+            <path d="M20 32h24" stroke="#222" stroke-width="4" fill="none" />
+            <path d="M32 20v24" stroke="#222" stroke-width="4" fill="none" />
+          </svg>
+          <span id="feature3-desc">Free Shipping</span>
+        </div>
+      </section>
 
-  </main>
+      <!-- Testimonials -->
+      <section class="testimonials" aria-label="Customer testimonials">
+        <blockquote class="testimonial-slide active" tabindex="0">
+          <p class="testimonial-quote">"Best t-shirts I've ever owned — tough, comfy, and stylish."</p>
+          <footer class="testimonial-author">— Jake M.</footer>
+        </blockquote>
+        <blockquote class="testimonial-slide" tabindex="0">
+          <p class="testimonial-quote">"Dude Proof Apparel nails durability without sacrificing comfort."</p>
+          <footer class="testimonial-author">— Chris P.</footer>
+        </blockquote>
+        <blockquote class="testimonial-slide" tabindex="0">
+          <p class="testimonial-quote">"I wear mine everywhere. Highly recommend!"</p>
+          <footer class="testimonial-author">— Alex R.</footer>
+        </blockquote>
+      </section>
+
+      <!-- Newsletter Signup moved to bottom -->
+      <section class="newsletter" aria-label="Newsletter signup">
+        <h2>Stay Updated</h2>
+        <p>Join our mailing list for exclusive offers and new arrivals.</p>
+        <form id="newsletter-form" novalidate>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Enter your email"
+            required
+            aria-required="true"
+            aria-label="Email address"
+          />
+          <button type="submit" aria-label="Subscribe to newsletter">Subscribe</button>
+        </form>
+        <p id="newsletter-feedback" role="alert" style="margin-top:1rem; color:#cc4444; display:none;"></p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Transparent crack div -->
+  <div id="logo-crack" aria-hidden="true"></div>
 
 <script>
   // Loading spinner removal
