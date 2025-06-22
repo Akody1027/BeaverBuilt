@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dude Proof Apparel - Index</title>
+<!-- Lily Script font -->
+<link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet" />
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('dudelogo.png') no-repeat center center fixed;
+    background-size: contain;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Overlay for slight transparent background behind content */
+  #page-overlay {
+    background: rgba(225,225,225,0.96);
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* allow iframe flex grow */
+  }
+
+  /* Header fixed at top */
+  header {
+    background: #e1e1e1;
+    padding: 0.6rem 0;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    font-family: 'Lily Script One', cursive;
+    font-size: 1.5rem;
+    color: #222;
+    user-select: text;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  /* Main iframe viewport fills available space between header and nav */
+  #viewport {
+    flex: 1 1 auto;
+    width: 100%;
+    border: none;
+    min-height: 0; /* important for flexbox */
+  }
+
+  /* Fixed bottom navigation bar */
+  nav {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: #e1e1e1;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.12);
+    display: flex;
+    justify-content: space-around;
+    padding: 0.6rem 0;
+    user-select: none;
+    z-index: 1001;
+  }
+
+  nav button {
+    background: transparent;
+    border: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+    color: #222;
+    cursor: pointer;
+    padding: 0.25rem 1rem;
+    transition: background-color 0.3s ease;
+    border-radius: 4px;
+  }
+  nav button:hover {
+    background-color: #ccc;
+  }
+  nav button.active {
+    background-color: #222;
+    color: #eee;
+    font-weight: 700;
+  }
+
+  /* Push bottom nav so iframe's bottom content isn't hidden */
+  /* Add padding-bottom equal to nav height */
+  main {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 48px; /* nav approx height */
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+</head>
+<body>
+
+<div id="page-overlay">
+
+  <header role="banner" aria-label="Store name">
+    Dude Proof Apparel
+  </header>
+
+  <main>
+    <iframe id="viewport" src="home2.html" title="Content viewport" aria-live="polite"></iframe>
+  </main>
+
+  <nav role="navigation" aria-label="Main navigation">
+    <button id="nav-home" aria-pressed="true" aria-label="Home page">Home</button>
+    <button id="nav-men" aria-pressed="false" aria-label="Men's T-shirts page">Men's</button>
+    <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">Boys'</button>
+  </nav>
+
+</div>
+
+<script>
+  const iframe = document.getElementById('viewport');
+  const buttons = {
+    home: document.getElementById('nav-home'),
+    men: document.getElementById('nav-men'),
+    boys: document.getElementById('nav-boys')
+  };
+
+  // Map buttons to page URLs
+  const pages = {
+    home: 'home2.html',
+    men: 'men.html',
+    boys: 'boys.html'
+  };
+
+  // Clear active states & aria-pressed on all buttons
+  function clearActive() {
+    Object.values(buttons).forEach(btn => {
+      btn.classList.remove('active');
+      btn.setAttribute('aria-pressed', 'false');
+    });
+  }
+
+  // Set active button
+  function setActive(key) {
+    clearActive();
+    buttons[key].classList.add('active');
+    buttons[key].setAttribute('aria-pressed', 'true');
+  }
+
+  // Load page in iframe & set active button
+  function loadPage(key) {
+    iframe.src = pages[key];
+    setActive(key);
+  }
+
+  // Event listeners for buttons
+  buttons.home.addEventListener('click', () => loadPage('home'));
+  buttons.men.addEventListener('click', () => loadPage('men'));
+  buttons.boys.addEventListener('click', () => loadPage('boys'));
+
+  // Initialize default page active
+  setActive('home');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dude Proof Apparel - Modern T-Shirt Store</title>
+<!-- Lily Script font -->
+<link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet" />
+<style>
+  /* Preserve original styles for background, header, fonts, overlay */
+
+  body {
+    background: url('dudelogo.png') no-repeat center center fixed;
+    background-size: contain;
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #222;
+  }
+  #page-overlay {
+    background: rgba(225, 225, 225, 0.96);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: #e1e1e1;
+    padding: 0.6rem 0;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    z-index: 1000;
+  }
+  header h1 {
+    margin: 0;
+    font-family: 'Lily Script One', cursive;
+    font-size: 1.5rem;
+    color: #222;
+    user-select: text;
+    letter-spacing: 0.05em;
+  }
+
+  main.container {
+    max-width: 960px;
+    margin: 2rem auto 4rem;
+    padding: 0 1rem;
+  }
+
+  /* Grid of T-shirts */
+  .products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+    gap: 1.5rem 2rem;
+    justify-items: center;
+  }
+  .product-card {
+    cursor: pointer;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    padding: 1rem;
+    background: transparent;
+    border-radius: 0;
+    text-align: center;
+    user-select: none;
+    transition: box-shadow 0.3s ease;
+    width: 260px;
+  }
+  .product-card:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+  }
+  .product-card img {
+    width: 100%;
+    height: 260px;
+    object-fit: contain;
+    border-radius: 0;
+    margin-bottom: 0.8rem;
+    pointer-events: none;
+  }
+  .product-card h3 {
+    margin: 0.4rem 0 0.2rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #222;
+    user-select: text;
+  }
+  .product-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+    user-select: text;
+  }
+
+  /* Modal overlay */
+  #modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+  }
+
+  /* Modal content */
+  #modal-content {
+    background: #fff;
+    padding: 1.5rem 2rem 2rem;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+    border-radius: 4px;
+    position: relative;
+    text-align: center;
+  }
+  #modal-content img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 1rem;
+  }
+  #modal-content button {
+    background: #222;
+    color: #eee;
+    border: none;
+    padding: 0.75rem 2.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: 0;
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
+  #modal-content button:hover {
+    background-color: #444;
+  }
+
+  /* Close button */
+  #modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #666;
+    user-select: none;
+  }
+  #modal-close:hover {
+    color: #222;
+  }
+
+</style>
+</head>
+<body>
+
+  <div id="page-overlay">
+
+    <header role="banner" aria-label="Store name">
+      <h1>Dude Proof Apparel</h1>
+    </header>
+
+    <main class="container" tabindex="-1" aria-label="Boys' T-shirt Store">
+
+      <section class="products" aria-label="Boys' T-shirt products grid">
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 1 details" data-img="boys1.jpg" data-title="Boy's T-shirt 1" data-desc="Bright colors with durable fabric.">
+          <img src="boys1.jpg" alt="Boy's T-shirt 1" />
+          <h3>Boy's T-shirt 1</h3>
+          <p>Bright colors with durable fabric.</p>
+        </article>
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 2 details" data-img="boys2.jpg" data-title="Boy's T-shirt 2" data-desc="Soft and comfortable cotton blend.">
+          <img src="boys2.jpg" alt="Boy's T-shirt 2" />
+          <h3>Boy's T-shirt 2</h3>
+          <p>Soft and comfortable cotton blend.</p>
+        </article>
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 3 details" data-img="boys3.jpg" data-title="Boy's T-shirt 3" data-desc="Lightweight fabric for active play.">
+          <img src="boys3.jpg" alt="Boy's T-shirt 3" />
+          <h3>Boy's T-shirt 3</h3>
+          <p>Lightweight fabric for active play.</p>
+        </article>
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 4 details" data-img="boys4.jpg" data-title="Boy's T-shirt 4" data-desc="Classic style with rugged durability.">
+          <img src="boys4.jpg" alt="Boy's T-shirt 4" />
+          <h3>Boy's T-shirt 4</h3>
+          <p>Classic style with rugged durability.</p>
+        </article>
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 5 details" data-img="boys5.jpg" data-title="Boy's T-shirt 5" data-desc="Fun patterns and soft fabric.">
+          <img src="boys5.jpg" alt="Boy's T-shirt 5" />
+          <h3>Boy's T-shirt 5</h3>
+          <p>Fun patterns and soft fabric.</p>
+        </article>
+        <article class="product-card" tabindex="0" role="button" aria-pressed="false" aria-label="View Boy's T-shirt 6 details" data-img="boys6.jpg" data-title="Boy's T-shirt 6" data-desc="Durable cotton blend for everyday wear.">
+          <img src="boys6.jpg" alt="Boy's T-shirt 6" />
+          <h3>Boy's T-shirt 6</h3>
+          <p>Durable cotton blend for everyday wear.</p>
+        </article>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal Popup -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+    <div id="modal-content">
+      <button id="modal-close" aria-label="Close popup">&times;</button>
+      <img src="" alt="" id="modal-image" />
+      <h3 id="modal-title"></h3>
+      <p id="modal-desc"></p>
+      <button id="add-to-cart-btn" type="button" aria-label="Add item to cart">Add to Cart</button>
+    </div>
+  </div>
+
+<script>
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalImage = document.getElementById('modal-image');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDesc = document.getElementById('modal-desc');
+  const modalCloseBtn = document.getElementById('modal-close');
+  const addToCartBtn = document.getElementById('add-to-cart-btn');
+
+  function openModal(card) {
+    const imgSrc = card.getAttribute('data-img');
+    const title = card.getAttribute('data-title');
+    const desc = card.getAttribute('data-desc');
+
+    modalImage.src = imgSrc;
+    modalImage.alt = title;
+    modalTitle.textContent = title;
+    modalDesc.textContent = desc;
+
+    modalOverlay.style.display = 'flex';
+    modalCloseBtn.focus();
+  }
+
+  function closeModal() {
+    modalOverlay.style.display = 'none';
+    modalImage.src = '';
+    modalTitle.textContent = '';
+    modalDesc.textContent = '';
+  }
+
+  document.querySelectorAll('.product-card').forEach(card => {
+    card.addEventListener('click', () => openModal(card));
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal(card);
+      }
+    });
+  });
+
+  modalCloseBtn.addEventListener('click', closeModal);
+
+  modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) {
+      closeModal();
+    }
+  });
+
+  addToCartBtn.addEventListener('click', () => {
+    alert('Add to Cart clicked for "' + modalTitle.textContent + '". Functionality coming soon.');
+  });
+
+  modalOverlay.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+    const focusableElements = [modalCloseBtn, addToCartBtn];
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (document.activeElement === modalCloseBtn) {
+        addToCartBtn.focus();
+      } else {
+        modalCloseBtn.focus();
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
