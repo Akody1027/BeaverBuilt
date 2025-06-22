@@ -7,6 +7,17 @@
 <!-- Lily Script font -->
 <link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet" />
 <style>
+#background-image {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover; /* for <img> */
+  z-index: -1;
+}
+
+
+
   /* Reset */
   *, *::before, *::after {
     box-sizing: border-box;
@@ -42,7 +53,7 @@
   #loading svg {
     width: 64px; height: 64px;
     stroke: #222;
-    animation: spin 2.5s linear infinite;
+    animation: spin 1.6s linear infinite;
   }
   @keyframes spin {
     0% { transform: rotate(0deg);}
@@ -98,7 +109,7 @@
   }
   .slide {
     position: absolute;
-    width: auto;
+    width: 100%;
     height: 100%;
     opacity: 0;
     transition: opacity 1s ease;
@@ -692,6 +703,8 @@
     </main>
   </div>
 
+  <!-- Transparent crack div -->
+  <div id="logo-crack" aria-hidden="true"></div>
 
 <script>
   // Loading spinner removal
