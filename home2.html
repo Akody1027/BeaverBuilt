@@ -14,16 +14,17 @@
   /* Background logo on body */
   body {
     background: url('dudelogo.png') no-repeat center center fixed;
-    background-size: cover;
-    margin: 0; padding: 0; height: 90%;
+    background-size: fill;
+    margin: 0; padding: 0; height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #222;
   }
 
   /* Overlay container with semi-transparent background */
   #page-overlay {
-    background: rgba(225, 225, 225, 0.85);
-    min-height: 100vh;
+    background: rgba(225, 225, 225, 0.96);
+    height: 100%;
+    overflow:hidden;
   }
 
   /* Loading Spinner */
@@ -290,7 +291,7 @@
     text-align: center;
     user-select: none;
     border-radius: 0;
-    margin-bottom:0px;
+    Padding-bottom:200px;
   }
   .newsletter h2 {
     font-weight: 800;
