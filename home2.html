@@ -15,16 +15,14 @@
   body {
     background: url('dudelogo.png') no-repeat center center fixed;
     background-size: cover;
-    margin: 0; padding: 0;    height: 100%;
+    margin: 0; padding: 0; height: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: ;
-    background-size:contain;
-    
+    color: #222;
   }
 
   /* Overlay container with semi-transparent background */
   #page-overlay {
-    background: rgba(225, 225, 225, 0.96);
+    background: rgba(225, 225, 225, 0.85);
     min-height: 100vh;
   }
 
@@ -69,7 +67,7 @@
   header h1 {
     margin: 0;
     font-family: 'Lily Script One', cursive;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: #222;
     user-select: text;
     letter-spacing: 0.05em;
@@ -136,10 +134,10 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.7);
   }
 
-  /* Products Section with grid for multiple rows */
+  /* Products Section with grid: 3 columns, 4 rows */
   .products {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem 2rem;
     justify-items: center;
     margin-bottom: 4rem;
@@ -182,7 +180,7 @@
     border-radius: 0; /* remove border radius */
   }
   .product-front {
-    background:;
+    background: #fff;
     color: #222;
   }
   .product-front img {
@@ -284,7 +282,7 @@
 
   /* Newsletter signup at bottom */
   .newsletter {
-    background: ;
+    background: #f7f7f7;
     padding: 2.5rem 1.5rem;
     max-width: 480px;
     margin: 0 auto 2rem;
@@ -353,7 +351,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     padding: 1rem 2rem;
-    background: ;
+    background: #f0f0f0;
     color: #444;
     font-style: italic;
     min-height: 110px;
@@ -381,9 +379,10 @@
   }
 
   /* Responsive */
-  @media (max-width: 40px) {
+  @media (max-width: 720px) {
     .products {
-      grid-template-columns: repeat(auto-fit, minmax(240px, 3fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem 1.5rem;
     }
     .features {
       flex-direction: row; /* keep horizontal on all sizes */
@@ -392,7 +391,17 @@
     }
   }
 
-  
+  /* Transparent crack div */
+  #logo-crack {
+    position: fixed;
+    top: 200px; /* adjust vertical position here if needed */
+    left: 0;
+    width: 100%;
+    height: 40px;
+    pointer-events: none;
+    background: transparent;
+    z-index: 2000;
+  }
 </style>
 </head>
 <body>
@@ -422,9 +431,18 @@
 
         <!-- Image Slider -->
         <div class="slider" aria-label="Featured images">
-          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=720&q=80" alt="Man wearing black t-shirt" class="slide active" />
-          <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=720&q=80" alt="Man wearing grey t-shirt" class="slide" />
-          <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=720&q=80" alt="Man modeling casual tee" class="slide" />
+          <img src="men1.jpg" alt="Product image men1" class="slide active" />
+          <img src="men2.jpg" alt="Product image men2" class="slide" />
+          <img src="men3.jpg" alt="Product image men3" class="slide" />
+          <img src="men4.jpg" alt="Product image men4" class="slide" />
+          <img src="men5.jpg" alt="Product image men5" class="slide" />
+          <img src="men6.jpg" alt="Product image men6" class="slide" />
+          <img src="men7.jpg" alt="Product image men7" class="slide" />
+          <img src="men8.jpg" alt="Product image men8" class="slide" />
+          <img src="men9.jpg" alt="Product image men9" class="slide" />
+          <img src="men10.jpg" alt="Product image men10" class="slide" />
+          <img src="men11.jpg" alt="Product image men11" class="slide" />
+          <img src="men12.jpg" alt="Product image men12" class="slide" />
         </div>
 
         <p>Built to last. Designed for the modern man.</p>
@@ -433,76 +451,188 @@
 
       <!-- Products Section -->
       <section class="products" aria-label="Featured products">
+
+        <!-- 12 product cards with your images -->
         <article class="product-card" tabindex="0" aria-describedby="product1-desc">
           <div class="product-inner">
             <div class="product-front">
-              <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80" alt="Minimal black men's t-shirt" />
-              <h3>Black Minimal Tee</h3>
+              <img src="men1.jpg" alt="Men's T-shirt 1" />
+              <h3>Men's T-shirt 1</h3>
               <p>Classic fit, durable cotton fabric.</p>
             </div>
             <div class="product-back">
               <h4>Details</h4>
               <p>100% cotton, pre-shrunk, machine washable.</p>
-              <button type="button" aria-label="Add Black Minimal Tee to cart">Add to Cart</button>
+              <button type="button" aria-label="Add Men's T-shirt 1 to cart">Add to Cart</button>
             </div>
           </div>
         </article>
+
         <article class="product-card" tabindex="0" aria-describedby="product2-desc">
           <div class="product-inner">
             <div class="product-front">
-              <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80" alt="Gray men's t-shirt" />
-              <h3>Heather Gray Tee</h3>
+              <img src="men2.jpg" alt="Men's T-shirt 2" />
+              <h3>Men's T-shirt 2</h3>
               <p>Soft feel with a modern look.</p>
             </div>
             <div class="product-back">
               <h4>Details</h4>
               <p>Blend of cotton and polyester for comfort.</p>
-              <button type="button" aria-label="Add Heather Gray Tee to cart">Add to Cart</button>
+              <button type="button" aria-label="Add Men's T-shirt 2 to cart">Add to Cart</button>
             </div>
           </div>
         </article>
+
         <article class="product-card" tabindex="0" aria-describedby="product3-desc">
           <div class="product-inner">
             <div class="product-front">
-              <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=600&q=80" alt="Casual white men's t-shirt" />
-              <h3>White Casual Tee</h3>
+              <img src="men3.jpg" alt="Men's T-shirt 3" />
+              <h3>Men's T-shirt 3</h3>
               <p>Lightweight and breathable fabric.</p>
             </div>
             <div class="product-back">
               <h4>Details</h4>
               <p>100% cotton, soft touch finish.</p>
-              <button type="button" aria-label="Add White Casual Tee to cart">Add to Cart</button>
+              <button type="button" aria-label="Add Men's T-shirt 3 to cart">Add to Cart</button>
             </div>
           </div>
         </article>
+
         <article class="product-card" tabindex="0" aria-describedby="product4-desc">
           <div class="product-inner">
             <div class="product-front">
-              <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=600&q=80" alt="Navy blue men's t-shirt" />
-              <h3>Navy Blue Tee</h3>
+              <img src="men4.jpg" alt="Men's T-shirt 4" />
+              <h3>Men's T-shirt 4</h3>
               <p>Durable fabric with classic style.</p>
             </div>
             <div class="product-back">
               <h4>Details</h4>
               <p>Soft cotton blend, machine washable.</p>
-              <button type="button" aria-label="Add Navy Blue Tee to cart">Add to Cart</button>
+              <button type="button" aria-label="Add Men's T-shirt 4 to cart">Add to Cart</button>
             </div>
           </div>
         </article>
+
         <article class="product-card" tabindex="0" aria-describedby="product5-desc">
           <div class="product-inner">
             <div class="product-front">
-              <img src="https://images.unsplash.com/photo-1494411375821-6d68ce7c63a9?auto=format&fit=crop&w=600&q=80" alt="Dark green men's t-shirt" />
-              <h3>Dark Green Tee</h3>
+              <img src="men5.jpg" alt="Men's T-shirt 5" />
+              <h3>Men's T-shirt 5</h3>
               <p>Rugged style with great comfort.</p>
             </div>
             <div class="product-back">
               <h4>Details</h4>
               <p>Premium cotton, designed for durability.</p>
-              <button type="button" aria-label="Add Dark Green Tee to cart">Add to Cart</button>
+              <button type="button" aria-label="Add Men's T-shirt 5 to cart">Add to Cart</button>
             </div>
           </div>
         </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product6-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men6.jpg" alt="Men's T-shirt 6" />
+              <h3>Men's T-shirt 6</h3>
+              <p>Comfort fit with modern style.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Poly-cotton blend, soft and durable.</p>
+              <button type="button" aria-label="Add Men's T-shirt 6 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product7-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men7.jpg" alt="Men's T-shirt 7" />
+              <h3>Men's T-shirt 7</h3>
+              <p>Lightweight fabric for all-day comfort.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Breathable cotton blend, machine washable.</p>
+              <button type="button" aria-label="Add Men's T-shirt 7 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product8-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men8.jpg" alt="Men's T-shirt 8" />
+              <h3>Men's T-shirt 8</h3>
+              <p>Classic look with rugged durability.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Heavyweight cotton, pre-shrunk.</p>
+              <button type="button" aria-label="Add Men's T-shirt 8 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product9-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men9.jpg" alt="Men's T-shirt 9" />
+              <h3>Men's T-shirt 9</h3>
+              <p>Soft texture with a modern cut.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>50/50 cotton-poly blend for durability.</p>
+              <button type="button" aria-label="Add Men's T-shirt 9 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product10-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men10.jpg" alt="Men's T-shirt 10" />
+              <h3>Men's T-shirt 10</h3>
+              <p>Minimal design with premium fabric.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>100% organic cotton, machine washable.</p>
+              <button type="button" aria-label="Add Men's T-shirt 10 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product11-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men11.jpg" alt="Men's T-shirt 11" />
+              <h3>Men's T-shirt 11</h3>
+              <p>Durable, comfortable, and stylish.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Polyester blend, moisture-wicking.</p>
+              <button type="button" aria-label="Add Men's T-shirt 11 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card" tabindex="0" aria-describedby="product12-desc">
+          <div class="product-inner">
+            <div class="product-front">
+              <img src="men12.jpg" alt="Men's T-shirt 12" />
+              <h3>Men's T-shirt 12</h3>
+              <p>Classic style with a soft finish.</p>
+            </div>
+            <div class="product-back">
+              <h4>Details</h4>
+              <p>Premium cotton, pre-shrunk.</p>
+              <button type="button" aria-label="Add Men's T-shirt 12 to cart">Add to Cart</button>
+            </div>
+          </div>
+        </article>
+
       </section>
 
       <!-- Features Section -->
@@ -569,7 +699,9 @@
     </main>
   </div>
 
-  
+  <!-- Transparent crack div -->
+  <div id="logo-crack" aria-hidden="true"></div>
+
 <script>
   // Loading spinner removal
   window.addEventListener('load', () => {
