@@ -78,6 +78,9 @@
     padding: 0.25rem 1rem;
     transition: background-color 0.3s ease;
     border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   nav button:hover {
     background-color: #ccc;
@@ -86,6 +89,12 @@
     background-color: #222;
     color: #eee;
     font-weight: 700;
+  }
+
+  nav button img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
   }
 
   /* Push bottom nav so iframe's bottom content isn't hidden */
@@ -112,9 +121,15 @@
   </main>
 
   <nav role="navigation" aria-label="Main navigation">
-    <button id="nav-home" aria-pressed="true" aria-label="Home page">Home</button>
-    <button id="nav-men" aria-pressed="false" aria-label="Men's T-shirts page">Men's</button>
-    <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">Boys'</button>
+    <button id="nav-home" aria-pressed="true" aria-label="Home page">
+      <img src="homeicon.png" alt="Home" />
+    </button>
+    <button id="nav-men" aria-pressed="false" aria-label="Men's T-shirts page">
+      <img src="menicon.png" alt="Men’s" />
+    </button>
+    <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">
+      <img src="boyicon.png" alt="Boys’" />
+    </button>
   </nav>
 
 </div>
