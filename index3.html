@@ -62,8 +62,6 @@
     background: #121212; /* dark near-black */
     box-shadow: 0 -2px 6px rgba(0,0,0,0.12);
     display: flex;
-    /* Remove justify-content: space-around; */
-    /* We'll rely on button widths */
     padding: 0.6rem 0;
     user-select: none;
     z-index: 1001;
@@ -82,7 +80,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Fill equal horizontal space */
     flex: 1 1 0;
   }
   nav button:hover {
@@ -92,13 +89,17 @@
     background-color: #212121;
     color: grey;
     font-weight: 700;
-    /* Keep padding as is */
   }
 
-  nav button img {
+  nav button img.nav-icon {
     width: 24px;
     height: 24px;
     object-fit: contain;
+  }
+  /* Increase boys icon size slightly */
+  nav button img.boys-icon {
+    width: 28px;
+    height: 28px;
   }
 
   /* Push bottom nav so iframe's bottom content isn't hidden */
@@ -181,16 +182,16 @@
 
   <nav role="navigation" aria-label="Main navigation">
     <button id="nav-home" aria-pressed="true" aria-label="Home page">
-      <img src="homeicon.png" alt="Home" />
+      <img src="homeicon.png" alt="Home" class="nav-icon home-icon" />
     </button>
     <button id="nav-men" aria-pressed="false" aria-label="Men's T-shirts page">
-      <img src="menicon.png" alt="Men’s" />
+      <img src="menicon.png" alt="Men’s" class="nav-icon men-icon" />
     </button>
     <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">
-      <img src="boyicon.png" alt="Boys’" />
+      <img src="boyicon.png" alt="Boys’" class="nav-icon boys-icon" />
     </button>
     <button id="nav-cart" aria-pressed="false" aria-label="Shopping cart">
-      <img src="Cart.png" alt="Cart" />
+      <img src="Cart.png" alt="Cart" class="nav-icon cart-icon" />
     </button>
   </nav>
 
