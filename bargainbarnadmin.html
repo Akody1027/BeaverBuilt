@@ -487,10 +487,17 @@ Admin</textarea>
         });
       });
 
-      function customerHasMissingInfo(c) {
-        return !c.email || !c.phone || !c.address;
-      }
 
+function customerHasMissingInfo(c) {
+  // If no name (or name empty), consider customer unassigned -> no warning
+  if (!c.name || c.name.trim() === "") return false;
+
+  // If assigned but missing any key info, show warning
+  return !c.email || !c.phone || !c.address;
+}
+
+
+      
       async function populateSidebar() {
         const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = "";
