@@ -13,7 +13,6 @@
   <!-- PayPal SDK -->
   <script src="https://www.paypal.com/sdk/js?client-id=AXFMhUc3S_3ohWhmBYldq&currency=USD"></script>
   <style>
-    /* Your existing styles unchanged */
     #invoice-container {
       max-width: 800px;
       margin: 2rem auto 0 auto;
@@ -232,18 +231,6 @@
       position: relative;
       padding-right: 18px; /* space to right for warning circle */
     }
-
-    /* Sidebar scrolling and truncation */
-    #sidebar-customer-list {
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-    .customer-btn {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 180px; /* prevent sidebar widening */
-    }
   </style>
 </head>
 <body class="flex h-screen bg-gray-50">
@@ -385,15 +372,14 @@ Admin</textarea>
           <p><strong>Address:</strong> <span id="profile-address"></span></p>
           <p><strong>Admin PIN:</strong> <span id="profile-admin-pin"></span></p>
           <p><strong>Customer PIN:</strong> <span id="profile-pin"></span> <button id="reset-pin-btn" class="text-red-600 hover:text-red-800 text-sm font-semibold ml-2">Reset</button></p>
-          
-          <div id="update-fields" class="update-fields"></div>
           <input id="invoice-amount" type="number" placeholder="Invoice Amount" class="mb-2 w-full rounded-lg border p-2" />
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
-            <button id="edit-profile-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Edit</button>
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
             <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
           </div>
+          <div id="update-fields" class="update-fields"></div>
           <div id="profile-email-log" class="mt-4"></div>
         </div>
       </section>
@@ -401,7 +387,7 @@ Admin</textarea>
   </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
       const firebaseConfig = {
         apiKey: "AIzaSyB2lKzEGU4YWV9-E9XILI3Gy0v80F2hJFc",
         authDomain: "customerportal-3032d.firebaseapp.com",
@@ -473,66 +459,9 @@ Admin</textarea>
       const closeEmailOptionsBtn = document.getElementById("close-email-options");
       const emailNewCustomerBtn = document.getElementById("email-new-customer");
       const emailNewInvoiceBtn = document.getElementById("email-new-invoice");
-      const editProfileBtn = document.getElementById("edit-profile-btn");
 
       let activeCustomer = null;
       let selectedCustomerIds = new Set();
-
-      // Edit profile button to toggle update fields visibility
-      editProfileBtn.onclick = () => {
-        if (!activeCustomer) return;
-        if (updateFieldsDiv.innerHTML !== "") {
-          updateFieldsDiv.innerHTML = "";
-          return;
-        }
-        const fields = [
-          { key: "name", label: "Name", type: "text" },
-          { key: "email", label: "Email", type: "email" },
-          { key: "phone", label: "Phone Number", type: "tel" },
-          { key: "address", label: "Address", type: "text" },
-          { key: "adminPin", label: "Admin PIN", type: "text" }
-        ];
-        updateFieldsDiv.innerHTML = "";
-        fields.forEach((f) => {
-          const row = document.createElement("div");
-          row.className = "update-row flex items-center mb-2 gap-2";
-
-          const label = document.createElement("label");
-          label.textContent = f.label + ":";
-          label.className = "w-24 font-semibold";
-
-          const inp = document.createElement("input");
-          inp.type = f.type;
-          inp.value = activeCustomer[f.key] || "";
-          inp.className = "border rounded px-2 py-1 flex-1";
-
-          const btn = document.createElement("button");
-          btn.textContent = "Save";
-          btn.className = "bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded";
-
-          btn.onclick = async () => {
-            const val = inp.value.trim();
-            if (!val) {
-              inp.classList.add("border-red-400");
-              return;
-            }
-            await db.collection("customers").doc(activeCustomer.id).update({ [f.key]: val });
-            activeCustomer[f.key] = val;
-            document.getElementById("profile-" + f.key.replace("adminPin","admin-pin").replace("name","name")).textContent = val;
-            if(f.key === "name"){
-              await populateSidebar();
-            }
-            row.remove();
-            if (updateFieldsDiv.children.length === 0) {
-              updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">All updates saved!</div>';
-              setTimeout(() => (updateFieldsDiv.innerHTML = ""), 2000);
-            }
-          };
-
-          row.append(label, inp, btn);
-          updateFieldsDiv.appendChild(row);
-        });
-      };
 
       function showSection(id) {
         ["dashboard", "customers", "profile"].forEach((s) => {
@@ -568,10 +497,9 @@ Admin</textarea>
 
             const btn = document.createElement("button");
             btn.className = "customer-btn flex items-center justify-between";
-            btn.textContent = `${c.id} - ${c.name || "(Available)"}`;
+            btn.textContent = `${c.id} - ${c.name}`;
 
-            // Do NOT show red warning if customer has no name (placeholder)
-            if (c.name && customerHasMissingInfo(c)) {
+            if (customerHasMissingInfo(c)) {
               const warning = document.createElement("span");
               warning.className = "customer-warning";
               warning.title = "Missing info";
@@ -887,15 +815,13 @@ Thank you!`);
       emailNewInvoiceBtn.onclick = () => sendNewInvoiceEmail();
 
       // Login flow
-      loginBtn.addEventListener("click", async () => {
+      loginBtn.onclick = async () => {
         pinError.textContent = "";
         if (pinInput.value === "1234") {
           loginBtnText.classList.add("hidden");
           loginBtnSpinner.classList.remove("hidden");
           loginBtn.disabled = true;
           try {
-            // Import customers before showing UI to ensure data is ready
-            await importCustomers();
             await populateSidebar();
             await updateMetrics();
             await updateGrid();
@@ -913,7 +839,7 @@ Thank you!`);
         } else {
           pinError.textContent = "Invalid PIN";
         }
-      });
+      };
 
       async function updateMetrics() {
         const customers = await getCustomers();
@@ -1004,45 +930,9 @@ Thank you!`);
         hideEmailOptionsDropdown();
       }
 
-      // ********** BULK CUSTOMER DATA TO IMPORT **********
-      const bulkCustomers = [
-        // same as before, omitted here for brevity
-      ];
-
-      // Function to check if customer already exists by ID
-      async function customerExists(id) {
-        const doc = await db.collection("customers").doc(id).get();
-        return doc.exists;
-      }
-
-      // Import all customers if they don't already exist
-      async function importCustomers() {
-        for (const cust of bulkCustomers) {
-          const exists = await customerExists(cust.id);
-          if (!exists) {
-            const data = cust.name
-              ? {
-                  name: cust.name,
-                  address: cust.address || "",
-                  city: cust.city || "",
-                  state: cust.state || "",
-                  zip: cust.zip || "",
-                  email: cust.email || "",
-                  pin: "",
-                  adminPin: ""
-                }
-              : { name: "", pin: "", adminPin: "" };
-            await db.collection("customers").doc(cust.id).set(data);
-          }
-        }
-      }
-
-      // Initialize UI to login view
-      loginOverlay.classList.remove("hidden");
-      sidebar.classList.add("hidden");
-      main.classList.add("hidden");
-      showSection("dashboard"); // default  section
-
+      await populateSidebar();
+      await updateMetrics();
+      await updateGrid();
     });
   </script>
 </body>
