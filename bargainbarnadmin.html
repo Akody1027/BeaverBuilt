@@ -867,27 +867,42 @@ Thank you!`);
         }
       };
 
+
+
       async function updateMetrics() {
-        const customers = await getCustomers();
-        const bills = await getBills();
-        document.getElementById("customersCount").textContent = customers.length;
-        const unpaid = bills.filter((b) => !b.paid);
-        document.getElementById("outstandingCount").textContent = unpaid.length;
-        document.getElementById("unpaidAmount").textContent =
-          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
-        const now = new Date(),
-          m = now.getMonth(),
-          y = now.getFullYear();
-        const revenue = bills
-          .filter(
-            (b) =>
-              b.paid &&
-              new Date(b.dueDate).getMonth() === m &&
-              new Date(b.dueDate).getFullYear() === y
-          )
-          .reduce((s, b) => s + b.amount, 0);
-        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
-      }
+  const customers = await getCustomers();
+  // Filter only customers with non-empty ID AND with at least one non-empty field like name or email
+  const validCustomers = customers.filter(c =>
+    c.id && c.id.trim() !== "" &&
+    ((c.name && c.name.trim() !== "") || (c.email && c.email.trim() !== ""))
+  );
+
+  const bills = await getBills();
+  document.getElementById("customersCount").textContent = validCustomers.length;
+
+  const unpaid = bills.filter((b) => !b.paid);
+  document.getElementById("outstandingCount").textContent = unpaid.length;
+  document.getElementById("unpaidAmount").textContent =
+    "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
+
+  const now = new Date(),
+    m = now.getMonth(),
+    y = now.getFullYear();
+
+  const revenue = bills
+    .filter(
+      (b) =>
+        b.paid &&
+        new Date(b.dueDate).getMonth() === m &&
+        new Date(b.dueDate).getFullYear() === y
+    )
+    .reduce((s, b) => s + b.amount, 0);
+
+  document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
+}
+
+
+      
 
       async function updateGrid() {
         const customers = await getCustomers();
