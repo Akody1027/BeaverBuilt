@@ -214,8 +214,6 @@
   padding-right: 0.5rem; /* prevent scrollbar overlap */
 }
 
-    
-
     /* New styling for warning ! */
     .customer-warning {
       display: flex;
@@ -497,10 +495,10 @@ Admin</textarea>
         const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = "";
         const customers = await getCustomers();
-        // **Include all customers regardless of ID emptiness**
         customers
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
+            if (!c.id || c.id.trim() === "") return;
             const li = document.createElement("li");
             li.classList.add("sidebar-customer-item");
 
@@ -649,11 +647,23 @@ Admin</textarea>
           return;
         }
         if (!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
-        await db.collection("customers").doc(activeCustomer.id).delete();
+
+        // Update the customer doc by clearing all fields instead of deleting the document
+        await db.collection("customers").doc(activeCustomer.id).update({
+          name: "",
+          email: "",
+          phone: "",
+          address: "",
+          pin: "",
+          adminPin: ""
+        });
+
+        // Delete all bills related to this customer
         const snap = await db.collection("bills").where("customerId", "==", activeCustomer.id).get();
         const batch = db.batch();
         snap.forEach((d) => batch.delete(d.ref));
         await batch.commit();
+
         activeCustomer = null;
         ["profile-id", "profile-name", "profile-email", "profile-phone", "profile-address", "profile-pin", "profile-admin-pin"].forEach(
           (f) => (document.getElementById(f).textContent = "")
@@ -872,22 +882,9 @@ Thank you!`);
         document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
       }
 
-      // Invoice Tracking Calendar grid update - includes all customers including those with empty IDs
       async function updateGrid() {
         const customers = await getCustomers();
-
-        // Sort customers by numeric ID ascending, with empty or non-numeric IDs last
-        customers.sort((a, b) => {
-          const aNum = Number(a.id);
-          const bNum = Number(b.id);
-          if (isNaN(aNum) && !isNaN(bNum)) return 1;
-          if (!isNaN(aNum) && isNaN(bNum)) return -1;
-          if (isNaN(aNum) && isNaN(bNum)) return 0;
-          return aNum - bNum;
-        });
-
-        invoiceGrid.innerHTML = ""; // Clear existing grid cells
-
+        invoiceGrid.innerHTML = "";
         customers.forEach((c) => {
           const cell = document.createElement("div");
           cell.className = "grid-cell";
@@ -895,9 +892,8 @@ Thank you!`);
           cell.setAttribute("data-customer-id", c.id);
           invoiceGrid.appendChild(cell);
         });
-
-        renderInvoiceGridColors();      // Color cells red/green based on unpaid bills
-        attachGridLongPressHandlers();  // Enable selection on long press/click
+        renderInvoiceGridColors();
+        attachGridLongPressHandlers();
       }
 
       async function renderInvoiceGridColors() {
