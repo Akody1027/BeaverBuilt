@@ -214,6 +214,8 @@
   padding-right: 0.5rem; /* prevent scrollbar overlap */
 }
 
+    
+
     /* New styling for warning ! */
     .customer-warning {
       display: flex;
@@ -495,10 +497,10 @@ Admin</textarea>
         const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = "";
         const customers = await getCustomers();
+        // **Include all customers regardless of ID emptiness**
         customers
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
-            if (!c.id || c.id.trim() === "") return;
             const li = document.createElement("li");
             li.classList.add("sidebar-customer-item");
 
@@ -537,6 +539,7 @@ Admin</textarea>
         ["id", "name", "email", "phone", "address"].forEach((f) => {
           document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
         });
+        // Show adminPin and customer pin separately
         document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || "";
         document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
         await renderBills();
@@ -605,7 +608,7 @@ Admin</textarea>
           phone: document.getElementById("cust-phone").value.trim(),
           address: document.getElementById("cust-address").value.trim(),
           pin,
-          adminPin: pin
+          adminPin: pin // store adminPin equal to pin initially
         });
         ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
           (f) => (document.getElementById(f).value = "")
@@ -712,15 +715,19 @@ Admin</textarea>
         });
       };
 
+      // Reset Customer PIN button functionality
       const resetPinBtn = document.getElementById("reset-pin-btn");
       resetPinBtn.onclick = async () => {
         if (!activeCustomer) return;
         if (!confirm("Reset customer's PIN? This will require them to create a new PIN on login.")) return;
         try {
+          // Reset customer PIN by clearing the customer-created pin field only (not adminPin)
           await db.collection("customers").doc(activeCustomer.id).update({ pin: "" });
+          // Update local object and UI
           activeCustomer.pin = "";
           document.getElementById("profile-pin").textContent = "";
           alert("Customer PIN has been reset. They must create a new PIN to log in.");
+          // Refresh sidebar and profile display
           await populateSidebar();
           openCustomer(activeCustomer.id);
         } catch (error) {
@@ -767,6 +774,7 @@ Admin</textarea>
         showEmailOptionsDropdown();
       };
 
+      // Email options dropdown handlers
       function showEmailOptionsDropdown() {
         emailOptionsDropdown.classList.add("show");
       }
@@ -812,29 +820,25 @@ Thank you!`);
         hideEmailOptionsDropdown();
       }
 
-      // ** FIXED LOGIN BUTTON HANDLER **
-      loginBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        pinError.textContent = "";
+      emailNewCustomerBtn.onclick = () => sendNewCustomerEmail();
+      emailNewInvoiceBtn.onclick = () => sendNewInvoiceEmail();
 
+      // Login flow
+      loginBtn.onclick = async () => {
+        pinError.textContent = "";
         if (pinInput.value === "1234") {
           loginBtnText.classList.add("hidden");
           loginBtnSpinner.classList.remove("hidden");
           loginBtn.disabled = true;
-
           try {
             await populateSidebar();
             await updateMetrics();
             await updateGrid();
-
             loginOverlay.classList.add("hidden");
             sidebar.classList.remove("hidden");
             main.classList.remove("hidden");
-
             document.querySelector('.nav-link[data-target="dashboard"]').classList.add("active");
             showSection("dashboard");
-          } catch (err) {
-            console.error("Login error:", err);
           } finally {
             loginBtnText.classList.remove("hidden");
             loginBtnSpinner.classList.add("hidden");
@@ -844,7 +848,110 @@ Thank you!`);
         } else {
           pinError.textContent = "Invalid PIN";
         }
-      });
+      };
+
+      async function updateMetrics() {
+        const customers = await getCustomers();
+        const bills = await getBills();
+        document.getElementById("customersCount").textContent = customers.length;
+        const unpaid = bills.filter((b) => !b.paid);
+        document.getElementById("outstandingCount").textContent = unpaid.length;
+        document.getElementById("unpaidAmount").textContent =
+          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
+        const now = new Date(),
+          m = now.getMonth(),
+          y = now.getFullYear();
+        const revenue = bills
+          .filter(
+            (b) =>
+              b.paid &&
+              new Date(b.dueDate).getMonth() === m &&
+              new Date(b.dueDate).getFullYear() === y
+          )
+          .reduce((s, b) => s + b.amount, 0);
+        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
+      }
+
+      // Invoice Tracking Calendar grid update - includes all customers including those with empty IDs
+      async function updateGrid() {
+        const customers = await getCustomers();
+
+        // Sort customers by numeric ID ascending, with empty or non-numeric IDs last
+        customers.sort((a, b) => {
+          const aNum = Number(a.id);
+          const bNum = Number(b.id);
+          if (isNaN(aNum) && !isNaN(bNum)) return 1;
+          if (!isNaN(aNum) && isNaN(bNum)) return -1;
+          if (isNaN(aNum) && isNaN(bNum)) return 0;
+          return aNum - bNum;
+        });
+
+        invoiceGrid.innerHTML = ""; // Clear existing grid cells
+
+        customers.forEach((c) => {
+          const cell = document.createElement("div");
+          cell.className = "grid-cell";
+          cell.textContent = c.id;
+          cell.setAttribute("data-customer-id", c.id);
+          invoiceGrid.appendChild(cell);
+        });
+
+        renderInvoiceGridColors();      // Color cells red/green based on unpaid bills
+        attachGridLongPressHandlers();  // Enable selection on long press/click
+      }
+
+      async function renderInvoiceGridColors() {
+        const bills = await getBills();
+
+        document.querySelectorAll("#invoice-grid .grid-cell").forEach((cell) => {
+          const cid = cell.getAttribute("data-customer-id");
+          const custBills = bills.filter((b) => b.customerId === cid);
+          const hasUnpaid = custBills.some((b) => !b.paid);
+          if (hasUnpaid) {
+            cell.classList.add("red");
+            cell.classList.remove("green");
+          } else {
+            cell.classList.add("green");
+            cell.classList.remove("red");
+          }
+          cell.classList.toggle("selected", selectedCustomerIds.has(cid));
+        });
+      }
+
+      let longPressTimer = null;
+      const longPressDuration = 600;
+
+      function attachGridLongPressHandlers() {
+        document.querySelectorAll("#invoice-grid .grid-cell").forEach((cell) => {
+          cell.onpointerdown = (e) => {
+            e.preventDefault();
+            const customerId = cell.getAttribute("data-customer-id");
+            longPressTimer = setTimeout(() => {
+              toggleCustomerSelection(customerId);
+            }, longPressDuration);
+          };
+          cell.onpointerup = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          cell.onpointerleave = () => {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          };
+          cell.onclick = (e) => {
+            e.preventDefault();
+            if (!longPressTimer) toggleCustomerSelection(cell.getAttribute("data-customer-id"));
+          };
+        });
+      }
+
+      function toggleCustomerSelection(customerId) {
+        if (selectedCustomerIds.has(customerId)) selectedCustomerIds.delete(customerId);
+        else selectedCustomerIds.add(customerId);
+        updateBatchBar();
+        renderInvoiceGridColors();
+        hideEmailOptionsDropdown();
+      }
 
       await populateSidebar();
       await updateMetrics();
