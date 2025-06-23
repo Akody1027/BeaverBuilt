@@ -532,7 +532,55 @@ Admin</textarea>
           });
       }
 
-      async function openCustomer(id) {
+async function populateSidebar() {
+  const emailLog = getEmailLog();
+  sidebarCustomerList.innerHTML = "";
+  const customers = await getCustomers();
+
+  customers
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .forEach((c) => {
+      // Skip customers with empty/whitespace-only ID or name
+      if (
+        !c.id || c.id.replace(/\s/g, "") === "" ||
+        !c.name || c.name.replace(/\s/g, "") === ""
+      )
+        return;
+
+      const li = document.createElement("li");
+      li.classList.add("sidebar-customer-item");
+
+      const btn = document.createElement("button");
+      btn.className = "customer-btn flex items-center justify-between";
+      btn.textContent = `${c.id} - ${c.name}`;
+
+      if (customerHasMissingInfo(c)) {
+        const warning = document.createElement("span");
+        warning.className = "customer-warning";
+        warning.title = "Missing info";
+        warning.textContent = "!";
+        btn.appendChild(warning);
+      }
+
+      const emailCheck = document.createElement("span");
+      emailCheck.className = "email-check";
+      emailCheck.innerHTML = "&#10003;";
+
+      if (emailLog[c.id]) {
+        emailCheck.style.opacity = "0";
+      }
+
+      btn.appendChild(emailCheck);
+
+      btn.onclick = () => openCustomer(c.id);
+      li.appendChild(btn);
+      sidebarCustomerList.appendChild(li);
+    });
+}
+
+
+      
+function openCustomer(id) {
         const customers = await getCustomers();
         activeCustomer = customers.find((c) => c.id === id);
         if (!activeCustomer) return;
