@@ -500,6 +500,7 @@ Admin</textarea>
         customers
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
+            if (!c.id || c.id.trim() === "") return;
             const li = document.createElement("li");
             li.classList.add("sidebar-customer-item");
 
