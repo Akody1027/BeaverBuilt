@@ -20,6 +20,16 @@
   overflow: hidden;
 }
 
+#dashboard-separator {
+  width: 90%;
+  height: 1.5px; /* thin line */
+  background-color: #888888; /* medium gray */
+  margin: 0.3rem auto 1rem auto; /* top margin to separate from button, bottom margin for spacing */
+  border-radius: 1px; /* slight rounding */
+}
+
+    
+
 .customer-btn {
   white-space: nowrap;
   overflow: hidden;
@@ -313,6 +323,9 @@ Admin</textarea>
             class="nav-link mb-2 flex w-full items-center rounded px-2 py-1 text-left text-gray-700 hover:bg-gray-100">
       Dashboard
     </button>
+    
+<div id="dashboard-separator"></div>
+    
     <div class="sidebar-divider"></div>
     <div class="mb-2 flex items-center">
       <span class="text-gray-700">👥 Customers</span>
