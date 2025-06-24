@@ -214,29 +214,6 @@
   padding-right: 0.5rem; /* prevent scrollbar overlap */
 }
 
-#sidebar {
-  width: 35vw;
-  max-width: 35vw;
-  min-width: 200px;
-  overflow: hidden;
-}
-
-.customer-btn {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  display: block;
-}
-
-.customer-btn.active {
-  background-color: #7d7d7d;
-  color: white;
-}
-
-
-
-
     /* New styling for warning ! */
     .customer-warning {
       display: flex;
@@ -250,7 +227,7 @@
       width: 15px;
       height: 15px;
       position: absolute;
-      right: 0px; /* far right within sidebar */
+      right: 8px; /* far right within sidebar */
       top: 50%;
       transform: translateY(-50%);
       user-select: none;
@@ -405,7 +382,7 @@ Admin</textarea>
           <button id="add-invoice-btn" class="w-full rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Add Invoice</button>
           <ul id="profile-bills-list" class="space-y-2 pt-4"></ul>
           <div class="flex flex-row gap-2 mt-4">
-            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Update</button>
+            <button id="update-cust-btn" class="flex-1 rounded-lg bg-gray-300 py-2 text-black hover:bg-gray-400">Edit</button>
             <button id="delete-cust-btn" class="flex-1 rounded-lg bg-red-500 py-2 text-white hover:bg-red-600">Delete Customer</button>
           </div>
           <div id="update-fields" class="update-fields"></div>
@@ -491,6 +468,7 @@ Admin</textarea>
 
       let activeCustomer = null;
       let selectedCustomerIds = new Set();
+      let editMode = false;
 
       function showSection(id) {
         ["dashboard", "customers", "profile"].forEach((s) => {
@@ -527,7 +505,7 @@ Admin</textarea>
             li.classList.add("sidebar-customer-item");
 
             const btn = document.createElement("button");
-            btn.className = "customer-btn flex items-center justify-between";
+            btn.className = "customer-btn flex items-center justify-between truncate";
             btn.textContent = `${c.id} - ${c.name}`;
 
             if (customerHasMissingInfo(c)) {
@@ -558,8 +536,19 @@ Admin</textarea>
         const customers = await getCustomers();
         activeCustomer = customers.find((c) => c.id === id);
         if (!activeCustomer) return;
+        editMode = false;
+        updateCustBtn.textContent = "Edit";
+        // Display all fields as text spans
         ["id", "name", "email", "phone", "address"].forEach((f) => {
-          document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
+          const el = document.getElementById("profile-" + f);
+          el.textContent = activeCustomer[f] || "";
+          el.contentEditable = false;
+          el.style.border = "";
+          el.style.padding = "";
+          el.style.display = "inline";
+          // Remove any input fields if left over
+          const existingInput = document.getElementById("input-" + f);
+          if (existingInput) existingInput.remove();
         });
         document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || "";
         document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
@@ -629,7 +618,7 @@ Admin</textarea>
           phone: document.getElementById("cust-phone").value.trim(),
           address: document.getElementById("cust-address").value.trim(),
           pin,
-          adminPin: pin
+          adminPin: pin // store adminPin equal to pin initially
         });
         ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
           (f) => (document.getElementById(f).value = "")
@@ -671,6 +660,7 @@ Admin</textarea>
         }
         if (!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
 
+        // Update the customer doc by clearing all fields instead of deleting the document
         await db.collection("customers").doc(activeCustomer.id).update({
           name: "",
           email: "",
@@ -680,6 +670,7 @@ Admin</textarea>
           adminPin: ""
         });
 
+        // Delete all bills related to this customer
         const snap = await db.collection("bills").where("customerId", "==", activeCustomer.id).get();
         const batch = db.batch();
         snap.forEach((d) => batch.delete(d.ref));
@@ -696,56 +687,70 @@ Admin</textarea>
         showSection("dashboard");
       };
 
-      updateCustBtn.onclick = () => {
-        if (updateFieldsDiv.innerHTML !== "") {
-          updateFieldsDiv.innerHTML = "";
-          return;
-        }
+      updateCustBtn.onclick = async () => {
         if (!activeCustomer) return;
-        const fields = [
-          { key: "email", label: "Email", type: "email" },
-          { key: "phone", label: "Phone Number", type: "tel" },
-          { key: "address", label: "Address", type: "text" },
-        ];
-        const missing = fields.filter((f) => !activeCustomer[f.key]?.trim());
-        if (!missing.length) {
-          updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">No missing information!</div>';
-          return;
-        }
-        updateFieldsDiv.innerHTML = "";
-        missing.forEach((f) => {
-          const row = document.createElement("div");
-          row.className = "update-row";
-          const inp = document.createElement("input");
-          inp.type = f.type;
-          inp.placeholder = f.label;
-          inp.className = "border rounded px-2 py-1 flex-1";
-          const btn = document.createElement("button");
-          btn.textContent = "Add";
-          btn.className = "bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded ml-2";
-          btn.onclick = async () => {
-            const val = inp.value.trim();
-            if (!val) {
-              inp.classList.add("border-red-400");
+
+        if (!editMode) {
+          // Switch to edit mode
+          editMode = true;
+          updateCustBtn.textContent = "Save";
+
+          // Replace text spans with inputs prefilled with current data
+          ["name", "email", "phone", "address"].forEach((f) => {
+            const span = document.getElementById("profile-" + f);
+            const val = span.textContent;
+            span.style.display = "none";
+            const input = document.createElement("input");
+            input.type = f === "email" ? "email" : f === "phone" ? "tel" : "text";
+            input.id = "input-" + f;
+            input.value = val;
+            input.className = "border rounded px-2 py-1 w-full";
+            span.parentNode.insertBefore(input, span.nextSibling);
+          });
+        } else {
+          // Save mode
+          const updates = {};
+          let hasError = false;
+          ["name", "email", "phone", "address"].forEach((f) => {
+            const input = document.getElementById("input-" + f);
+            if (!input) return;
+            const val = input.value.trim();
+            if (f === "name" && val === "") {
+              alert("Name cannot be empty");
+              hasError = true;
               return;
             }
-            await db.collection("customers").doc(activeCustomer.id).update({ [f.key]: val });
-            activeCustomer[f.key] = val;
-            document.getElementById("profile-" + f.key).textContent = val;
-            row.remove();
+            updates[f] = val;
+          });
+          if (hasError) return;
+
+          try {
+            await db.collection("customers").doc(activeCustomer.id).update(updates);
+            Object.assign(activeCustomer, updates);
+
+            // Update UI
+            ["name", "email", "phone", "address"].forEach((f) => {
+              const span = document.getElementById("profile-" + f);
+              const input = document.getElementById("input-" + f);
+              span.textContent = updates[f];
+              span.style.display = "inline";
+              if (input) input.remove();
+            });
+
+            editMode = false;
+            updateCustBtn.textContent = "Edit";
+
             await populateSidebar();
             await updateMetrics();
             await updateGrid();
-            if (!fields.filter((ff) => !activeCustomer[ff.key]?.trim()).length) {
-              updateFieldsDiv.innerHTML = '<div class="text-green-700 mt-2">All information updated!</div>';
-              setTimeout(() => (updateFieldsDiv.innerHTML = ""), 2000);
-            }
-          };
-          row.append(inp, btn);
-          updateFieldsDiv.appendChild(row);
-        });
+          } catch (err) {
+            alert("Failed to update customer.");
+            console.error(err);
+          }
+        }
       };
 
+      // Reset Customer PIN button functionality
       const resetPinBtn = document.getElementById("reset-pin-btn");
       resetPinBtn.onclick = async () => {
         if (!activeCustomer) return;
@@ -801,6 +806,7 @@ Admin</textarea>
         showEmailOptionsDropdown();
       };
 
+      // Email options dropdown handlers
       function showEmailOptionsDropdown() {
         emailOptionsDropdown.classList.add("show");
       }
@@ -849,6 +855,7 @@ Thank you!`);
       emailNewCustomerBtn.onclick = () => sendNewCustomerEmail();
       emailNewInvoiceBtn.onclick = () => sendNewInvoiceEmail();
 
+      // Login flow
       loginBtn.onclick = async () => {
         pinError.textContent = "";
         if (pinInput.value === "1234") {
@@ -909,21 +916,13 @@ Thank you!`);
       async function updateGrid() {
         const customers = await getCustomers();
         invoiceGrid.innerHTML = "";
-
-        // Sort customers by numeric ID ascending (filter those with no numeric ID)
-        const filteredCustomers = customers.filter(c => c.id && !isNaN(c.id));
-        filteredCustomers.sort((a, b) => Number(a.id) - Number(b.id));
-
-        // Sequential numbering from 1 to length of filteredCustomers
-        for (let i = 0; i < filteredCustomers.length; i++) {
-          const c = filteredCustomers[i];
+        customers.forEach((c) => {
           const cell = document.createElement("div");
           cell.className = "grid-cell";
-          cell.textContent = (i + 1).toString(); // sequential number starting at 1
+          cell.textContent = c.id;
           cell.setAttribute("data-customer-id", c.id);
           invoiceGrid.appendChild(cell);
-        }
-
+        });
         renderInvoiceGridColors();
         attachGridLongPressHandlers();
       }
