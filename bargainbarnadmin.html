@@ -214,6 +214,29 @@
   padding-right: 0.5rem; /* prevent scrollbar overlap */
 }
 
+#sidebar {
+  width: 35vw;
+  max-width: 35vw;
+  min-width: 200px;
+  overflow: hidden;
+}
+
+.customer-btn {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+}
+
+.customer-btn.active {
+  background-color: #7d7d7d;
+  color: white;
+}
+
+
+
+
     /* New styling for warning ! */
     .customer-warning {
       display: flex;
@@ -227,7 +250,7 @@
       width: 15px;
       height: 15px;
       position: absolute;
-      right: 8px; /* far right within sidebar */
+      right: 0px; /* far right within sidebar */
       top: 50%;
       transform: translateY(-50%);
       user-select: none;
