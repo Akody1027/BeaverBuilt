@@ -487,17 +487,11 @@ Admin</textarea>
         });
       });
 
+      function customerHasMissingInfo(c) {
+        if (!c.name || c.name.trim() === "") return false;
+        return !c.email || !c.phone || !c.address;
+      }
 
-function customerHasMissingInfo(c) {
-  // If no name (or name empty), consider customer unassigned -> no warning
-  if (!c.name || c.name.trim() === "") return false;
-
-  // If assigned but missing any key info, show warning
-  return !c.email || !c.phone || !c.address;
-}
-
-
-      
       async function populateSidebar() {
         const emailLog = getEmailLog();
         sidebarCustomerList.innerHTML = "";
@@ -544,7 +538,6 @@ function customerHasMissingInfo(c) {
         ["id", "name", "email", "phone", "address"].forEach((f) => {
           document.getElementById("profile-" + f).textContent = activeCustomer[f] || "";
         });
-        // Show adminPin and customer pin separately
         document.getElementById("profile-admin-pin").textContent = activeCustomer.adminPin || "";
         document.getElementById("profile-pin").textContent = activeCustomer.pin || "";
         await renderBills();
@@ -613,7 +606,7 @@ function customerHasMissingInfo(c) {
           phone: document.getElementById("cust-phone").value.trim(),
           address: document.getElementById("cust-address").value.trim(),
           pin,
-          adminPin: pin // store adminPin equal to pin initially
+          adminPin: pin
         });
         ["cust-id", "cust-name", "cust-email", "cust-phone", "cust-address"].forEach(
           (f) => (document.getElementById(f).value = "")
@@ -655,7 +648,6 @@ function customerHasMissingInfo(c) {
         }
         if (!confirm(`Delete "${activeCustomer.name}" and all their invoices?`)) return;
 
-        // Update the customer doc by clearing all fields instead of deleting the document
         await db.collection("customers").doc(activeCustomer.id).update({
           name: "",
           email: "",
@@ -665,7 +657,6 @@ function customerHasMissingInfo(c) {
           adminPin: ""
         });
 
-        // Delete all bills related to this customer
         const snap = await db.collection("bills").where("customerId", "==", activeCustomer.id).get();
         const batch = db.batch();
         snap.forEach((d) => batch.delete(d.ref));
@@ -732,19 +723,15 @@ function customerHasMissingInfo(c) {
         });
       };
 
-      // Reset Customer PIN button functionality
       const resetPinBtn = document.getElementById("reset-pin-btn");
       resetPinBtn.onclick = async () => {
         if (!activeCustomer) return;
         if (!confirm("Reset customer's PIN? This will require them to create a new PIN on login.")) return;
         try {
-          // Reset customer PIN by clearing the customer-created pin field only (not adminPin)
           await db.collection("customers").doc(activeCustomer.id).update({ pin: "" });
-          // Update local object and UI
           activeCustomer.pin = "";
           document.getElementById("profile-pin").textContent = "";
           alert("Customer PIN has been reset. They must create a new PIN to log in.");
-          // Refresh sidebar and profile display
           await populateSidebar();
           openCustomer(activeCustomer.id);
         } catch (error) {
@@ -791,7 +778,6 @@ function customerHasMissingInfo(c) {
         showEmailOptionsDropdown();
       };
 
-      // Email options dropdown handlers
       function showEmailOptionsDropdown() {
         emailOptionsDropdown.classList.add("show");
       }
@@ -840,7 +826,6 @@ Thank you!`);
       emailNewCustomerBtn.onclick = () => sendNewCustomerEmail();
       emailNewInvoiceBtn.onclick = () => sendNewInvoiceEmail();
 
-      // Login flow
       loginBtn.onclick = async () => {
         pinError.textContent = "";
         if (pinInput.value === "1234") {
@@ -869,7 +854,6 @@ Thank you!`);
 
       async function updateMetrics() {
         const customers = await getCustomers();
-        // Filter only customers with non-empty ID AND with at least one non-empty field like name or email
         const validCustomers = customers.filter(c =>
           c.id && c.id.trim() !== "" &&
           ((c.name && c.name.trim() !== "") || (c.email && c.email.trim() !== ""))
@@ -902,13 +886,21 @@ Thank you!`);
       async function updateGrid() {
         const customers = await getCustomers();
         invoiceGrid.innerHTML = "";
-        customers.forEach((c) => {
+
+        // Sort customers by numeric ID ascending (filter those with no numeric ID)
+        const filteredCustomers = customers.filter(c => c.id && !isNaN(c.id));
+        filteredCustomers.sort((a, b) => Number(a.id) - Number(b.id));
+
+        // Sequential numbering from 1 to length of filteredCustomers
+        for (let i = 0; i < filteredCustomers.length; i++) {
+          const c = filteredCustomers[i];
           const cell = document.createElement("div");
           cell.className = "grid-cell";
-          cell.textContent = c.id;
+          cell.textContent = (i + 1).toString(); // sequential number starting at 1
           cell.setAttribute("data-customer-id", c.id);
           invoiceGrid.appendChild(cell);
-        });
+        }
+
         renderInvoiceGridColors();
         attachGridLongPressHandlers();
       }
