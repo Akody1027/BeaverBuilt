@@ -936,6 +936,8 @@ Thank you!`);
       async function updateGrid() {
         const customers = await getCustomers();
         invoiceGrid.innerHTML = "";
+        // SORT customers by numeric ID ascending BEFORE rendering
+        customers.sort((a, b) => +a.id - +b.id);
         customers.forEach((c) => {
           const cell = document.createElement("div");
           cell.className = "grid-cell";
