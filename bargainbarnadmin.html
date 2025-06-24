@@ -505,7 +505,7 @@ function customerHasMissingInfo(c) {
         customers
           .sort((a, b) => +a.id - +b.id)
           .forEach((c) => {
-            if (!c.id || c.id.trim() === "") return;
+            if (!c.id) return;
             const li = document.createElement("li");
             li.classList.add("sidebar-customer-item");
 
@@ -867,42 +867,37 @@ Thank you!`);
         }
       };
 
-
-
       async function updateMetrics() {
-  const customers = await getCustomers();
-  // Filter only customers with non-empty ID AND with at least one non-empty field like name or email
-  const validCustomers = customers.filter(c =>
-    c.id && c.id.trim() !== "" &&
-    ((c.name && c.name.trim() !== "") || (c.email && c.email.trim() !== ""))
-  );
+        const customers = await getCustomers();
+        // Filter only customers with non-empty ID AND with at least one non-empty field like name or email
+        const validCustomers = customers.filter(c =>
+          c.id && c.id.trim() !== "" &&
+          ((c.name && c.name.trim() !== "") || (c.email && c.email.trim() !== ""))
+        );
 
-  const bills = await getBills();
-  document.getElementById("customersCount").textContent = validCustomers.length;
+        const bills = await getBills();
+        document.getElementById("customersCount").textContent = validCustomers.length;
 
-  const unpaid = bills.filter((b) => !b.paid);
-  document.getElementById("outstandingCount").textContent = unpaid.length;
-  document.getElementById("unpaidAmount").textContent =
-    "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
+        const unpaid = bills.filter((b) => !b.paid);
+        document.getElementById("outstandingCount").textContent = unpaid.length;
+        document.getElementById("unpaidAmount").textContent =
+          "$" + unpaid.reduce((s, b) => s + b.amount, 0).toFixed(2);
 
-  const now = new Date(),
-    m = now.getMonth(),
-    y = now.getFullYear();
+        const now = new Date(),
+          m = now.getMonth(),
+          y = now.getFullYear();
 
-  const revenue = bills
-    .filter(
-      (b) =>
-        b.paid &&
-        new Date(b.dueDate).getMonth() === m &&
-        new Date(b.dueDate).getFullYear() === y
-    )
-    .reduce((s, b) => s + b.amount, 0);
+        const revenue = bills
+          .filter(
+            (b) =>
+              b.paid &&
+              new Date(b.dueDate).getMonth() === m &&
+              new Date(b.dueDate).getFullYear() === y
+          )
+          .reduce((s, b) => s + b.amount, 0);
 
-  document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
-}
-
-
-      
+        document.getElementById("revenueCount").textContent = "$" + revenue.toFixed(2);
+      }
 
       async function updateGrid() {
         const customers = await getCustomers();
@@ -971,43 +966,9 @@ Thank you!`);
         hideEmailOptionsDropdown();
       }
 
-      // Initial page setup
       await populateSidebar();
       await updateMetrics();
       await updateGrid();
-
-      // --- RESET CODE: REMOVE THIS BLOCK AFTER USING ---
-      async function resetAllCustomersAndBills() {
-        if (!confirm("Are you sure you want to CLEAR all customers and bills? This cannot be undone.")) return;
-        // Clear all customers data but keep IDs with blank data
-        const customers = await getCustomers();
-        const batch = db.batch();
-        customers.forEach(c => {
-          const custRef = db.collection("customers").doc(c.id);
-          batch.update(custRef, {
-            name: "",
-            email: "",
-            phone: "",
-            address: "",
-            pin: "",
-            adminPin: ""
-          });
-        });
-        // Delete all bills
-        const bills = await getBills();
-        bills.forEach(b => {
-          const billRef = db.collection("bills").doc(b.id);
-          batch.delete(billRef);
-        });
-        await batch.commit();
-        alert("All customers cleared and all bills deleted.");
-        await populateSidebar();
-        await updateMetrics();
-        await updateGrid();
-      }
-      // To use reset, uncomment the next line, run the page once, then comment it back or remove the block:
-      // await resetAllCustomersAndBills();
-      // --- END RESET CODE ---
     });
   </script>
 </body>
