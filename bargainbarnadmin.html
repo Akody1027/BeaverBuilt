@@ -971,9 +971,43 @@ Thank you!`);
         hideEmailOptionsDropdown();
       }
 
+      // Initial page setup
       await populateSidebar();
       await updateMetrics();
       await updateGrid();
+
+      // --- RESET CODE: REMOVE THIS BLOCK AFTER USING ---
+      async function resetAllCustomersAndBills() {
+        if (!confirm("Are you sure you want to CLEAR all customers and bills? This cannot be undone.")) return;
+        // Clear all customers data but keep IDs with blank data
+        const customers = await getCustomers();
+        const batch = db.batch();
+        customers.forEach(c => {
+          const custRef = db.collection("customers").doc(c.id);
+          batch.update(custRef, {
+            name: "",
+            email: "",
+            phone: "",
+            address: "",
+            pin: "",
+            adminPin: ""
+          });
+        });
+        // Delete all bills
+        const bills = await getBills();
+        bills.forEach(b => {
+          const billRef = db.collection("bills").doc(b.id);
+          batch.delete(billRef);
+        });
+        await batch.commit();
+        alert("All customers cleared and all bills deleted.");
+        await populateSidebar();
+        await updateMetrics();
+        await updateGrid();
+      }
+      // To use reset, uncomment the next line, run the page once, then comment it back or remove the block:
+      // await resetAllCustomersAndBills();
+      // --- END RESET CODE ---
     });
   </script>
 </body>
