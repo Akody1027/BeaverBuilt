@@ -216,6 +216,7 @@
     </tbody>
   </table>
 
+  <!-- Package info display -->
   <div id="shipping-info"></div>
 
   <div id="shipping-calculator">
@@ -262,7 +263,6 @@
   <script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
 
   <script>
-    // Shipping classes definition
     const shippingClasses = {
       A: { weight: 2,  dimensions: [8, 6, 4], name: "Small Accessories" },
       B: { weight: 6,  dimensions: [12, 10, 6], name: "Wall Decor" },
@@ -271,7 +271,6 @@
       E: { weight: 150, dimensions: [72, 36, 30], name: "Dining Table" }
     };
 
-    // Helper: assign shipping class by price temporarily
     function assignShippingClass(price) {
       if (price <= 100) return 'A';
       if (price <= 300) return 'B';
@@ -280,12 +279,10 @@
       return 'E';
     }
 
-    // Cart and shipping cost state
     let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
     let shippingCost = 0;
     let selectedShippingOption = null;
 
-    // Elements
     const cartBody = document.getElementById('cart-body');
     const cartTotalEl = document.getElementById('cart-total');
     const paymentMessage = document.getElementById('payment-message');
@@ -300,18 +297,27 @@
     const discountBubble = document.getElementById('discount-bubble');
     const shippingInfoDiv = document.getElementById('shipping-info');
 
-    // Render cart UI
     function renderCart() {
       cartBody.innerHTML = '';
       let total = 0;
       cart.forEach(item => {
         const sub = item.price * item.qty;
         total += sub;
+
+        // Discount info for additional quantities
+        let discountHtml = '';
+        if(item.qty > 1){
+          const discountedQty = item.qty - 1;
+          const discountedPrice = (item.price * 0.9).toFixed(2);
+          discountHtml = `<div class="discount-info">10% off on ${discountedQty} item${discountedQty > 1 ? 's' : ''} → New price each: $${discountedPrice}</div>`;
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <img src="${item.img}" alt="" />
             ${item.itemNum}
+            ${discountHtml}
           </td>
           <td>$${item.price.toFixed(2)}</td>
           <td>
@@ -350,7 +356,6 @@
       renderCart();
     }
 
-    // Render shipping info: item ID + weight + dimensions above shipping section
     function renderShippingInfo() {
       shippingInfoDiv.innerHTML = '';
       if(cart.length === 0) return;
@@ -367,7 +372,6 @@
       });
     }
 
-    // Calculate shipping package info based on cart and shipping class
     function calculatePackageFromCart() {
       if (cart.length === 0) return null;
 
@@ -395,14 +399,12 @@
       };
     }
 
-    // Update displayed order total (items + shipping)
     function updateOrderTotal() {
       const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
       const orderTotal = itemsTotal + shippingCost;
       orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
     }
 
-    // Generate PDF receipt using jsPDF
     function generatePDFReceipt(orderData) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -435,7 +437,6 @@
       doc.save(`Receipt_${Date.now()}.pdf`);
     }
 
-    // Simulated fetch shipping rates (replace with real backend call)
     async function fetchShippingRates(zip, country, packageInfo) {
       await new Promise(r=>setTimeout(r, 500)); // simulate network delay
 
@@ -447,7 +448,6 @@
       ];
     }
 
-    // Render shipping options radios
     function renderShippingOptions(options) {
       shippingOptionsDiv.innerHTML = '';
       if(options.length === 0) {
@@ -482,7 +482,6 @@
       shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
     }
 
-    // Get Shipping Rates button handler
     getRatesBtn.onclick = async () => {
       paymentMessage.textContent = '';
       paymentError.textContent = '';
@@ -513,7 +512,6 @@
       }
     };
 
-    // PayPal Buttons
     paypal.Buttons({
       createOrder: function(data, actions) {
         if(cart.length === 0) {
@@ -592,7 +590,6 @@
 
     }).render('#paypal-button-container');
 
-    // Discount bubble logic
     function checkForDiscountPrompt() {
       if (cart.length > 0) {
         discountBubble.style.display = 'block';
@@ -601,7 +598,6 @@
       }
     }
 
-    // Initial render
     renderCart();
   </script>
 </body>
