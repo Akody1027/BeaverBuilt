@@ -32,6 +32,7 @@
     }
     .cart-list th, .cart-list td {
       padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0;
+      vertical-align: top;
     }
     .cart-list th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #555; }
     .cart-list img {
@@ -50,11 +51,18 @@
       min-width: 20px; text-align: center; display: inline-block;
     }
 
+    .discount-info {
+      font-size: 0.85rem;
+      color: #15803d; /* green */
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
     .totals {
       display: flex;
-      Justify-content:flex-end;
-      Padding-top:10px;
-      Margin-right:5px;
+      justify-content: flex-end;
+      padding-top: 10px;
+      margin-right: 5px;
       margin-bottom: 25px;
       font-size: 1.1rem; font-weight: 600;
     }
@@ -63,7 +71,7 @@
     /* Receipt checkbox styling */
     .receipt-checkbox {
       margin-bottom: 20px;
-      Margin-left:35px;
+      margin-left: 35px;
       font-size: 0.9rem;
       display: flex;
       align-items: center;
@@ -79,7 +87,7 @@
       border: none;
       box-shadow: none;
       position: relative;
-      Left:0px; /* shift right slightly */
+      left: 0px; /* shift right slightly */
       text-align: center;
     }
     #shipping-calculator label {
@@ -101,6 +109,7 @@
 
     #shipping-options {
       margin-bottom: 15px;
+      text-align: left;
     }
     #shipping-options label {
       display: block;
@@ -194,7 +203,7 @@
     </tbody>
   </table>
 
-  <div class="totals"  style="margin-bottom: 50px;" >
+  <div class="totals" style="margin-bottom: 50px;">
     <span>Items Total:</span><span id="cart-total">$0.00</span>
   </div>
 
@@ -233,7 +242,7 @@
   <div id="payment-error"></div>
 
   <!-- Discount bubble -->
-  <div id="discount-bubble">💡 Add one more item and get 10% off your total order!</div>
+  <div id="discount-bubble">💡 10% off additional products</div>
 
   <!-- Load jsPDF library for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -277,15 +286,33 @@
 
     function renderCart() {
       cartBody.innerHTML = '';
-      let total = 0;
-      cart.forEach(item => {
-        const sub = item.price * item.qty;
-        total += sub;
+      let totalFullPrice = 0;
+      let totalDiscountedPrice = 0;
+
+      cart.forEach((item, index) => {
+        const fullSub = item.price * item.qty;
+        // For first product, full price
+        // For others, discount 10% on full qty
+        let sub = fullSub;
+        let discountHtml = '';
+
+        if(index === 0){
+          sub = fullSub;
+        } else {
+          const discountedUnitPrice = item.price * 0.9;
+          sub = discountedUnitPrice * item.qty;
+          discountHtml = `<div class="discount-info">10% off on this product → New price each: $${discountedUnitPrice.toFixed(2)} (Total: $${sub.toFixed(2)})</div>`;
+        }
+
+        totalFullPrice += (index === 0 ? fullSub : 0);
+        totalDiscountedPrice += (index === 0 ? 0 : sub);
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <img src="${item.img}" alt="" />
             ${item.itemNum}
+            ${discountHtml}
           </td>
           <td>$${item.price.toFixed(2)}</td>
           <td>
@@ -299,8 +326,11 @@
         `;
         cartBody.appendChild(tr);
       });
+
+      const total = totalFullPrice + totalDiscountedPrice;
+
       cartTotalEl.textContent = '$' + total.toFixed(2);
-      updateOrderTotal();
+      updateOrderTotal(total);
       attachQtyHandlers();
       checkForDiscountPrompt();
     }
@@ -350,9 +380,9 @@
       };
     }
 
-    function updateOrderTotal() {
-      const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-      const orderTotal = itemsTotal + shippingCost;
+    function updateOrderTotal(totalFromCart) {
+      // totalFromCart is the discounted sum of items
+      const orderTotal = totalFromCart + shippingCost;
       orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
     }
 
@@ -419,13 +449,19 @@
           radio.checked = true;
           selectedShippingOption = opt;
           shippingCost = parseFloat(opt.amount);
-          updateOrderTotal();
+          updateOrderTotal(cart.reduce((sum, item, index) => {
+            if(index === 0) return sum + item.price * item.qty;
+            else return sum + item.price * 0.9 * item.qty;
+          }, 0));
         }
         radio.onchange = () => {
           shippingCost = parseFloat(radio.value);
           selectedShippingOption = opt;
           shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-          updateOrderTotal();
+          updateOrderTotal(cart.reduce((sum, item, index) => {
+            if(index === 0) return sum + item.price * item.qty;
+            else return sum + item.price * 0.9 * item.qty;
+          }, 0));
         };
         label.prepend(radio);
         shippingOptionsDiv.appendChild(label);
@@ -474,7 +510,11 @@
           return;
         }
 
-        const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        // Calculate discounted total for PayPal
+        const itemsTotal = cart.reduce((sum, item, index) => {
+          if(index === 0) return sum + item.price * item.qty;
+          else return sum + item.price * 0.9 * item.qty;
+        }, 0);
         const orderTotal = itemsTotal + shippingCost;
 
         const purchaseUnits = [{
@@ -492,16 +532,19 @@
               }
             }
           },
-          items: cart.map(item => ({
-            name: item.itemNum,
-            unit_amount: {
-              currency_code: "USD",
-              value: item.price.toFixed(2)
-            },
-            quantity: item.qty.toString(),
-            item_category: "PHYSICAL_GOODS",
-            sku: item.itemNum
-          })),
+          items: cart.map((item, index) => {
+            const unitPrice = index === 0 ? item.price : item.price * 0.9;
+            return {
+              name: item.itemNum,
+              unit_amount: {
+                currency_code: "USD",
+                value: unitPrice.toFixed(2)
+              },
+              quantity: item.qty.toString(),
+              item_category: "PHYSICAL_GOODS",
+              sku: item.itemNum
+            };
+          }),
           shipping: {
             method: selectedShippingOption.label,
             address: {
