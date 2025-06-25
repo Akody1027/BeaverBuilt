@@ -175,15 +175,21 @@
       max-width: 280px;
       display: none;
     }
-@keyframes pulseOpacity {
-  0%, 100% { font-wieght:600 }
-  50% { font-wieght:900 }
+
+@keyframes pulseScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 #discount-bubble {
-  
-  animation: pulseOpacity 2s infinite ease-in-out;
-
+  /* your existing styles */
+  animation: pulseScale 2s infinite ease-in-out;
+  /* Add transform origin so it scales from center */
+  transform-origin: center center;
 }
 
     
