@@ -32,7 +32,6 @@
     }
     .cart-list th, .cart-list td {
       padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0;
-      vertical-align: top;
     }
     .cart-list th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #555; }
     .cart-list img {
@@ -49,13 +48,6 @@
     }
     .quantity-controls span {
       min-width: 20px; text-align: center; display: inline-block;
-    }
-
-    .discount-info {
-      font-size: 0.85rem;
-      color: #15803d; /* green */
-      margin-top: 4px;
-      font-weight: 600;
     }
 
     .totals {
@@ -109,7 +101,6 @@
 
     #shipping-options {
       margin-bottom: 15px;
-      text-align: left;
     }
     #shipping-options label {
       display: block;
@@ -175,19 +166,6 @@
       max-width: 280px;
       display: none;
     }
-
-    /* Shipping info above shipping section */
-    #shipping-info {
-      max-width: 85%;
-      margin: 0 auto 10px auto;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-align: left;
-      color: #444;
-    }
-    #shipping-info div {
-      margin-bottom: 4px;
-    }
   </style>
 </head>
 <body>
@@ -216,8 +194,9 @@
     </tbody>
   </table>
 
-  <!-- Package info display -->
-  <div id="shipping-info"></div>
+  <div class="totals"  style="margin-bottom: 50px;" >
+    <span>Items Total:</span><span id="cart-total">$0.00</span>
+  </div>
 
   <div id="shipping-calculator">
     <label for="zip">Enter Shipping ZIP/Postal Code:</label>
@@ -295,7 +274,6 @@
     const shippingCostEl = document.getElementById('shipping-cost');
     const orderTotalEl = document.getElementById('order-total');
     const discountBubble = document.getElementById('discount-bubble');
-    const shippingInfoDiv = document.getElementById('shipping-info');
 
     function renderCart() {
       cartBody.innerHTML = '';
@@ -303,21 +281,11 @@
       cart.forEach(item => {
         const sub = item.price * item.qty;
         total += sub;
-
-        // Discount info for additional quantities
-        let discountHtml = '';
-        if(item.qty > 1){
-          const discountedQty = item.qty - 1;
-          const discountedPrice = (item.price * 0.9).toFixed(2);
-          discountHtml = `<div class="discount-info">10% off on ${discountedQty} item${discountedQty > 1 ? 's' : ''} → New price each: $${discountedPrice}</div>`;
-        }
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <img src="${item.img}" alt="" />
             ${item.itemNum}
-            ${discountHtml}
           </td>
           <td>$${item.price.toFixed(2)}</td>
           <td>
@@ -335,7 +303,6 @@
       updateOrderTotal();
       attachQtyHandlers();
       checkForDiscountPrompt();
-      renderShippingInfo();
     }
 
     function attachQtyHandlers() {
@@ -354,22 +321,6 @@
       if (cart[idx].qty < 1) cart.splice(idx,1);
       localStorage.setItem('bbf_cart', JSON.stringify(cart));
       renderCart();
-    }
-
-    function renderShippingInfo() {
-      shippingInfoDiv.innerHTML = '';
-      if(cart.length === 0) return;
-
-      cart.forEach(item => {
-        const cls = item.shippingClass || assignShippingClass(item.price);
-        const tier = shippingClasses[cls];
-        if(!tier) return;
-
-        const [l, w, h] = tier.dimensions;
-        const div = document.createElement('div');
-        div.textContent = `Item ID: ${item.itemNum} | Weight: ${tier.weight} lbs | Dimensions: ${l}x${w}x${h} in`;
-        shippingInfoDiv.appendChild(div);
-      });
     }
 
     function calculatePackageFromCart() {
