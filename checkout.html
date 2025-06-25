@@ -478,11 +478,11 @@
     paypal.Buttons({
       createOrder: function(data, actions) {
         if(cart.length === 0) {
-          alert(\"Your cart is empty!\");
+          alert("Your cart is empty!");
           return;
         }
         if(!selectedShippingOption) {
-          alert(\"Please select a shipping option.\");
+          alert("Please select a shipping option.");
           return;
         }
 
@@ -491,15 +491,15 @@
 
         const purchaseUnits = [{
           amount: {
-            currency_code: \"USD\",
+            currency_code: "USD",
             value: orderTotal.toFixed(2),
             breakdown: {
               item_total: {
-                currency_code: \"USD\",
+                currency_code: "USD",
                 value: itemsTotal.toFixed(2)
               },
               shipping: {
-                currency_code: \"USD\",
+                currency_code: "USD",
                 value: shippingCost.toFixed(2)
               }
             }
@@ -507,11 +507,11 @@
           items: cart.map(item => ({
             name: item.itemNum,
             unit_amount: {
-              currency_code: \"USD\",
+              currency_code: "USD",
               value: item.price.toFixed(2)
             },
             quantity: item.qty.toString(),
-            item_category: \"PHYSICAL_GOODS\",
+            item_category: "PHYSICAL_GOODS",
             sku: item.itemNum
           })),
           shipping: {
@@ -530,8 +530,8 @@
 
       onApprove: function(data, actions) {
         return actions.order.capture().then(function(details) {
-          paymentMessage.textContent = \"Payment completed successfully! Thank you.\";
-          paymentError.textContent = \"\";
+          paymentMessage.textContent = "Payment completed successfully! Thank you.";
+          paymentError.textContent = "";
 
           // Clear cart
           localStorage.removeItem('bbf_cart');
@@ -546,8 +546,8 @@
       },
 
       onError: function(err) {
-        paymentError.textContent = \"An error occurred during payment. Please try again.\";
-        paymentMessage.textContent = \"\";
+        paymentError.textContent = "An error occurred during payment. Please try again.";
+        paymentMessage.textContent = "";
         console.error(err);
       }
 
