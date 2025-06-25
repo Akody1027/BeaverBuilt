@@ -149,6 +149,23 @@
       font-weight: 600;
       color: red;
     }
+
+    /* Discount bubble */
+    #discount-bubble {
+      position: fixed;
+      bottom: 30px;
+      right: 20px;
+      background: #fcd34d;
+      color: #111;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 9999;
+      font-size: 0.95rem;
+      max-width: 280px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -215,6 +232,9 @@
   <div id="payment-message"></div>
   <div id="payment-error"></div>
 
+  <!-- Discount bubble -->
+  <div id="discount-bubble">💡 Add one more item and get 10% off your total order!</div>
+
   <!-- Load jsPDF library for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -222,22 +242,28 @@
   <script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
 
   <script>
-    // Your Shippo Test API Key (do NOT expose your live key on client side in production)
-    const SHIPPO_API_KEY = 'shippo_live_a266348688eccb0934e9d763cd9136ac0cdcf107';
+    // Shipping classes definition
+    const shippingClasses = {
+      A: { weight: 2,  dimensions: [8, 6, 4], name: "Small Accessories" },
+      B: { weight: 6,  dimensions: [12, 10, 6], name: "Wall Decor" },
+      C: { weight: 18, dimensions: [24, 18, 10], name: "Bench" },
+      D: { weight: 50, dimensions: [60, 24, 18], name: "Outdoor Bench" },
+      E: { weight: 150, dimensions: [72, 36, 30], name: "Dining Table" }
+    };
+
+    // Helper: assign shipping class by price temporarily
+    function assignShippingClass(price) {
+      if (price <= 100) return 'A';
+      if (price <= 300) return 'B';
+      if (price <= 700) return 'C';
+      if (price <= 1500) return 'D';
+      return 'E';
+    }
 
     // Cart and shipping cost state
     let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
     let shippingCost = 0;
     let selectedShippingOption = null;
-
-    // Package size tiers by price range
-    const priceTiers = [
-      { min: 0, max: 100, weight: 2, dimensions: [8,6,4], name: "Small Package" },
-      { min: 101, max: 300, weight: 5, dimensions: [14,10,8], name: "Medium Package" },
-      { min: 301, max: 700, weight: 10, dimensions: [20,14,10], name: "Large Package" },
-      { min: 701, max: 1500, weight: 50, dimensions: [72,24,18], name: "Outdoor Bench" },
-      { min: 1501, max: Infinity, weight: 150, dimensions: [72,40,30], name: "Dining Table" }
-    ];
 
     // Elements
     const cartBody = document.getElementById('cart-body');
@@ -251,6 +277,7 @@
     const shippingOptionsDiv = document.getElementById('shipping-options');
     const shippingCostEl = document.getElementById('shipping-cost');
     const orderTotalEl = document.getElementById('order-total');
+    const discountBubble = document.getElementById('discount-bubble');
 
     // Render cart UI
     function renderCart() {
@@ -280,6 +307,7 @@
       cartTotalEl.textContent = '$' + total.toFixed(2);
       updateOrderTotal();
       attachQtyHandlers();
+      checkForDiscountPrompt();
     }
 
     function attachQtyHandlers() {
@@ -300,26 +328,32 @@
       renderCart();
     }
 
-    // Map item price to package tier (weight, dims)
-    function assignPackageForItem(price) {
-      for(let tier of priceTiers) {
-        if(price >= tier.min && price <= tier.max) return tier;
-      }
-      // fallback small
-      return priceTiers[0];
-    }
-
-    // Calculate shipping package info for the whole cart aggregated
-    // We will combine all items into a single package for simplicity,
-    // using the heaviest tier found among items.
+    // Calculate shipping package info based on cart and shipping class
     function calculatePackageFromCart() {
-      if(cart.length === 0) return null;
-      let heaviestTier = priceTiers[0];
+      if (cart.length === 0) return null;
+
+      let totalWeight = 0;
+      let maxLength = 0, maxWidth = 0, totalHeight = 0;
+
       cart.forEach(item => {
-        const tier = assignPackageForItem(item.price);
-        if(tier.weight > heaviestTier.weight) heaviestTier = tier;
+        const cls = item.shippingClass || assignShippingClass(item.price);
+        const tier = shippingClasses[cls];
+        if (!tier) return;
+
+        const [length, width, height] = tier.dimensions;
+        const qty = item.qty;
+
+        totalWeight += tier.weight * qty;
+        maxLength = Math.max(maxLength, length);
+        maxWidth  = Math.max(maxWidth, width);
+        totalHeight += height * qty;
       });
-      return heaviestTier;
+
+      return {
+        weight: totalWeight,
+        dimensions: [maxLength, maxWidth, totalHeight],
+        name: 'Combined Package'
+      };
     }
 
     // Update displayed order total (items + shipping)
@@ -444,11 +478,11 @@
     paypal.Buttons({
       createOrder: function(data, actions) {
         if(cart.length === 0) {
-          alert("Your cart is empty!");
+          alert(\"Your cart is empty!\");
           return;
         }
         if(!selectedShippingOption) {
-          alert("Please select a shipping option.");
+          alert(\"Please select a shipping option.\");
           return;
         }
 
@@ -457,15 +491,15 @@
 
         const purchaseUnits = [{
           amount: {
-            currency_code: "USD",
+            currency_code: \"USD\",
             value: orderTotal.toFixed(2),
             breakdown: {
               item_total: {
-                currency_code: "USD",
+                currency_code: \"USD\",
                 value: itemsTotal.toFixed(2)
               },
               shipping: {
-                currency_code: "USD",
+                currency_code: \"USD\",
                 value: shippingCost.toFixed(2)
               }
             }
@@ -473,11 +507,11 @@
           items: cart.map(item => ({
             name: item.itemNum,
             unit_amount: {
-              currency_code: "USD",
+              currency_code: \"USD\",
               value: item.price.toFixed(2)
             },
             quantity: item.qty.toString(),
-            item_category: "PHYSICAL_GOODS",
+            item_category: \"PHYSICAL_GOODS\",
             sku: item.itemNum
           })),
           shipping: {
@@ -496,8 +530,8 @@
 
       onApprove: function(data, actions) {
         return actions.order.capture().then(function(details) {
-          paymentMessage.textContent = "Payment completed successfully! Thank you.";
-          paymentError.textContent = "";
+          paymentMessage.textContent = \"Payment completed successfully! Thank you.\";
+          paymentError.textContent = \"\";
 
           // Clear cart
           localStorage.removeItem('bbf_cart');
@@ -512,12 +546,21 @@
       },
 
       onError: function(err) {
-        paymentError.textContent = "An error occurred during payment. Please try again.";
-        paymentMessage.textContent = "";
+        paymentError.textContent = \"An error occurred during payment. Please try again.\";
+        paymentMessage.textContent = \"\";
         console.error(err);
       }
 
     }).render('#paypal-button-container');
+
+    // Discount bubble logic
+    function checkForDiscountPrompt() {
+      if (cart.length > 0) {
+        discountBubble.style.display = 'block';
+      } else {
+        discountBubble.style.display = 'none';
+      }
+    }
 
     // Initial render
     renderCart();
