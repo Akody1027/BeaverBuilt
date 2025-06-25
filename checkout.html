@@ -670,14 +670,14 @@
 
     }).render('#paypal-button-container');
 
-    function checkForDiscountPrompt() {
-      const totalQty = totalCartQuantity();
-      if (totalQty > 1) {
-        discountBubble.style.display = 'block';
-      } else {
-        discountBubble.style.display = 'none';
-      }
-    }
+function checkForDiscountPrompt() {
+  const totalQty = totalCartQuantity();
+  if (totalQty >= 1) {  // Show bubble as soon as 1 or more units in cart
+    discountBubble.style.display = 'block';
+  } else {
+    discountBubble.style.display = 'none';
+  }
+}
 
     renderCart();
   </script>
