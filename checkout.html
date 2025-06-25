@@ -242,7 +242,7 @@
   <div id="payment-error"></div>
 
   <!-- Discount bubble -->
-  <div id="discount-bubble">💡 10% off additional products</div>
+  <div id="discount-bubble">Coupon added</div>
 
   <!-- Load jsPDF library for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -284,37 +284,63 @@
     const orderTotalEl = document.getElementById('order-total');
     const discountBubble = document.getElementById('discount-bubble');
 
+    // Total quantity helper
+    function totalCartQuantity() {
+      return cart.reduce((acc, item) => acc + item.qty, 0);
+    }
+
+    // Calculate discounted prices applying 10% off to all units after the first unit in total quantity
     function renderCart() {
       cartBody.innerHTML = '';
       let totalFullPrice = 0;
       let totalDiscountedPrice = 0;
+      let unitsProcessed = 0;
 
-      cart.forEach((item, index) => {
-        const fullSub = item.price * item.qty;
-        // For first product, full price
-        // For others, discount 10% on full qty
-        let sub = fullSub;
-        let discountHtml = '';
+      cart.forEach((item) => {
+        let sub = 0;
+        let discountAddedHtml = '';
+        let discountedUnits = 0;
+        let fullPriceUnits = 0;
 
-        if(index === 0){
-          sub = fullSub;
+        // Calculate how many units get discount and how many at full price
+        if (unitsProcessed >= 1) {
+          // All this item's units discounted
+          discountedUnits = item.qty;
+          fullPriceUnits = 0;
+        } else if (unitsProcessed + item.qty <= 1) {
+          // All units full price
+          fullPriceUnits = item.qty;
+          discountedUnits = 0;
         } else {
-          const discountedUnitPrice = item.price * 0.9;
-          sub = discountedUnitPrice * item.qty;
-          discountHtml = `<div class="discount-info">10% off on this product → New price each: $${discountedUnitPrice.toFixed(2)} (Total: $${sub.toFixed(2)})</div>`;
+          // Some units full price (to complete first unit), rest discounted
+          fullPriceUnits = 1 - unitsProcessed; // fraction to make total 1
+          discountedUnits = item.qty - fullPriceUnits;
         }
 
-        totalFullPrice += (index === 0 ? fullSub : 0);
-        totalDiscountedPrice += (index === 0 ? 0 : sub);
+        unitsProcessed += item.qty;
+
+        // Calculate subtotal for this item with discount
+        sub += item.price * fullPriceUnits;
+        sub += item.price * 0.9 * discountedUnits;
+
+        // Show discount message if any units discounted
+        if (discountedUnits > 0) {
+          discountAddedHtml = `<div class="discount-info">Discount added</div>`;
+        }
+
+        totalFullPrice += item.price * fullPriceUnits;
+        totalDiscountedPrice += item.price * 0.9 * discountedUnits;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
             <img src="${item.img}" alt="" />
             ${item.itemNum}
-            ${discountHtml}
           </td>
-          <td>$${item.price.toFixed(2)}</td>
+          <td>
+            $${item.price.toFixed(2)}
+            ${discountAddedHtml}
+          </td>
           <td>
             <div class="quantity-controls">
               <button class="dec" data-id="${item.itemNum}">−</button>
@@ -328,7 +354,6 @@
       });
 
       const total = totalFullPrice + totalDiscountedPrice;
-
       cartTotalEl.textContent = '$' + total.toFixed(2);
       updateOrderTotal(total);
       attachQtyHandlers();
@@ -381,7 +406,6 @@
     }
 
     function updateOrderTotal(totalFromCart) {
-      // totalFromCart is the discounted sum of items
       const orderTotal = totalFromCart + shippingCost;
       orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
     }
@@ -449,24 +473,40 @@
           radio.checked = true;
           selectedShippingOption = opt;
           shippingCost = parseFloat(opt.amount);
-          updateOrderTotal(cart.reduce((sum, item, index) => {
-            if(index === 0) return sum + item.price * item.qty;
-            else return sum + item.price * 0.9 * item.qty;
-          }, 0));
+          updateOrderTotal(calculateDiscountedTotal());
         }
         radio.onchange = () => {
           shippingCost = parseFloat(radio.value);
           selectedShippingOption = opt;
           shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-          updateOrderTotal(cart.reduce((sum, item, index) => {
-            if(index === 0) return sum + item.price * item.qty;
-            else return sum + item.price * 0.9 * item.qty;
-          }, 0));
+          updateOrderTotal(calculateDiscountedTotal());
         };
         label.prepend(radio);
         shippingOptionsDiv.appendChild(label);
       });
       shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+    }
+
+    function calculateDiscountedTotal() {
+      let unitsProcessed = 0;
+      let total = 0;
+      for (const item of cart) {
+        let fullPriceUnits = 0;
+        let discountedUnits = 0;
+
+        if (unitsProcessed >= 1) {
+          discountedUnits = item.qty;
+        } else if (unitsProcessed + item.qty <= 1) {
+          fullPriceUnits = item.qty;
+        } else {
+          fullPriceUnits = 1 - unitsProcessed;
+          discountedUnits = item.qty - fullPriceUnits;
+        }
+
+        unitsProcessed += item.qty;
+        total += item.price * fullPriceUnits + item.price * 0.9 * discountedUnits;
+      }
+      return total + shippingCost;
     }
 
     getRatesBtn.onclick = async () => {
@@ -510,11 +550,7 @@
           return;
         }
 
-        // Calculate discounted total for PayPal
-        const itemsTotal = cart.reduce((sum, item, index) => {
-          if(index === 0) return sum + item.price * item.qty;
-          else return sum + item.price * 0.9 * item.qty;
-        }, 0);
+        const itemsTotal = calculateDiscountedTotal() - shippingCost;
         const orderTotal = itemsTotal + shippingCost;
 
         const purchaseUnits = [{
@@ -532,19 +568,71 @@
               }
             }
           },
-          items: cart.map((item, index) => {
-            const unitPrice = index === 0 ? item.price : item.price * 0.9;
-            return {
-              name: item.itemNum,
-              unit_amount: {
-                currency_code: "USD",
-                value: unitPrice.toFixed(2)
-              },
-              quantity: item.qty.toString(),
-              item_category: "PHYSICAL_GOODS",
-              sku: item.itemNum
-            };
-          }),
+          items: (() => {
+            let unitsProcessed = 0;
+            return cart.map(item => {
+              let fullPriceUnits = 0;
+              let discountedUnits = 0;
+
+              if (unitsProcessed >= 1) {
+                discountedUnits = item.qty;
+              } else if (unitsProcessed + item.qty <= 1) {
+                fullPriceUnits = item.qty;
+              } else {
+                fullPriceUnits = 1 - unitsProcessed;
+                discountedUnits = item.qty - fullPriceUnits;
+              }
+              unitsProcessed += item.qty;
+
+              // Send two line items if both full price and discounted units exist
+              if (fullPriceUnits > 0 && discountedUnits > 0) {
+                return [
+                  {
+                    name: item.itemNum + ' (Full Price)',
+                    unit_amount: {
+                      currency_code: "USD",
+                      value: item.price.toFixed(2)
+                    },
+                    quantity: fullPriceUnits.toString(),
+                    item_category: "PHYSICAL_GOODS",
+                    sku: item.itemNum
+                  },
+                  {
+                    name: item.itemNum + ' (10% Discount)',
+                    unit_amount: {
+                      currency_code: "USD",
+                      value: (item.price * 0.9).toFixed(2)
+                    },
+                    quantity: discountedUnits.toString(),
+                    item_category: "PHYSICAL_GOODS",
+                    sku: item.itemNum
+                  }
+                ];
+              } else if (fullPriceUnits > 0) {
+                return [{
+                  name: item.itemNum,
+                  unit_amount: {
+                    currency_code: "USD",
+                    value: item.price.toFixed(2)
+                  },
+                  quantity: fullPriceUnits.toString(),
+                  item_category: "PHYSICAL_GOODS",
+                  sku: item.itemNum
+                }];
+              } else {
+                return [{
+                  name: item.itemNum,
+                  unit_amount: {
+                    currency_code: "USD",
+                    value: (item.price * 0.9).toFixed(2)
+                  },
+                  quantity: discountedUnits.toString(),
+                  item_category: "PHYSICAL_GOODS",
+                  sku: item.itemNum
+                }];
+              }
+            }).flat();
+          })(),
           shipping: {
             method: selectedShippingOption.label,
             address: {
@@ -564,12 +652,10 @@
           paymentMessage.textContent = "Payment completed successfully! Thank you.";
           paymentError.textContent = "";
 
-          // Clear cart
           localStorage.removeItem('bbf_cart');
           cart = [];
           renderCart();
 
-          // Download receipt if checked
           if(downloadReceiptCheckbox.checked) {
             generatePDFReceipt(details);
           }
@@ -585,7 +671,8 @@
     }).render('#paypal-button-container');
 
     function checkForDiscountPrompt() {
-      if (cart.length > 0) {
+      const totalQty = totalCartQuantity();
+      if (totalQty > 1) {
         discountBubble.style.display = 'block';
       } else {
         discountBubble.style.display = 'none';
