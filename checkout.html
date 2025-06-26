@@ -464,10 +464,6 @@ function toggleLargeProductSection() {
         let discountedUnits = 0;
         let fullPriceUnits = 0;
 
-
-        // Call this function initially and after cart updates
-        toggleLargeProductSection();
-
         
         // Calculate how many units get discount and how many at full price
         if (unitsProcessed >= 1) {
@@ -521,7 +517,8 @@ function toggleLargeProductSection() {
       });
 
       
-
+        // Call this function initially and after cart updates
+        toggleLargeProductSection();
 
 
 
