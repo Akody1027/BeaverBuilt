@@ -409,6 +409,8 @@
       return 'E';
     }
 
+  
+
     let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
     let shippingCost = 0;
     let selectedShippingOption = null;
@@ -431,13 +433,30 @@
       return cart.reduce((acc, item) => acc + item.qty, 0);
     }
 
+
+function toggleLargeProductSection() {
+  const hasLargeProduct = cart.some(item => item.id === "large");
+  const largeProductDiv = document.getElementById('largeproduct');
+  const shippingCalcDiv = document.getElementById('shipping-calculator');
+
+  if (hasLargeProduct) {
+    largeProductDiv.style.display = 'block';
+    shippingCalcDiv.style.display = 'none';
+  } else {
+    largeProductDiv.style.display = 'none';
+    shippingCalcDiv.style.display = 'block';
+  }
+}
+
+
+
+    
     // Calculate discounted prices applying 10% off to all units after the first unit in total quantity
     function renderCart() {
       cartBody.innerHTML = '';
       let totalFullPrice = 0;
       let totalDiscountedPrice = 0;
       let unitsProcessed = 0;
-      toggleLargeProductSection();
 
       cart.forEach((item) => {
         let sub = 0;
@@ -445,6 +464,11 @@
         let discountedUnits = 0;
         let fullPriceUnits = 0;
 
+
+        // Call this function initially and after cart updates
+        toggleLargeProductSection();
+
+        
         // Calculate how many units get discount and how many at full price
         if (unitsProcessed >= 1) {
           // All this item's units discounted
@@ -496,22 +520,9 @@
         cartBody.appendChild(tr);
       });
 
-      function toggleLargeProductSection() {
-  const hasLargeProduct = cart.some(item => item.id === "large");
-  const largeProductDiv = document.getElementById('largeproduct');
-  const shippingCalcDiv = document.getElementById('shipping-calculator');
+      
 
-  if (hasLargeProduct) {
-    largeProductDiv.style.display = 'block';
-    shippingCalcDiv.style.display = 'none';
-  } else {
-    largeProductDiv.style.display = 'none';
-    shippingCalcDiv.style.display = 'block';
-  }
-}
 
-// Call this function initially and after cart updates
-toggleLargeProductSection();
 
 
       const total = totalFullPrice + totalDiscountedPrice;
