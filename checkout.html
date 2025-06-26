@@ -193,7 +193,101 @@
 }
 
     
+    
+    
+
+  button {
+    cursor: pointer;
+    padding: 8px 12px;
+    background-color: #1f2937;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+  button:hover {
+    background-color: #374151;
+  }
+  #delivery-message {
+    margin-top: 10px;
+    font-weight: bold;
+    line-height: 1.4;
+  }
+  #map {
+    width: 100%;
+    height: 250px;
+    margin-top: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: none; /* Hidden initially */
+  }
+  /* Fullscreen modal styles */
+  #modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #modal-map-container {
+    position: relative;
+    width: 90vw;
+    height: 90vh;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+  #modal-close-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    font-size: 20px;
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    z-index: 10;
+  }
+  #modal-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+  }
+  #fullscreen-btn {
+    margin-top: 10px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    background-color: #059669;
+    display: none; /* Hidden initially */
+  }
+  #fullscreen-btn:hover {
+    background-color: #047857;
+  }
+  .marker-label {
+    background-color: red;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    border: 2px solid white;
+    box-sizing: border-box;
+  }
+    
+    
   </style>
+  
+  <!-- Mapbox CSS & JS -->
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
 </head>
 <body>
 
@@ -243,6 +337,36 @@
     <div class="totals">
       <span>Shipping:</span><span id="shipping-cost">$0.00</span>
     </div>
+
+
+
+
+
+<h3>Delivery Meeting Spot Finder</h3>
+
+<label for="address-input">Enter Customer Full Address:</label>
+<input type="text" id="address-input" placeholder="123 Main St, City, State ZIP" />
+
+<div>
+  <button id="find-spots-btn">Find Meeting Spots</button>
+</div>
+
+<div id="delivery-message"></div>
+<div id="map"></div>
+<button id="fullscreen-btn">View Map Fullscreen</button>
+
+<!-- Fullscreen Modal -->
+<div id="modal-overlay">
+  <div id="modal-map-container">
+    <button id="modal-close-btn" title="Close Map">&times;</button>
+    <div id="modal-map"></div>
+  </div>
+</div>
+
+
+
+
+
 
     <div class="totals">
       <span><strong>Order Total:</strong></span><span id="order-total">$0.00</span>
@@ -699,5 +823,197 @@ function checkForDiscountPrompt() {
 
     renderCart();
   </script>
+  <script>
+  mapboxgl.accessToken = 'pk.eyJ1Ijoia29keWEiLCJhIjoiY21jZGd1amVuMGJ0bTJqb2ptc3V4MDNtZyJ9.2cZ20_whY2bXAPZW545n9A';
+
+  const warehouseCoords = [-95.4800, 41.0772]; // [lng, lat]
+  const perMileRate = 1.5;
+
+  const addressInput = document.getElementById('address-input');
+  const findSpotsBtn = document.getElementById('find-spots-btn');
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
+  const deliveryMessage = document.getElementById('delivery-message');
+  const mapDiv = document.getElementById('map');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalMapDiv = document.getElementById('modal-map');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+
+  let map, modalMap;
+  let startMarker = null, destMarker = null;
+  let startMarkerModal = null, destMarkerModal = null;
+  let customerCoords = null;
+  let drivingDistance = null;
+
+  // Initialize maps but do NOT display map container yet
+  map = new mapboxgl.Map({
+    container: mapDiv,
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: warehouseCoords,
+    zoom: 9
+  });
+  modalMap = new mapboxgl.Map({
+    container: modalMapDiv,
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: warehouseCoords,
+    zoom: 9
+  });
+
+  fullscreenBtn.onclick = () => {
+    modalOverlay.style.display = 'flex';
+    modalMap.resize();
+  };
+  modalCloseBtn.onclick = () => {
+    modalOverlay.style.display = 'none';
+  };
+
+  findSpotsBtn.onclick = async () => {
+    deliveryMessage.textContent = '';
+    fullscreenBtn.style.display = 'none';
+    clearMapLayers();
+    mapDiv.style.display = 'none'; // hide map until route loaded
+
+    const address = addressInput.value.trim();
+
+    if (!address) {
+      deliveryMessage.textContent = 'Please enter your full address.';
+      return;
+    }
+
+    try {
+      customerCoords = await geocodeMapbox(address);
+      const routeData = await getDrivingRoute(warehouseCoords, customerCoords);
+      if (!routeData) throw new Error('No route found');
+
+      drivingDistance = routeData.distanceMiles;
+
+      showDeliveryInfo(drivingDistance);
+
+      drawRoute(routeData.geometry);
+
+      addMarkers();
+
+      mapDiv.style.display = 'block'; // show map after loading route
+      fullscreenBtn.style.display = 'inline-block';
+    } catch (err) {
+      deliveryMessage.textContent = `Error: ${err.message}`;
+      fullscreenBtn.style.display = 'none';
+      mapDiv.style.display = 'none';
+    }
+  };
+
+  function clearMapLayers() {
+    if (startMarker) {
+      startMarker.remove();
+      startMarker = null;
+    }
+    if (destMarker) {
+      destMarker.remove();
+      destMarker = null;
+    }
+    if (startMarkerModal) {
+      startMarkerModal.remove();
+      startMarkerModal = null;
+    }
+    if (destMarkerModal) {
+      destMarkerModal.remove();
+      destMarkerModal = null;
+    }
+    if(map.getLayer('route')) map.removeLayer('route');
+    if(map.getSource('route')) map.removeSource('route');
+    if(modalMap.getLayer('route')) modalMap.removeLayer('route');
+    if(modalMap.getSource('route')) modalMap.removeSource('route');
+  }
+
+  async function geocodeMapbox(address) {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?limit=1&access_token=${mapboxgl.accessToken}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Geocode fetch failed: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    if(!data.features || data.features.length === 0) throw new Error('Address not found');
+    return data.features[0].center;
+  }
+
+  async function getDrivingRoute(startLngLat, endLngLat) {
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startLngLat[0]},${startLngLat[1]};${endLngLat[0]},${endLngLat[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Directions fetch failed: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+    if(!data.routes || data.routes.length === 0) throw new Error('No driving route found');
+    const route = data.routes[0];
+    return {
+      geometry: route.geometry,
+      distanceMiles: route.distance / 1609.34
+    };
+  }
+
+  function showDeliveryInfo(distance) {
+    const roundedMiles = Math.round(distance);
+    const totalCost = Math.round(distance * perMileRate);
+    deliveryMessage.innerHTML = `
+      <strong>Total miles:</strong> ${roundedMiles}<br>
+      <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
+      <strong>Delivery total:</strong> $${totalCost}
+    `;
+  }
+
+  function drawRoute(geojson) {
+    if (map.getSource('route')) {
+      if (map.getLayer('route')) map.removeLayer('route');
+      map.removeSource('route');
+    }
+    map.addSource('route', { type: 'geojson', data: geojson });
+    map.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#22c55e', 'line-width': 6 }
+    });
+    map.fitBounds(boundsFromGeojson(geojson), { padding: 40 });
+
+    if (modalMap.getSource('route')) {
+      if (modalMap.getLayer('route')) modalMap.removeLayer('route');
+      modalMap.removeSource('route');
+    }
+    modalMap.addSource('route', { type: 'geojson', data: geojson });
+    modalMap.addLayer({
+      id: 'route',
+      type: 'line',
+      source: 'route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: { 'line-color': '#22c55e', 'line-width': 6 }
+    });
+    modalMap.fitBounds(boundsFromGeojson(geojson), { padding: 40 });
+  }
+
+  function boundsFromGeojson(geojson) {
+    const coords = geojson.coordinates;
+    const lats = coords.map(c => c[1]);
+    const lngs = coords.map(c => c[0]);
+    return [
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)]
+    ];
+  }
+
+  function createLabelMarker(label) {
+    const el = document.createElement('div');
+    el.className = 'marker-label';
+    el.textContent = label;
+    return el;
+  }
+
+  function addMarkers() {
+    // Start marker - warehouse (red with label "A")
+    startMarker = new mapboxgl.Marker(createLabelMarker('A')).setLngLat(warehouseCoords).addTo(map);
+    // Destination marker - customer (red with label "B")
+    destMarker = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(map);
+
+    // Same for modal map
+    startMarkerModal = new mapboxgl.Marker(createLabelMarker('A')).setLngLat(warehouseCoords).addTo(modalMap);
+    destMarkerModal = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(modalMap);
+  }
+</script>
+  
 </body>
 </html>
