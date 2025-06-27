@@ -481,13 +481,19 @@
     }
     function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
 
-    function addToCart(itemNum, price, img, id = null) {
-      const ex = cart.find(x=>x.itemNum===itemNum);
-      if (ex) ex.qty++; 
-      else cart.push({itemNum,price,img,qty:1});
-      if (id) newItem.id = id;
-      saveCart(); updateCart();
-    }
+function addToCart(itemNum, price, img, id = null) {
+  const ex = cart.find(x => x.itemNum === itemNum);
+  if (ex) {
+    ex.qty++;
+  } else {
+    const newItem = { itemNum, price, img, qty: 1 };
+    if (id) newItem.id = id;  // Properly assign id here
+    cart.push(newItem);
+  }
+  saveCart();
+  updateCart();
+}
+
     function removeFromCart(itemNum) {
       const idx = cart.findIndex(x=>x.itemNum===itemNum);
       if (idx>-1) {
