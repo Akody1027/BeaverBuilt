@@ -1198,6 +1198,50 @@ function showDeliveryInfo(distance) {
     startMarkerModal = new mapboxgl.Marker(createLabelMarker('A')).setLngLat(warehouseCoords).addTo(modalMap);
     destMarkerModal = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(modalMap);
   }
+
+
+
+const confirmDeliveryBtn = document.getElementById('confirm-delivery-btn');
+const freePickupRadio = document.getElementById('free-pickup');
+
+confirmDeliveryBtn.onclick = () => {
+  if (deliveryCost <= 0) {
+    alert('Please calculate delivery cost first.');
+    return;
+  }
+  selectedShippingOption = {
+    id: 'large_delivery',
+    label: 'Large Item Delivery',
+    amount: deliveryCost.toFixed(2)
+  };
+  shippingCost = deliveryCost;
+  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+
+  // Visually update selections
+  confirmDeliveryBtn.classList.add('selected');
+  freePickupRadio.checked = false;
+  freePickupRadio.parentElement.classList.remove('selected');
+
+  updateOrderTotal(calculateDiscountedTotal() - shippingCost);
+};
+
+freePickupRadio.onchange = () => {
+  if (freePickupRadio.checked) {
+    selectedShippingOption = {
+      id: 'free_pickup',
+      label: 'Free Pickup',
+      amount: '0.00'
+    };
+    shippingCost = 0;
+    shippingCostEl.textContent = '$0.00';
+
+    confirmDeliveryBtn.classList.remove('selected');
+
+    updateOrderTotal(calculateDiscountedTotal() - shippingCost);
+  }
+};
+
+    
 </script>
   
 </body>
