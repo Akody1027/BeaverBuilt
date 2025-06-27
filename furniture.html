@@ -481,9 +481,11 @@
     }
     function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
 
-    function addToCart(itemNum, price, img) {
+    function addToCart(itemNum, price, img, id = null) {
       const ex = cart.find(x=>x.itemNum===itemNum);
-      if (ex) ex.qty++; else cart.push({itemNum,price,img,qty:1});
+      if (ex) ex.qty++; 
+      else cart.push({itemNum,price,img,qty:1});
+      if (id) newItem.id = id;
       saveCart(); updateCart();
     }
     function removeFromCart(itemNum) {
@@ -560,12 +562,13 @@
               match = img.match(/furniture(\d+)\.jpg/),
               num = match?+match[1]:null,
               price = parseFloat(item.dataset.price)||0;
+              idAttr = item.id || null;
         imgEl.src = img;
         descEl.textContent = item.dataset.description;
         numEl.textContent = 'Item #: '+num;
         priceEl.textContent = 'Price: $'+price.toFixed(2);
         modal.style.display = 'flex';
-        addBtn.onclick = () => { addToCart(num,price,img); modal.style.display='none'; };
+        addBtn.onclick = () => { addToCart(num,price,img, idAttr); modal.style.display='none'; };
       }));
       closeBtn.onclick = () => modal.style.display = 'none';
       modal.addEventListener('click', e=>{ if(e.target===modal) modal.style.display='none'; });
