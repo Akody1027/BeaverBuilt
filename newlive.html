@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Code Editor with Live Preview and Zoom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      margin: 0; padding: 0; height: 100%; width: 100%; 
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+    }
+
+    header {
+      position: fixed;
+      top: 0; left: 0; width: 100%;
+      height: 40px;
+      background: #1f1f1f;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      z-index: 10;
+      user-select: none;
+    }
+
+    /* Left controls container for + and - buttons */
+    #left-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Right controls container for toggle live view button */
+    #right-controls {
+      display: flex;
+      align-items: center;
+    }
+
+    header button {
+      background-color: #22c55e;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      border-radius: 5px;
+      line-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
+    }
+    header button:hover {
+      background-color: #16a34a;
+    }
+    #toggle-live-view-btn {
+      padding: 5px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #editor, #preview {
+      position: fixed;
+      top: 40px; left: 0;
+      width: 100vw;
+      height: calc(100vh - 40px);
+      margin: 0; padding: 12px;
+      font-size: 14px;
+      background: #1e1e1e;
+      color: #eee;
+      font-family: monospace, monospace;
+      resize: none;
+      outline: none;
+      border: none;
+      z-index: 1;
+      overflow: auto;
+      display: block;
+      transform-origin: top left;
+      transform: scale(1);
+    }
+
+    #preview {
+      background: white;
+      color: black;
+      display: none;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div id="left-controls">
+      <button id="decrease-font-btn" title="Decrease font size or zoom out">−</button>
+      <button id="increase-font-btn" title="Increase font size or zoom in">+</button>
+    </div>
+    <div id="right-controls">
+      <button id="toggle-live-view-btn">Show Live</button>
+    </div>
+  </header>
+
+  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
+// Enter your HTML, CSS, and JS code here
+</textarea>
+
+  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+
+<script>
+  const editor = document.getElementById('editor');
+  const preview = document.getElementById('preview');
+  const toggleBtn = document.getElementById('toggle-live-view-btn');
+  const incBtn = document.getElementById('increase-font-btn');
+  const decBtn = document.getElementById('decrease-font-btn');
+
+  let fontSize = 14;
+  const minFontSize = 2;
+  const maxFontSize = 40;
+
+  // Zoom scale for preview iframe
+  let previewScale = 1;
+  const minPreviewScale = 0.2;
+  const maxPreviewScale = 3;
+
+  // Update preview iframe srcdoc from editor content
+  function updatePreview() {
+    preview.srcdoc = editor.value;
+  }
+
+  // When editor content changes, update preview if visible
+  editor.addEventListener('input', () => {
+    if (preview.style.display === 'block') {
+      updatePreview();
+    }
+  });
+
+  // Toggle between editor and live preview
+  toggleBtn.addEventListener('click', () => {
+    if (preview.style.display === 'none' || preview.style.display === '') {
+      // Show preview, hide editor
+      preview.style.display = 'block';
+      editor.style.display = 'none';
+      toggleBtn.textContent = 'Show Editor';
+      updatePreview();
+      // Reset preview scale (optional)
+      previewScale = 1;
+      preview.style.transform = `scale(${previewScale})`;
+    } else {
+      // Show editor, hide preview
+      preview.style.display = 'none';
+      editor.style.display = 'block';
+      toggleBtn.textContent = 'Show Live';
+      editor.focus();
+      // Reset editor font size to current fontSize setting
+      editor.style.fontSize = fontSize + 'px';
+    }
+  });
+
+  // Increase font size (editing) or zoom in (preview)
+  incBtn.addEventListener('click', () => {
+    if (preview.style.display === 'block') {
+      // Zoom in preview iframe
+      if (previewScale < maxPreviewScale) {
+        previewScale = Math.min(maxPreviewScale, previewScale + 0.1);
+        preview.style.transform = `scale(${previewScale})`;
+      }
+    } else {
+      // Increase editor font size
+      if (fontSize < maxFontSize) {
+        fontSize++;
+        editor.style.fontSize = fontSize + 'px';
+      }
+    }
+  });
+
+  // Decrease font size (editing) or zoom out (preview)
+  decBtn.addEventListener('click', () => {
+    if (preview.style.display === 'block') {
+      // Zoom out preview iframe
+      if (previewScale > minPreviewScale) {
+        previewScale = Math.max(minPreviewScale, previewScale - 0.1);
+        preview.style.transform = `scale(${previewScale})`;
+      }
+    } else {
+      // Decrease editor font size
+      if (fontSize > minFontSize) {
+        fontSize--;
+        editor.style.fontSize = fontSize + 'px';
+      }
+    }
+  });
+
+  // Initial focus on editor
+  editor.focus();
+</script>
+
+</body>
+</html>
