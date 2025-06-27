@@ -944,7 +944,7 @@ paypal.Buttons({
       return actions.reject();
     }
 
-    const itemsTotal = calculateDiscountedTotal() - shippingCost;
+    const itemsTotal = calculateDiscountedTotal() ;
     const orderTotal = itemsTotal + shippingCost;
 
     const purchaseUnits = [{
@@ -1214,7 +1214,7 @@ function showDeliveryInfo(distance) {
   `;
 
   // Update the order total whenever delivery cost changes
-  updateOrderTotal(calculateDiscountedTotal() - shippingCost);
+  updateOrderTotal(calculateDiscountedTotal());
 }
 
 
