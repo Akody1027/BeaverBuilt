@@ -1,5 +1,5 @@
 
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -194,10 +194,6 @@
   transform-origin: center center;
 }
 
-    
-    
-    
-
   button {
     cursor: pointer;
     padding: 8px 12px;
@@ -283,16 +279,11 @@
     border: 2px solid white;
     box-sizing: border-box;
   }
-    
-
-
-
 
 #largeproduct {
   background-color: transparent;
   padding: 20px 25px;
   border-radius: 10px;
-  
   max-width: 500px;
   margin: 0 auto 30px auto;
   font-family: Arial, sans-serif;
@@ -386,9 +377,6 @@
   box-shadow: 0 5px 12px rgba(22, 163, 74, 0.7);
 }
 
-
-
-
 #confirm-delivery-btn {
   margin-top: 20px;
   background-color: #22c55e;
@@ -412,7 +400,6 @@
   margin-top: 40px;
   margin-bottom: 40px;
   padding: 15px 20px;
-  
   border-radius: 10px;
   max-width: 500px;
   margin-left: auto;
@@ -435,16 +422,11 @@
   margin-right: 8px;
 }
 
-
-
-    hr{
-     width:100%;
-     opacity: 50%;
-     
-     
+hr{
+  width:100%;
+  opacity: 50%;
 }
 
-    
   </style>
   
   <!-- Mapbox CSS & JS -->
@@ -501,11 +483,6 @@
     </div>
 </div>
 
-
-
-
-
-
 <div id="largeproduct">
 
  <hr>
@@ -531,26 +508,15 @@
   </div>
 </div>
 
-
-
-
-
-
     <div class="totals">
       <span><strong>Order Total:</strong></span><span id="order-total">$0.00</span>
     </div>
 
-
 <button id="confirm-delivery-btn" type="button">Confirm Delivery</button>
 
-  
-  </div>
-
-
+</div>
 
 <hr>
-
-
 
 <div id="free-pickup-section">
   <h3>Pickup Options</h3>
@@ -560,533 +526,487 @@
   </label>
 </div>
 
-
-
 <hr>
-  
 
-  <label class="receipt-checkbox">
-    <input type="checkbox" id="download-receipt" />
-    Download receipt after purchase
-  </label>
+<label class="receipt-checkbox">
+  <input type="checkbox" id="download-receipt" />
+  Download receipt after purchase
+</label>
 
-  <div id="paypal-button-container"></div>
+<div id="paypal-button-container"></div>
 
-  <div id="payment-message"></div>
-  <div id="payment-error"></div>
+<div id="payment-message"></div>
+<div id="payment-error"></div>
 
-  <!-- Discount bubble -->
-  <div id="discount-bubble">Get 10% off additional products!</div>
+<!-- Discount bubble -->
+<div id="discount-bubble">Get 10% off additional products!</div>
 
-  <!-- Load jsPDF library for PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Load jsPDF library for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Load PayPal SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
+<!-- Load PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
 
-  <script>
-    const shippingClasses = {
-      A: { weight: 2,  dimensions: [8, 6, 4], name: "Small Accessories" },
-      B: { weight: 6,  dimensions: [12, 10, 6], name: "Wall Decor" },
-      C: { weight: 18, dimensions: [24, 18, 10], name: "Bench" },
-      D: { weight: 50, dimensions: [60, 24, 18], name: "Outdoor Bench" },
-      E: { weight: 150, dimensions: [72, 36, 30], name: "Dining Table" }
-    };
+<script>
+  const shippingClasses = {
+    A: { weight: 2,  dimensions: [8, 6, 4], name: "Small Accessories" },
+    B: { weight: 6,  dimensions: [12, 10, 6], name: "Wall Decor" },
+    C: { weight: 18, dimensions: [24, 18, 10], name: "Bench" },
+    D: { weight: 50, dimensions: [60, 24, 18], name: "Outdoor Bench" },
+    E: { weight: 150, dimensions: [72, 36, 30], name: "Dining Table" }
+  };
 
-    function assignShippingClass(price) {
-      if (price <= 100) return 'A';
-      if (price <= 300) return 'B';
-      if (price <= 700) return 'C';
-      if (price <= 1500) return 'D';
-      return 'E';
-    }
-
-  
-
-
-    let deliveryCost = 0;
-
-
-
-
-    
-    let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-    let shippingCost = 0;
-    let selectedShippingOption = null;
-
-    const cartBody = document.getElementById('cart-body');
-    const cartTotalEl = document.getElementById('cart-total');
-    const paymentMessage = document.getElementById('payment-message');
-    const paymentError = document.getElementById('payment-error');
-    const downloadReceiptCheckbox = document.getElementById('download-receipt');
-    const zipInput = document.getElementById('zip');
-    const countrySelect = document.getElementById('country');
-
-    
-    const getRatesBtns = document.querySelectorAll('.get-rates-btn');
-
-
-
-    
-    const shippingOptionsDiv = document.getElementById('shipping-options');
-    const shippingCostEl = document.getElementById('shipping-cost');
-    const orderTotalEl = document.getElementById('order-total');
-    const discountBubble = document.getElementById('discount-bubble');
-
-    // Total quantity helper
-    function totalCartQuantity() {
-      return cart.reduce((acc, item) => acc + item.qty, 0);
-    }
-
-
-function toggleLargeProductSection() {
-  const hasLargeProduct = cart.some(item => item.id === "large");
-  const largeProductDiv = document.getElementById('largeproduct');
-  const shippingCalcDiv = document.getElementById('shipping-calculator');
-
-  if (hasLargeProduct) {
-    largeProductDiv.style.display = 'block';
-    shippingCalcDiv.style.display = 'none';
-  } else {
-    largeProductDiv.style.display = 'none';
-    shippingCalcDiv.style.display = 'block';
+  function assignShippingClass(price) {
+    if (price <= 100) return 'A';
+    if (price <= 300) return 'B';
+    if (price <= 700) return 'C';
+    if (price <= 1500) return 'D';
+    return 'E';
   }
-}
 
+  let deliveryCost = 0;
 
+  let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
+  let shippingCost = 0;
+  let selectedShippingOption = null;
 
-    
-    // Calculate discounted prices applying 10% off to all units after the first unit in total quantity
-    function renderCart() {
-      cartBody.innerHTML = '';
-      let totalFullPrice = 0;
-      let totalDiscountedPrice = 0;
-      let unitsProcessed = 0;
+  const cartBody = document.getElementById('cart-body');
+  const cartTotalEl = document.getElementById('cart-total');
+  const paymentMessage = document.getElementById('payment-message');
+  const paymentError = document.getElementById('payment-error');
+  const downloadReceiptCheckbox = document.getElementById('download-receipt');
+  const zipInput = document.getElementById('zip');
+  const countrySelect = document.getElementById('country');
 
-      cart.forEach((item) => {
-        let sub = 0;
-        let discountAddedHtml = '';
-        let discountedUnits = 0;
-        let fullPriceUnits = 0;
+  const getRatesBtns = document.querySelectorAll('.get-rates-btn');
 
-        
-        // Calculate how many units get discount and how many at full price
-        if (unitsProcessed >= 1) {
-          // All this item's units discounted
-          discountedUnits = item.qty;
-          fullPriceUnits = 0;
-        } else if (unitsProcessed + item.qty <= 1) {
-          // All units full price
-          fullPriceUnits = item.qty;
-          discountedUnits = 0;
-        } else {
-          // Some units full price (to complete first unit), rest discounted
-          fullPriceUnits = 1 - unitsProcessed; // fraction to make total 1
-          discountedUnits = item.qty - fullPriceUnits;
-        }
+  const shippingOptionsDiv = document.getElementById('shipping-options');
+  const shippingCostEl = document.getElementById('shipping-cost');
+  const orderTotalEl = document.getElementById('order-total');
+  const discountBubble = document.getElementById('discount-bubble');
 
-        unitsProcessed += item.qty;
+  // Total quantity helper
+  function totalCartQuantity() {
+    return cart.reduce((acc, item) => acc + item.qty, 0);
+  }
 
-        // Calculate subtotal for this item with discount
-        sub += item.price * fullPriceUnits;
-        sub += item.price * 0.9 * discountedUnits;
+  function toggleLargeProductSection() {
+    const hasLargeProduct = cart.some(item => item.id === "large");
+    const largeProductDiv = document.getElementById('largeproduct');
+    const shippingCalcDiv = document.getElementById('shipping-calculator');
 
-        // Show discount message if any units discounted
-        if (discountedUnits > 0) {
-          discountAddedHtml = `<div class="discount-info">10% Discount added</div>`;
-        }
-
-        totalFullPrice += item.price * fullPriceUnits;
-        totalDiscountedPrice += item.price * 0.9 * discountedUnits;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <img src="${item.img}" alt="" />
-            ${item.itemNum}
-          </td>
-          <td>
-            $${item.price.toFixed(2)}
-            ${discountAddedHtml}
-          </td>
-          <td>
-            <div class="quantity-controls">
-              <button class="dec" data-id="${item.itemNum}">−</button>
-              <span>${item.qty}</span>
-              <button class="inc" data-id="${item.itemNum}">+</button>
-            </div>
-          </td>
-          <td>$${sub.toFixed(2)}</td>
-        `;
-        cartBody.appendChild(tr);
-      });
-
-      
-        // Call this function initially and after cart updates
-        toggleLargeProductSection();
-
-
-
-      const total = totalFullPrice + totalDiscountedPrice;
-      cartTotalEl.textContent = '$' + total.toFixed(2);
-      updateOrderTotal(total);
-      attachQtyHandlers();
-      checkForDiscountPrompt();
+    if (hasLargeProduct) {
+      largeProductDiv.style.display = 'block';
+      shippingCalcDiv.style.display = 'none';
+    } else {
+      largeProductDiv.style.display = 'none';
+      shippingCalcDiv.style.display = 'block';
     }
+  }
 
-    function attachQtyHandlers() {
-      document.querySelectorAll('.inc').forEach(btn => {
-        btn.onclick = () => adjustQty(btn.dataset.id, +1);
-      });
-      document.querySelectorAll('.dec').forEach(btn => {
-        btn.onclick = () => adjustQty(btn.dataset.id, -1);
-      });
+  // Calculate discounted prices applying 10% off to all units after the first unit in total quantity
+  function renderCart() {
+    cartBody.innerHTML = '';
+    let totalFullPrice = 0;
+    let totalDiscountedPrice = 0;
+    let unitsProcessed = 0;
+
+    cart.forEach((item) => {
+      let sub = 0;
+      let discountAddedHtml = '';
+      let discountedUnits = 0;
+      let fullPriceUnits = 0;
+
+      // Calculate how many units get discount and how many at full price
+      if (unitsProcessed >= 1) {
+        // All this item's units discounted
+        discountedUnits = item.qty;
+        fullPriceUnits = 0;
+      } else if (unitsProcessed + item.qty <= 1) {
+        // All units full price
+        fullPriceUnits = item.qty;
+        discountedUnits = 0;
+      } else {
+        // Some units full price (to complete first unit), rest discounted
+        fullPriceUnits = 1 - unitsProcessed; // fraction to make total 1
+        discountedUnits = item.qty - fullPriceUnits;
+      }
+
+      unitsProcessed += item.qty;
+
+      // Calculate subtotal for this item with discount
+      sub += item.price * fullPriceUnits;
+      sub += item.price * 0.9 * discountedUnits;
+
+      // Show discount message if any units discounted
+      if (discountedUnits > 0) {
+        discountAddedHtml = `<div class="discount-info">10% Discount added</div>`;
+      }
+
+      totalFullPrice += item.price * fullPriceUnits;
+      totalDiscountedPrice += item.price * 0.9 * discountedUnits;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <img src="${item.img}" alt="" />
+          ${item.itemNum}
+        </td>
+        <td>
+          $${item.price.toFixed(2)}
+          ${discountAddedHtml}
+        </td>
+        <td>
+          <div class="quantity-controls">
+            <button class="dec" data-id="${item.itemNum}">−</button>
+            <span>${item.qty}</span>
+            <button class="inc" data-id="${item.itemNum}">+</button>
+          </div>
+        </td>
+        <td>$${sub.toFixed(2)}</td>
+      `;
+      cartBody.appendChild(tr);
+    });
+
+    // Call this function initially and after cart updates
+    toggleLargeProductSection();
+
+    const total = totalFullPrice + totalDiscountedPrice;
+    cartTotalEl.textContent = '$' + total.toFixed(2);
+    updateOrderTotal(total);
+    attachQtyHandlers();
+    checkForDiscountPrompt();
+  }
+
+  function attachQtyHandlers() {
+    document.querySelectorAll('.inc').forEach(btn => {
+      btn.onclick = () => adjustQty(btn.dataset.id, +1);
+    });
+    document.querySelectorAll('.dec').forEach(btn => {
+      btn.onclick = () => adjustQty(btn.dataset.id, -1);
+    });
+  }
+
+  function adjustQty(id, delta) {
+    const idx = cart.findIndex(i=>i.itemNum==id);
+    if (idx===-1) return;
+    cart[idx].qty += delta;
+    if (cart[idx].qty < 1) cart.splice(idx,1);
+    localStorage.setItem('bbf_cart', JSON.stringify(cart));
+    renderCart();
+  }
+
+  function calculatePackageFromCart() {
+    if (cart.length === 0) return null;
+
+    let totalWeight = 0;
+    let maxLength = 0, maxWidth = 0, totalHeight = 0;
+
+    cart.forEach(item => {
+      const cls = item.shippingClass || assignShippingClass(item.price);
+      const tier = shippingClasses[cls];
+      if (!tier) return;
+
+      const [length, width, height] = tier.dimensions;
+      const qty = item.qty;
+
+      totalWeight += tier.weight * qty;
+      maxLength = Math.max(maxLength, length);
+      maxWidth  = Math.max(maxWidth, width);
+      totalHeight += height * qty;
+    });
+
+    return {
+      weight: totalWeight,
+      dimensions: [maxLength, maxWidth, totalHeight],
+      name: 'Combined Package'
+    };
+  }
+
+  function updateOrderTotal(totalFromCart) {
+    const orderTotal = totalFromCart + shippingCost + deliveryCost;  // <-- Add deliveryCost here
+    orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
+  }
+
+  function generatePDFReceipt(orderData) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Beaver Built Furniture", 10, 20);
+    doc.setFontSize(14);
+    doc.text("Purchase Receipt", 10, 30);
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 10, 40);
+
+    let y = 55;
+    doc.text("Items Purchased:", 10, y);
+    y += 10;
+
+    orderData.items.forEach(item => {
+      const line = `${item.name} (ID: ${item.itemNum}) x${item.quantity} - $${item.unit_amount.value}`;
+      doc.text(line, 10, y);
+      y += 10;
+    });
+
+    y += 10;
+    doc.text(`Shipping Method: ${selectedShippingOption ? selectedShippingOption.label : 'N/A'}`, 10, y);
+    y += 10;
+    doc.text(`Shipping Cost: $${shippingCost.toFixed(2)}`, 10, y);
+
+    y += 10;
+    doc.text(`Total Paid: $${orderData.purchase_units[0].amount.value}`, 10, y);
+
+    doc.save(`Receipt_${Date.now()}.pdf`);
+  }
+
+  async function fetchShippingRates(zip, country, packageInfo) {
+    await new Promise(r=>setTimeout(r, 500)); // simulate network delay
+
+    const base = packageInfo.weight;
+    return [
+      { id: 'standard', label: 'Standard Shipping (5-7 days)', amount: (5 + base * 0.5).toFixed(2) },
+      { id: 'express', label: 'Express Shipping (2-3 days)', amount: (15 + base * 1.0).toFixed(2) },
+      { id: 'overnight', label: 'Overnight Shipping', amount: (30 + base * 2.0).toFixed(2) },
+    ];
+  }
+
+  function renderShippingOptions(options) {
+    shippingOptionsDiv.innerHTML = '';
+    if(options.length === 0) {
+      shippingOptionsDiv.textContent = 'No shipping options found for this address/package.';
+      return;
     }
-
-    function adjustQty(id, delta) {
-      const idx = cart.findIndex(i=>i.itemNum==id);
-      if (idx===-1) return;
-      cart[idx].qty += delta;
-      if (cart[idx].qty < 1) cart.splice(idx,1);
-      localStorage.setItem('bbf_cart', JSON.stringify(cart));
-      renderCart();
-    }
-
-    function calculatePackageFromCart() {
-      if (cart.length === 0) return null;
-
-      let totalWeight = 0;
-      let maxLength = 0, maxWidth = 0, totalHeight = 0;
-
-      cart.forEach(item => {
-        const cls = item.shippingClass || assignShippingClass(item.price);
-        const tier = shippingClasses[cls];
-        if (!tier) return;
-
-        const [length, width, height] = tier.dimensions;
-        const qty = item.qty;
-
-        totalWeight += tier.weight * qty;
-        maxLength = Math.max(maxLength, length);
-        maxWidth  = Math.max(maxWidth, width);
-        totalHeight += height * qty;
-      });
-
-      return {
-        weight: totalWeight,
-        dimensions: [maxLength, maxWidth, totalHeight],
-        name: 'Combined Package'
+    options.forEach(opt => {
+      const id = 'ship_opt_' + opt.id;
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = `${opt.label} - $${opt.amount}`;
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'shipping_option';
+      radio.id = id;
+      radio.value = opt.amount;
+      if(opt === options[0]) {
+        radio.checked = true;
+        selectedShippingOption = opt;
+        shippingCost = parseFloat(opt.amount);
+        shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+        updateOrderTotal(calculateDiscountedTotal());  // Fix here
+      }
+      radio.onchange = () => {
+        shippingCost = parseFloat(radio.value);
+        selectedShippingOption = opt;
+        shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+        updateOrderTotal(calculateDiscountedTotal());  // Correct
       };
+      label.prepend(radio);
+      shippingOptionsDiv.appendChild(label);
+    });
+    shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+  }
+
+  function calculateDiscountedTotal(includeShipping = true) {
+    let unitsProcessed = 0;
+    let total = 0;
+    for (const item of cart) {
+      let fullPriceUnits = 0;
+      let discountedUnits = 0;
+
+      if (unitsProcessed >= 1) {
+        discountedUnits = item.qty;
+      } else if (unitsProcessed + item.qty <= 1) {
+        fullPriceUnits = item.qty;
+      } else {
+        fullPriceUnits = 1 - unitsProcessed;
+        discountedUnits = item.qty - fullPriceUnits;
+      }
+
+      unitsProcessed += item.qty;
+      total += item.price * fullPriceUnits + item.price * 0.9 * discountedUnits;
     }
+    return includeShipping ? total + shippingCost : total;
+  }
 
+  document.querySelectorAll('.get-rates-btn').forEach(btn => {
+    btn.onclick = async () => {
+      paymentMessage.textContent = '';
+      paymentError.textContent = '';
 
-    
-
-
-
-    function updateOrderTotal(totalFromCart) {
-  const orderTotal = totalFromCart + shippingCost + deliveryCost;  // <-- Add deliveryCost here
-  orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
-}
-
-
-
-
-
-    
-    function generatePDFReceipt(orderData) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(18);
-      doc.text("Beaver Built Furniture", 10, 20);
-      doc.setFontSize(14);
-      doc.text("Purchase Receipt", 10, 30);
-      doc.setFontSize(12);
-      doc.text(`Date: ${new Date().toLocaleString()}`, 10, 40);
-
-      let y = 55;
-      doc.text("Items Purchased:", 10, y);
-      y += 10;
-
-      orderData.items.forEach(item => {
-        const line = `${item.name} (ID: ${item.itemNum}) x${item.quantity} - $${item.unit_amount.value}`;
-        doc.text(line, 10, y);
-        y += 10;
-      });
-
-      y += 10;
-      doc.text(`Shipping Method: ${selectedShippingOption ? selectedShippingOption.label : 'N/A'}`, 10, y);
-      y += 10;
-      doc.text(`Shipping Cost: $${shippingCost.toFixed(2)}`, 10, y);
-
-      y += 10;
-      doc.text(`Total Paid: $${orderData.purchase_units[0].amount.value}`, 10, y);
-
-      doc.save(`Receipt_${Date.now()}.pdf`);
-    }
-
-    async function fetchShippingRates(zip, country, packageInfo) {
-      await new Promise(r=>setTimeout(r, 500)); // simulate network delay
-
-      const base = packageInfo.weight;
-      return [
-        { id: 'standard', label: 'Standard Shipping (5-7 days)', amount: (5 + base * 0.5).toFixed(2) },
-        { id: 'express', label: 'Express Shipping (2-3 days)', amount: (15 + base * 1.0).toFixed(2) },
-        { id: 'overnight', label: 'Overnight Shipping', amount: (30 + base * 2.0).toFixed(2) },
-      ];
-    }
-
-    function renderShippingOptions(options) {
-      shippingOptionsDiv.innerHTML = '';
-      if(options.length === 0) {
-        shippingOptionsDiv.textContent = 'No shipping options found for this address/package.';
+      const zip = zipInput.value.trim();
+      const country = countrySelect.value;
+      if (!zip) {
+        alert('Please enter your ZIP/postal code');
         return;
       }
-      options.forEach(opt => {
-        const id = 'ship_opt_' + opt.id;
-        const label = document.createElement('label');
-        label.htmlFor = id;
-        label.textContent = `${opt.label} - $${opt.amount}`;
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'shipping_option';
-        radio.id = id;
-        radio.value = opt.amount;
-if(opt === options[0]) {
-  radio.checked = true;
-  selectedShippingOption = opt;
-  shippingCost = parseFloat(opt.amount);
-  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-  updateOrderTotal(calculateDiscountedTotal());  // Fix here
-}
-radio.onchange = () => {
-  shippingCost = parseFloat(radio.value);
-  selectedShippingOption = opt;
-  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-  updateOrderTotal(calculateDiscountedTotal());  // Correct
-};
-        label.prepend(radio);
-        shippingOptionsDiv.appendChild(label);
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+
+      const packageInfo = calculatePackageFromCart();
+      if (!packageInfo) {
+        alert('Could not determine package information');
+        return;
+      }
+
+      try {
+        const rates = await fetchShippingRates(zip, country, packageInfo);
+        renderShippingOptions(rates);
+      } catch (err) {
+        paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
+        console.error(err);
+      }
+    };
+  });
+
+  // NEW PAYPAL BUTTONS:  
+  paypal.Buttons({
+    createOrder: function(data, actions) {
+      if(cart.length === 0) {
+        alert("Your cart is empty!");
+        return actions.reject();
+      }
+      if(!selectedShippingOption) {
+        alert("Please select a shipping option.");
+        return actions.reject();
+      }
+
+      const itemsTotalRaw = calculateDiscountedTotal(false);
+      const itemsTotal = Math.round(itemsTotalRaw * 100) / 100;
+      const shippingCostRounded = Math.round(shippingCost * 100) / 100;
+      const orderTotal = Math.round((itemsTotal + shippingCostRounded) * 100) / 100;
+
+      const purchaseUnits = [{
+        amount: {
+          currency_code: "USD",
+          value: orderTotal.toFixed(2),
+          breakdown: {
+            item_total: {
+              currency_code: "USD",
+              value: itemsTotal.toFixed(2)
+            },
+            shipping: {
+              currency_code: "USD",
+              value: shippingCostRounded.toFixed(2)
+            }
+          }
+        },
+        items: (() => {
+          let unitsProcessed = 0;
+          return cart.map(item => {
+            let fullPriceUnits = 0;
+            let discountedUnits = 0;
+
+            if (unitsProcessed >= 1) {
+              discountedUnits = item.qty;
+            } else if (unitsProcessed + item.qty <= 1) {
+              fullPriceUnits = item.qty;
+            } else {
+              fullPriceUnits = 1 - unitsProcessed;
+              discountedUnits = item.qty - fullPriceUnits;
+            }
+            unitsProcessed += item.qty;
+
+            if (fullPriceUnits > 0 && discountedUnits > 0) {
+              return [
+                {
+                  name: item.itemNum + ' (Full Price)',
+                  unit_amount: {
+                    currency_code: "USD",
+                    value: item.price.toFixed(2)
+                  },
+                  quantity: fullPriceUnits.toString(),
+                  item_category: "PHYSICAL_GOODS",
+                  sku: item.itemNum
+                },
+                {
+                  name: item.itemNum + ' (10% Discount)',
+                  unit_amount: {
+                    currency_code: "USD",
+                    value: (item.price * 0.9).toFixed(2)
+                  },
+                  quantity: discountedUnits.toString(),
+                  item_category: "PHYSICAL_GOODS",
+                  sku: item.itemNum
+                }
+              ];
+            } else if (fullPriceUnits > 0) {
+              return [{
+                name: item.itemNum,
+                unit_amount: {
+                  currency_code: "USD",
+                  value: item.price.toFixed(2)
+                },
+                quantity: fullPriceUnits.toString(),
+                item_category: "PHYSICAL_GOODS",
+                sku: item.itemNum
+              }];
+            } else {
+              return [{
+                name: item.itemNum,
+                unit_amount: {
+                  currency_code: "USD",
+                  value: (item.price * 0.9).toFixed(2)
+                },
+                quantity: discountedUnits.toString(),
+                item_category: "PHYSICAL_GOODS",
+                sku: item.itemNum
+              }];
+            }
+          }).flat();
+        })(),
+        shipping: {
+          method: selectedShippingOption.label,
+          address: {
+            postal_code: zipInput.value.trim(),
+            country_code: countrySelect.value
+          }
+        }
+      }];
+
+      console.log("PayPal order data:", JSON.stringify(purchaseUnits, null, 2)); // Debug log
+
+      return actions.order.create({
+        purchase_units: purchaseUnits
       });
-      shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-    }
+    },
 
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        paymentMessage.textContent = "Payment completed successfully! Thank you.";
+        paymentError.textContent = "";
 
+        localStorage.removeItem('bbf_cart');
+        cart = [];
+        renderCart();
 
-   
-   function calculateDiscountedTotal(includeShipping = true) {
-  let unitsProcessed = 0;
-  let total = 0;
-  for (const item of cart) {
-    let fullPriceUnits = 0;
-    let discountedUnits = 0;
+        if(downloadReceiptCheckbox.checked) {
+          generatePDFReceipt(details);
+        }
+      });
+    },
 
-    if (unitsProcessed >= 1) {
-      discountedUnits = item.qty;
-    } else if (unitsProcessed + item.qty <= 1) {
-      fullPriceUnits = item.qty;
-    } else {
-      fullPriceUnits = 1 - unitsProcessed;
-      discountedUnits = item.qty - fullPriceUnits;
-    }
-
-    unitsProcessed += item.qty;
-    total += item.price * fullPriceUnits + item.price * 0.9 * discountedUnits;
-  }
-  return includeShipping ? total + shippingCost : total;
-}
-
-
-
-
-
-
-document.querySelectorAll('.get-rates-btn').forEach(btn => {
-  btn.onclick = async () => {
-    paymentMessage.textContent = '';
-    paymentError.textContent = '';
-
-    const zip = zipInput.value.trim();
-    const country = countrySelect.value;
-    if (!zip) {
-      alert('Please enter your ZIP/postal code');
-      return;
-    }
-    if (cart.length === 0) {
-      alert('Your cart is empty!');
-      return;
-    }
-
-    const packageInfo = calculatePackageFromCart();
-    if (!packageInfo) {
-      alert('Could not determine package information');
-      return;
-    }
-
-    try {
-      const rates = await fetchShippingRates(zip, country, packageInfo);
-      renderShippingOptions(rates);
-    } catch (err) {
-      paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
+    onError: function(err) {
+      paymentError.textContent = "An error occurred during payment. Please try again.";
+      paymentMessage.textContent = "";
       console.error(err);
     }
-  };
-});
+  }).render('#paypal-button-container');
 
-
-//new pay pal
-
-createOrder: function(data, actions) {
-  if(cart.length === 0) {
-    alert("Your cart is empty!");
-    return actions.reject();
-  }
-  if(!selectedShippingOption) {
-    alert("Please select a shipping option.");
-    return actions.reject();
-  }
-
-  const itemsTotalRaw = calculateDiscountedTotal(false);
-  const itemsTotal = Math.round(itemsTotalRaw * 100) / 100;
-  const shippingCostRounded = Math.round(shippingCost * 100) / 100;
-  const orderTotal = Math.round((itemsTotal + shippingCostRounded) * 100) / 100;
-
-  const purchaseUnits = [{
-    amount: {
-      currency_code: "USD",
-      value: orderTotal.toFixed(2),
-      breakdown: {
-        item_total: {
-          currency_code: "USD",
-          value: itemsTotal.toFixed(2)
-        },
-        shipping: {
-          currency_code: "USD",
-          value: shippingCostRounded.toFixed(2)
-        }
-      }
-    },
-    items: (() => {
-      let unitsProcessed = 0;
-      return cart.map(item => {
-        let fullPriceUnits = 0;
-        let discountedUnits = 0;
-
-        if (unitsProcessed >= 1) {
-          discountedUnits = item.qty;
-        } else if (unitsProcessed + item.qty <= 1) {
-          fullPriceUnits = item.qty;
-        } else {
-          fullPriceUnits = 1 - unitsProcessed;
-          discountedUnits = item.qty - fullPriceUnits;
-        }
-        unitsProcessed += item.qty;
-
-        if (fullPriceUnits > 0 && discountedUnits > 0) {
-          return [
-            {
-              name: item.itemNum + ' (Full Price)',
-              unit_amount: {
-                currency_code: "USD",
-                value: item.price.toFixed(2)
-              },
-              quantity: fullPriceUnits.toString(),
-              item_category: "PHYSICAL_GOODS",
-              sku: item.itemNum
-            },
-            {
-              name: item.itemNum + ' (10% Discount)',
-              unit_amount: {
-                currency_code: "USD",
-                value: (item.price * 0.9).toFixed(2)
-              },
-              quantity: discountedUnits.toString(),
-              item_category: "PHYSICAL_GOODS",
-              sku: item.itemNum
-            }
-          ];
-        } else if (fullPriceUnits > 0) {
-          return [{
-            name: item.itemNum,
-            unit_amount: {
-              currency_code: "USD",
-              value: item.price.toFixed(2)
-            },
-            quantity: fullPriceUnits.toString(),
-            item_category: "PHYSICAL_GOODS",
-            sku: item.itemNum
-          }];
-        } else {
-          return [{
-            name: item.itemNum,
-            unit_amount: {
-              currency_code: "USD",
-              value: (item.price * 0.9).toFixed(2)
-            },
-            quantity: discountedUnits.toString(),
-            item_category: "PHYSICAL_GOODS",
-            sku: item.itemNum
-          }];
-        }
-      }).flat();
-    })(),
-    shipping: {
-      method: selectedShippingOption.label,
-      address: {
-        postal_code: zipInput.value.trim(),
-        country_code: countrySelect.value
-      }
+  function checkForDiscountPrompt() {
+    const totalQty = totalCartQuantity();
+    if (totalQty >= 1) {  // Show bubble as soon as 1 or more units in cart
+      discountBubble.style.display = 'block';
+    } else {
+      discountBubble.style.display = 'none';
     }
-  }];
-
-  console.log("PayPal order data:", JSON.stringify(purchaseUnits, null, 2)); // Debug log
-
-  return actions.order.create({
-    purchase_units: purchaseUnits
-  });
-},
-
-
-
-  onApprove: function(data, actions) {
-    return actions.order.capture().then(function(details) {
-      paymentMessage.textContent = "Payment completed successfully! Thank you.";
-      paymentError.textContent = "";
-
-      localStorage.removeItem('bbf_cart');
-      cart = [];
-      renderCart();
-
-      if(downloadReceiptCheckbox.checked) {
-        generatePDFReceipt(details);
-      }
-    });
-  },
-
-  onError: function(err) {
-    paymentError.textContent = "An error occurred during payment. Please try again.";
-    paymentMessage.textContent = "";
-    console.error(err);
   }
 
-}).render('#paypal-button-container');
+  renderCart();
+</script>
 
-//new pay pal
-
-
-function checkForDiscountPrompt() {
-  const totalQty = totalCartQuantity();
-  if (totalQty >= 1) {  // Show bubble as soon as 1 or more units in cart
-    discountBubble.style.display = 'block';
-  } else {
-    discountBubble.style.display = 'none';
-  }
-}
-
-    renderCart();
-  </script>
-  <script>
+<script>
   mapboxgl.accessToken = 'pk.eyJ1Ijoia29keWEiLCJhIjoiY21jZGd1amVuMGJ0bTJqb2ptc3V4MDNtZyJ9.2cZ20_whY2bXAPZW545n9A';
 
   const warehouseCoords = [-95.4800, 41.0772]; // [lng, lat]
@@ -1209,28 +1129,20 @@ function checkForDiscountPrompt() {
     };
   }
 
+  function showDeliveryInfo(distance) {
+    const roundedMiles = Math.round(distance);
+    const totalCost = Math.round(distance * perMileRate);
+    deliveryCost = totalCost;  // <-- Add this line to update the global deliveryCost
 
+    deliveryMessage.innerHTML = `
+      <strong>Total miles:</strong> ${roundedMiles}<br>
+      <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
+      <strong>Delivery total:</strong> $${totalCost}
+    `;
 
-function showDeliveryInfo(distance) {
-  const roundedMiles = Math.round(distance);
-  const totalCost = Math.round(distance * perMileRate);
-  deliveryCost = totalCost;  // <-- Add this line to update the global deliveryCost
-
-  deliveryMessage.innerHTML = `
-    <strong>Total miles:</strong> ${roundedMiles}<br>
-    <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
-    <strong>Delivery total:</strong> $${totalCost}
-  `;
-
-  // Update the order total whenever delivery cost changes
-  updateOrderTotal(calculateDiscountedTotal());
-}
-
-
-
-
-
-    
+    // Update the order total whenever delivery cost changes
+    updateOrderTotal(calculateDiscountedTotal());
+  }
 
   function drawRoute(geojson) {
     if (map.getSource('route')) {
@@ -1290,51 +1202,46 @@ function showDeliveryInfo(distance) {
     destMarkerModal = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(modalMap);
   }
 
+  const confirmDeliveryBtn = document.getElementById('confirm-delivery-btn');
+  const freePickupRadio = document.getElementById('free-pickup');
 
-
-const confirmDeliveryBtn = document.getElementById('confirm-delivery-btn');
-const freePickupRadio = document.getElementById('free-pickup');
-
-confirmDeliveryBtn.onclick = () => {
-  if (deliveryCost <= 0) {
-    alert('Please calculate delivery cost first.');
-    return;
-  }
-  selectedShippingOption = {
-    id: 'large_delivery',
-    label: 'Large Item Delivery',
-    amount: deliveryCost.toFixed(2)
-  };
-  shippingCost = deliveryCost;
-  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-
-  // Visually update selections
-  confirmDeliveryBtn.classList.add('selected');
-  freePickupRadio.checked = false;
-  freePickupRadio.parentElement.classList.remove('selected');
-
-  updateOrderTotal(calculateDiscountedTotal());
-};
-
-
-freePickupRadio.onchange = () => {
-  if (freePickupRadio.checked) {
+  confirmDeliveryBtn.onclick = () => {
+    if (deliveryCost <= 0) {
+      alert('Please calculate delivery cost first.');
+      return;
+    }
     selectedShippingOption = {
-      id: 'free_pickup',
-      label: 'Free Pickup',
-      amount: '0.00'
+      id: 'large_delivery',
+      label: 'Large Item Delivery',
+      amount: deliveryCost.toFixed(2)
     };
-    shippingCost = 0;
-    shippingCostEl.textContent = '$0.00';
+    shippingCost = deliveryCost;
+    shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
 
-    confirmDeliveryBtn.classList.remove('selected');
+    // Visually update selections
+    confirmDeliveryBtn.classList.add('selected');
+    freePickupRadio.checked = false;
+    freePickupRadio.parentElement.classList.remove('selected');
 
     updateOrderTotal(calculateDiscountedTotal());
-  }
-};
+  };
 
-    
+  freePickupRadio.onchange = () => {
+    if (freePickupRadio.checked) {
+      selectedShippingOption = {
+        id: 'free_pickup',
+        label: 'Free Pickup',
+        amount: '0.00'
+      };
+      shippingCost = 0;
+      shippingCostEl.textContent = '$0.00';
+
+      confirmDeliveryBtn.classList.remove('selected');
+
+      updateOrderTotal(calculateDiscountedTotal());
+    }
+  };
 </script>
-  
+
 </body>
-</html> 
+</html>
