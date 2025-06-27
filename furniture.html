@@ -266,6 +266,7 @@
     function saveCart() { localStorage.setItem('bbf_cart', JSON.stringify(cart)); }
 
     function addToCart(itemNum, price, img, id = null) {
+      cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
       const ex = cart.find(x => x.itemNum === itemNum);
       if (ex) {
         ex.qty++;
