@@ -1,325 +1,298 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Code Editor with Live Preview and Inspect Console</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    /* Reset */
-    * {
-      box-sizing: border-box;
-    }
-    body, html {
-      margin: 0; padding: 0; height: 100%; width: 100%; 
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Code Editor with Live Preview & Debug Console</title>
 
-    header {
-      position: fixed;
-      top: 0; left: 0; width: 100%;
-      height: 40px;
-      background: #1f1f1f;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      z-index: 20;
-      user-select: none;
-    }
+<style>
+  /* Reset & Base */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body, html {
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
 
-    #left-controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background: #222;
+    padding: 8px 12px;
+    color: white;
+  }
+  #header button {
+    background: #059669;
+    border: none;
+    color: white;
+    font-weight: 700;
+    padding: 6px 14px;
+    margin-left: 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 1rem;
+    user-select: none;
+  }
+  #header button:hover {
+    background: #047857;
+  }
+  #zoom-controls {
+    display: flex;
+    gap: 10px;
+  }
+  #zoom-controls button {
+    background: #059669;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    width: 32px;
+    height: 32px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 6px;
+    user-select: none;
+    padding: 0;
+  }
+  #zoom-controls button:hover {
+    background: #047857;
+  }
 
-    #right-controls {
-      display: flex;
-      align-items: center;
-    }
+  #editor-container {
+    position: absolute;
+    top: 44px; /* header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px;
+    overflow: auto;
+    background: #1e1e1e;
+  }
+  #code-editor {
+    width: 100%;
+    height: 100%;
+    font-family: monospace;
+    font-size: 20px;
+    color: #d4d4d4;
+    background: #1e1e1e;
+    border: none;
+    resize: none;
+    outline: none;
+    padding: 12px;
+    min-font-size: 2px; /* for reference, enforced in JS */
+  }
 
-    header button {
-      background-color: #22c55e;
-      border: none;
-      color: white;
-      font-weight: 700;
-      font-size: 18px;
-      
-      height: 28px;
-      cursor: pointer;
-      border-radius: 5px;
-      line-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s ease;
-    }
-    header button:hover {
-      background-color: #16a34a;
-    }
-    #toggle-live-view-btn {
-      padding: auto;
-      font-size: 14px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
+  #live-view-container {
+    display: none;
+    position: absolute;
+    top: 44px; /* header */
+    left: 0; right: 0; bottom: 0;
+  }
+  #live-view-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    transform-origin: 0 0;
+  }
 
-    #editor, #preview {
-      position: fixed;
-      top: 40px; left: 0;
-      
-      width: 100vw;
-      height: calc(100vh - 40px);
-      margin: 0; padding: 12px;
-      font-size: 14px;
-      background: #1e1e1e;
-      color: #eee;
-      font-family: monospace, monospace;
-      resize: none;
-      outline: none;
-      border: none;
-      z-index: 10;
-      overflow: auto;
-      display: block;
-    }
+  /* Debug console panel */
+  #debug-console {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: #111;
+    color: #eee;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-y: auto;
+    border-top: 2px solid #059669;
+    padding: 8px;
+    display: none;
+    z-index: 9999;
+  }
 
-    #preview {
-      background: white;
-      color: black;
-      display: none;
-      border: none;
-    }
-
-    /* Floating Inspect Button */
-    #inspect-btn {
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      z-index: 30;
-      background: #22c55e;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 28px;
-      font-weight: 700;
-      cursor: pointer;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 10px #16a34aaa;
-      user-select: none;
-    }
-    #inspect-btn:hover {
-      background: #16a34a;
-      box-shadow: 0 0 15px #16a34aff;
-    }
-
-    /* Console Overlay */
-    #console-overlay {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      max-height: 200px;
-      background: #222;
-      color: #eee;
-      font-family: monospace;
-      font-size: 13px;
-      overflow-y: auto;
-      padding: 8px 12px;
-      display: none;
-      z-index: 25;
-      border-top: 3px solid #22c55e;
-      white-space: pre-wrap;
-      user-select: text;
-    }
-  </style>
+  /* Floating debug toggle button */
+  #debug-toggle-btn {
+    position: fixed;
+    bottom: 210px;
+    right: 20px;
+    background: black;
+    color: #0f0;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    box-shadow: 0 0 8px #0f0;
+    z-index: 10000;
+  }
+  #debug-toggle-btn:hover {
+    background: #222;
+    box-shadow: 0 0 12px #0f0;
+  }
+</style>
 </head>
 <body>
 
-  <header>
-    <div id="left-controls">
-      <button id="decrease-font-btn" title="Decrease font size or zoom out">−</button>
-      <button id="increase-font-btn" title="Increase font size or zoom in">+</button>
-    </div>
-    <div id="right-controls">
-      <button id="toggle-live-view-btn">Show Live</button>
-    </div>
-  </header>
+<div id="header">
+  <div id="zoom-controls">
+    <button id="zoom-out-btn" title="Zoom Out">−</button>
+    <button id="zoom-in-btn" title="Zoom In">+</button>
+  </div>
+  <button id="toggle-live-btn" style="margin-left: auto;">Show Live View</button>
+</div>
 
-  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="enter code">
+<div id="editor-container">
+  <textarea id="code-editor" spellcheck="false">// Write your HTML, CSS, JS here</textarea>
+</div>
 
-  </textarea>
+<div id="live-view-container">
+  <iframe id="live-view-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
 
-  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
-
-  <button id="inspect-btn" title="Toggle Console">💬</button>
-  <div id="console-overlay"></div>
+<div id="debug-console"></div>
+<button id="debug-toggle-btn" title="Toggle Debug Console">▶</button>
 
 <script>
-  const editor = document.getElementById('editor');
-  const preview = document.getElementById('preview');
-  const toggleBtn = document.getElementById('toggle-live-view-btn');
-  const incBtn = document.getElementById('increase-font-btn');
-  const decBtn = document.getElementById('decrease-font-btn');
-  const inspectBtn = document.getElementById('inspect-btn');
-  const consoleOverlay = document.getElementById('console-overlay');
+  const editor = document.getElementById('code-editor');
+  const liveView = document.getElementById('live-view-container');
+  const liveIframe = document.getElementById('live-view-iframe');
+  const toggleLiveBtn = document.getElementById('toggle-live-btn');
+  const editorContainer = document.getElementById('editor-container');
+  const debugConsole = document.getElementById('debug-console');
+  const debugToggleBtn = document.getElementById('debug-toggle-btn');
+  const zoomInBtn = document.getElementById('zoom-in-btn');
+  const zoomOutBtn = document.getElementById('zoom-out-btn');
 
-  let fontSize = 8;
-  const minFontSize = 2;
-  const maxFontSize = 40;
+  let liveViewActive = false;
+  let zoomLevel = 1;
+  const MIN_FONT_SIZE = 2;
+  const MAX_FONT_SIZE = 72;
 
-  // Zoom scale inside iframe content
-  let insideZoom = 1;
-  const minInsideZoom = 0.2;
-  const maxInsideZoom = 3;
+  // Initialize editor font size
+  editor.style.fontSize = '20px';
 
-  let isConsoleVisible = false;
+  // Zoom font size in editor
+  zoomInBtn.onclick = () => {
+    let size = parseInt(window.getComputedStyle(editor).fontSize);
+    if(size < MAX_FONT_SIZE) {
+      size += 2;
+      editor.style.fontSize = size + 'px';
+    }
+  };
+  zoomOutBtn.onclick = () => {
+    let size = parseInt(window.getComputedStyle(editor).fontSize);
+    if(size > MIN_FONT_SIZE) {
+      size -= 2;
+      editor.style.fontSize = size + 'px';
+    }
+  };
 
-  // Inject code + setup console capturing inside iframe
-  function updatePreview() {
-    // Compose full HTML with console capture scripts injected
-    const userCode = editor.value;
+  // Toggle live view
+  toggleLiveBtn.onclick = () => {
+    liveViewActive = !liveViewActive;
+    if(liveViewActive){
+      // Show live view full screen
+      liveView.style.display = 'block';
+      editorContainer.style.display = 'none';
+      toggleLiveBtn.textContent = 'Show Editor';
+      // Render iframe content
+      liveIframe.srcdoc = editor.value;
+      zoomLevel = 1;
+      liveIframe.style.transform = `scale(${zoomLevel})`;
+    } else {
+      liveView.style.display = 'none';
+      editorContainer.style.display = 'block';
+      toggleLiveBtn.textContent = 'Show Live View';
+    }
+  };
 
-    // Wrap user code to override console & capture errors, then postMessage to parent
-    const injectedScript = `
-      <script>
-        (function() {
-          const sendMessage = (type, args) => {
-            parent.postMessage({ type, args: Array.from(args).map(a => (typeof a === 'object' ? JSON.stringify(a) : a.toString())) }, '*');
-          };
-          const oldLog = console.log;
-          const oldError = console.error;
-          console.log = function() {
-            oldLog.apply(console, arguments);
-            sendMessage('log', arguments);
-          };
-          console.error = function() {
-            oldError.apply(console, arguments);
-            sendMessage('error', arguments);
-          };
-          window.onerror = function(message, source, lineno, colno, error) {
-            sendMessage('error', [message + ' at ' + source + ':' + lineno + ':' + colno]);
-          };
-        })();
-      <\/script>`;
+  // Zoom live view iframe content
+  zoomInBtn.onclick = () => {
+    if(liveViewActive){
+      zoomLevel = Math.min(zoomLevel + 0.1, 3);
+      liveIframe.style.transform = `scale(${zoomLevel})`;
+      liveIframe.style.width = (100 / zoomLevel) + '%';
+      liveIframe.style.height = (100 / zoomLevel) + '%';
+    }
+  };
+  zoomOutBtn.onclick = () => {
+    if(liveViewActive){
+      zoomLevel = Math.max(zoomLevel - 0.1, 0.1);
+      liveIframe.style.transform = `scale(${zoomLevel})`;
+      liveIframe.style.width = (100 / zoomLevel) + '%';
+      liveIframe.style.height = (100 / zoomLevel) + '%';
+    }
+  };
 
-    // Wrap full HTML
-    const fullHTML = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <style>html { zoom: ${insideZoom}; -webkit-text-size-adjust: none; }</style>
-      </head>
-      <body>
-      ${userCode}
-      ${injectedScript}
-      </body>
-      </html>
-    `;
+  // Debug console toggle
+  debugToggleBtn.onclick = () => {
+    if(debugConsole.style.display === 'block'){
+      debugConsole.style.display = 'none';
+      debugToggleBtn.textContent = '▶';
+    } else {
+      debugConsole.style.display = 'block';
+      debugToggleBtn.textContent = '▼';
+    }
+  };
 
-    preview.srcdoc = fullHTML;
+  // Capture console messages and errors from iframe and show in debug console
+  function setupIframeLogging() {
+    if(!liveIframe.contentWindow) return;
+    const iframeWin = liveIframe.contentWindow;
+
+    // Clear previous handlers to avoid duplication
+    iframeWin.console.log = function(...args) {
+      appendLog('LOG', args);
+      // Also call original console log in iframe window
+      Function.prototype.apply.call(console.log, console, args);
+    };
+    iframeWin.console.error = function(...args) {
+      appendLog('ERROR', args);
+      Function.prototype.apply.call(console.error, console, args);
+    };
+    iframeWin.console.warn = function(...args) {
+      appendLog('WARN', args);
+      Function.prototype.apply.call(console.warn, console, args);
+    };
+
+    iframeWin.onerror = function(message, source, lineno, colno, error) {
+      appendLog('ERROR', [`${message} at ${source}:${lineno}:${colno}`]);
+    };
   }
 
-  // Listen to messages from iframe to show logs/errors
-  window.addEventListener('message', (event) => {
-    if (!event.data || !event.data.type) return;
-
-    if (event.data.type === 'log') {
-      appendConsole('LOG', event.data.args.join(' '));
-    } else if (event.data.type === 'error') {
-      appendConsole('ERROR', event.data.args.join(' '));
+  // Append logs to debug console
+  function appendLog(type, args) {
+    const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ');
+    const div = document.createElement('div');
+    div.textContent = `[${type}] ${msg}`;
+    if(type === 'ERROR'){
+      div.style.color = '#ff4444';
+      div.style.fontWeight = '700';
+    } else if(type === 'WARN'){
+      div.style.color = '#ffbb33';
     }
-  });
-
-  // Append message to console overlay
-  function appendConsole(type, message) {
-    const color = type === 'ERROR' ? '#ff6666' : '#99ff99';
-    const time = new Date().toLocaleTimeString();
-    consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
-    consoleOverlay.scrollTop = consoleOverlay.scrollHeight;
+    debugConsole.appendChild(div);
+    debugConsole.scrollTop = debugConsole.scrollHeight;
   }
 
-  // Clear console overlay
-  function clearConsole() {
-    consoleOverlay.textContent = '';
-  }
+  // On iframe load, setup logging again
+  liveIframe.onload = () => {
+    setupIframeLogging();
+  };
 
-  editor.addEventListener('input', () => {
-    if (preview.style.display === 'block') {
-      updatePreview();
-      clearConsole();
-    }
-  });
+  // Initial setup (clear debug console)
+  debugConsole.textContent = '';
 
-  // Toggle editor/live preview
-  toggleBtn.addEventListener('click', () => {
-    if (preview.style.display === 'none' || preview.style.display === '') {
-      preview.style.display = 'block';
-      editor.style.display = 'none';
-      toggleBtn.textContent = 'Show Editor';
-      updatePreview();
-      clearConsole();
-      insideZoom = 1;
-      inspectBtn.style.display = 'flex';
-    } else {
-      preview.style.display = 'none';
-      editor.style.display = 'block';
-      toggleBtn.textContent = 'Show Live';
-      editor.focus();
-      inspectBtn.style.display = 'none';
-      consoleOverlay.style.display = 'none';
-      insideZoom = 1;
-    }
-  });
-
-  // Zoom in/out handler: zoom inside iframe content or font size in editor
-  incBtn.addEventListener('click', () => {
-    if (preview.style.display === 'block') {
-      if (insideZoom < maxInsideZoom) {
-        insideZoom = Math.min(maxInsideZoom, insideZoom + 0.1);
-        updatePreview();
-      }
-    } else {
-      if (fontSize < maxFontSize) {
-        fontSize++;
-        editor.style.fontSize = fontSize + 'px';
-      }
-    }
-  });
-
-  decBtn.addEventListener('click', () => {
-    if (preview.style.display === 'block') {
-      if (insideZoom > minInsideZoom) {
-        insideZoom = Math.max(minInsideZoom, insideZoom - 0.1);
-        updatePreview();
-      }
-    } else {
-      if (fontSize > minFontSize) {
-        fontSize--;
-        editor.style.fontSize = fontSize + 'px';
-      }
-    }
-  });
-
-  // Inspect button toggles console overlay
-  inspectBtn.addEventListener('click', () => {
-    isConsoleVisible = !isConsoleVisible;
-    consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
-  });
-
-  // Init
-  editor.style.fontSize = fontSize + 'px';
-  editor.focus();
 </script>
-
 </body>
 </html>
