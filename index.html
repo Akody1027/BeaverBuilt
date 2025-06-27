@@ -171,6 +171,22 @@
   </script>
 
   <script>
+// Close cart popover when clicking outside of it
+document.addEventListener('click', function(event) {
+  const cartPopover = document.getElementById('cart-popover');
+  
+  // Check if cartPopover is visible
+  if (cartPopover.style.display === 'block' || cartPopover.style.display === '') {
+    // If click target is NOT inside the popover
+    if (!cartPopover.contains(event.target)) {
+      cartPopover.style.display = 'none';
+    }
+  }
+});
+
+
+
+    
   // Section Switching & Chat Badge Clearing
   const navBtns = document.querySelectorAll('.nav-btn'),
         iframe  = document.getElementById('view-frame'),
