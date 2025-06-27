@@ -435,7 +435,7 @@
       <!-- Add more countries as needed -->
     </select>
 
-    <button id="get-rates-btn" type="button">Get Shipping Rates</button>
+    <button class="get-rates-btn" type="button">Get Shipping Rates</button>
 
     <div id="shipping-options"></div>
 
@@ -453,7 +453,7 @@
 <input type="text" id="address-input" placeholder="123 Main St, City, State ZIP" />
 
 <div>
-  <button id="find-spots-btn">Calculate</button>
+  <button id="find-spots-btn" class="get-rates-btn">Calculate</button>
 </div>
 
 <div id="delivery-message"></div>
@@ -534,7 +534,13 @@
     const downloadReceiptCheckbox = document.getElementById('download-receipt');
     const zipInput = document.getElementById('zip');
     const countrySelect = document.getElementById('country');
-    const getRatesBtn = document.getElementById('get-rates-btn');
+
+    
+    const getRatesBtns = document.querySelectorAll('.get-rates-btn');
+
+
+
+    
     const shippingOptionsDiv = document.getElementById('shipping-options');
     const shippingCostEl = document.getElementById('shipping-cost');
     const orderTotalEl = document.getElementById('order-total');
@@ -800,35 +806,47 @@ function toggleLargeProductSection() {
       return total + shippingCost;
     }
 
-    getRatesBtn.onclick = async () => {
-      paymentMessage.textContent = '';
-      paymentError.textContent = '';
 
-      const zip = zipInput.value.trim();
-      const country = countrySelect.value;
-      if(!zip) {
-        alert('Please enter your ZIP/postal code');
-        return;
-      }
-      if(cart.length === 0) {
-        alert('Your cart is empty!');
-        return;
-      }
 
-      const packageInfo = calculatePackageFromCart();
-      if(!packageInfo) {
-        alert('Could not determine package information');
-        return;
-      }
 
-      try {
-        const rates = await fetchShippingRates(zip, country, packageInfo);
-        renderShippingOptions(rates);
-      } catch(err) {
-        paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
-        console.error(err);
-      }
-    };
+
+document.querySelectorAll('.get-rates-btn').forEach(btn => {
+  btn.onclick = async () => {
+    paymentMessage.textContent = '';
+    paymentError.textContent = '';
+
+    const zip = zipInput.value.trim();
+    const country = countrySelect.value;
+    if (!zip) {
+      alert('Please enter your ZIP/postal code');
+      return;
+    }
+    if (cart.length === 0) {
+      alert('Your cart is empty!');
+      return;
+    }
+
+    const packageInfo = calculatePackageFromCart();
+    if (!packageInfo) {
+      alert('Could not determine package information');
+      return;
+    }
+
+    try {
+      const rates = await fetchShippingRates(zip, country, packageInfo);
+      renderShippingOptions(rates);
+    } catch (err) {
+      paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
+      console.error(err);
+    }
+  };
+});
+
+
+
+
+    
+
 
     paypal.Buttons({
       createOrder: function(data, actions) {
