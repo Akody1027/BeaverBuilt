@@ -853,18 +853,19 @@ function toggleLargeProductSection() {
         radio.name = 'shipping_option';
         radio.id = id;
         radio.value = opt.amount;
-        if(opt === options[0]) {
-          radio.checked = true;
-          selectedShippingOption = opt;
-          shippingCost = parseFloat(opt.amount);
-          updateOrderTotal(calculateDiscountedTotal());
-        }
-        radio.onchange = () => {
-          shippingCost = parseFloat(radio.value);
-          selectedShippingOption = opt;
-          shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-          updateOrderTotal(calculateDiscountedTotal());
-        };
+if(opt === options[0]) {
+  radio.checked = true;
+  selectedShippingOption = opt;
+  shippingCost = parseFloat(opt.amount);
+  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+  updateOrderTotal(calculateDiscountedTotal());  // Fix here
+}
+radio.onchange = () => {
+  shippingCost = parseFloat(radio.value);
+  selectedShippingOption = opt;
+  shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
+  updateOrderTotal(calculateDiscountedTotal());  // Correct
+};
         label.prepend(radio);
         shippingOptionsDiv.appendChild(label);
       });
@@ -1318,7 +1319,7 @@ freePickupRadio.onchange = () => {
 
     confirmDeliveryBtn.classList.remove('selected');
 
-    updateOrderTotal(calculateDiscountedTotal() - shippingCost);
+    updateOrderTotal(calculateDiscountedTotal());
   }
 };
 
