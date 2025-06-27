@@ -516,6 +516,13 @@
 
   
 
+
+    let deliveryCost = 0;
+
+
+
+
+    
     let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
     let shippingCost = 0;
     let selectedShippingOption = null;
@@ -679,11 +686,21 @@ function toggleLargeProductSection() {
       };
     }
 
-    function updateOrderTotal(totalFromCart) {
-      const orderTotal = totalFromCart + shippingCost;
-      orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
-    }
 
+    
+
+
+
+    function updateOrderTotal(totalFromCart) {
+  const orderTotal = totalFromCart + shippingCost + deliveryCost;  // <-- Add deliveryCost here
+  orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
+}
+
+
+
+
+
+    
     function generatePDFReceipt(orderData) {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -1078,15 +1095,28 @@ function checkForDiscountPrompt() {
     };
   }
 
-  function showDeliveryInfo(distance) {
-    const roundedMiles = Math.round(distance);
-    const totalCost = Math.round(distance * perMileRate);
-    deliveryMessage.innerHTML = `
-      <strong>Total miles:</strong> ${roundedMiles}<br>
-      <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
-      <strong>Delivery total:</strong> $${totalCost}
-    `;
-  }
+
+
+function showDeliveryInfo(distance) {
+  const roundedMiles = Math.round(distance);
+  const totalCost = Math.round(distance * perMileRate);
+  deliveryCost = totalCost;  // <-- Add this line to update the global deliveryCost
+
+  deliveryMessage.innerHTML = `
+    <strong>Total miles:</strong> ${roundedMiles}<br>
+    <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
+    <strong>Delivery total:</strong> $${totalCost}
+  `;
+
+  // Update the order total whenever delivery cost changes
+  updateOrderTotal(calculateDiscountedTotal() - shippingCost);
+}
+
+
+
+
+
+    
 
   function drawRoute(geojson) {
     if (map.getSource('route')) {
