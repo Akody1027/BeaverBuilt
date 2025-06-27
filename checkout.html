@@ -1065,29 +1065,6 @@ paypal.Buttons({
 //new pay pal
 
 
-
-     
-      onApprove: function(data, actions) {
-        return actions.order.capture().then(function(details) {
-          paymentMessage.textContent = "Payment completed successfully! Thank you.";
-          paymentError.textContent = "";
-
-          localStorage.removeItem('bbf_cart');
-          cart = [];
-          renderCart();
-
-          if(downloadReceiptCheckbox.checked) {
-            generatePDFReceipt(details);
-          }
-        });
-      },
-
-      onError: function(err) {
-        paymentError.textContent = "An error occurred during payment. Please try again.";
-        paymentMessage.textContent = "";
-        console.error(err);
-      }
-
     }).render('#paypal-button-container');
 
 function checkForDiscountPrompt() {
