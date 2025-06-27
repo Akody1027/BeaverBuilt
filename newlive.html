@@ -61,7 +61,7 @@
       background-color: #16a34a;
     }
     #toggle-live-view-btn {
-      padding: 5px 12px;
+      padding: auto;
       font-size: 14px;
       border-radius: 6px;
       font-weight: 600;
@@ -153,13 +153,8 @@
     </div>
   </header>
 
-  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
-// Enter your HTML, CSS, and JS code here
-console.log('Welcome to the editor!');
+  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="enter code">
 
-function greet() {
-  console.log('Hello from inside the iframe!');
-}
   </textarea>
 
   <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -176,7 +171,7 @@ function greet() {
   const inspectBtn = document.getElementById('inspect-btn');
   const consoleOverlay = document.getElementById('console-overlay');
 
-  let fontSize = 14;
+  let fontSize = 8;
   const minFontSize = 2;
   const maxFontSize = 40;
 
