@@ -207,14 +207,19 @@ document.getElementById('checkout-btn').addEventListener('click', function(e) {
   });
 
   // Cart Logic
-  let cart = [];
-  function loadCart() {
-    cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-    updateCartBadge();
-  }
-  function saveCart() {
-    localStorage.setItem('bbf_cart', JSON.stringify(cart));
-    updateCartBadge();
+function saveCart() {
+  localStorage.setItem('bbf_cart', JSON.stringify(cart));
+  updateCartBadge();
+}
+
+function loadCart() {
+  cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+  updateCartBadge();
+}
+
+
+
+    
   }
   function updateCartBadge() {
     const total = cart.reduce((s,i)=>s+i.qty,0),
@@ -224,45 +229,51 @@ document.getElementById('checkout-btn').addEventListener('click', function(e) {
       cb.style.display = 'block';
     } else cb.style.display = 'none';
   }
-  function renderCartPopover() {
-    const container = document.getElementById('cart-items');
-    container.innerHTML = '';
-    let sum = 0;
-    cart.forEach(item=>{
-      sum += item.price * item.qty;
-      const div = document.createElement('div');
-      div.className = 'cart-item';
-      div.innerHTML = `
-        <img src="${item.img}" alt="">
-        <div class="cart-item-name">Item#${item.itemNum}</div>
-        <div class="quantity-controls">
-          <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
-          <span>${item.qty}</span>
-          <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
-        </div>
-        <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
-      `;
-      container.appendChild(div);
-    });
-    document.getElementById('cart-total').textContent = sum.toFixed(2);
-    // plus/minus handlers
-    container.querySelectorAll('.plus').forEach(b=>{
-      b.onclick = ()=>{ 
-        const id = b.dataset.id|0;
-        cart.find(x=>x.itemNum==id).qty++;
-        saveCart(); renderCartPopover();
-      };
-    });
-    container.querySelectorAll('.minus').forEach(b=>{
-      b.onclick = ()=>{ 
-        const id = b.dataset.id|0;
-        const itm = cart.find(x=>x.itemNum==id);
-        itm.qty--;
-        if (itm.qty<1) cart = cart.filter(x=>x.itemNum!=id);
-        saveCart(); renderCartPopover();
-      };
-    });
-  }
+
+    
+function renderCartPopover() {
+  const container = document.getElementById('cart-items');
+  container.innerHTML = '';
+  let sum = 0;
+  cart.forEach(item=>{
+    sum += item.price * item.qty;
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.innerHTML = `
+      <img src="${item.img}" alt="">
+      <div class="cart-item-name">Item#${item.itemNum}</div>
+      <div class="quantity-controls">
+        <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
+        <span>${item.qty}</span>
+        <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
+      </div>
+      <div class="cart-item-price">$${(item.price*item.qty).toFixed(2)}</div>
+    `;
+    container.appendChild(div);
+  });
+  document.getElementById('cart-total').textContent = sum.toFixed(2);
+  // plus/minus handlers
+  container.querySelectorAll('.plus').forEach(b=>{
+    b.onclick = ()=>{ 
+      const id = b.dataset.id|0;
+      cart.find(x=>x.itemNum==id).qty++;
+      saveCart(); renderCartPopover();
+    };
+  });
+  container.querySelectorAll('.minus').forEach(b=>{
+    b.onclick = ()=>{ 
+      const id = b.dataset.id|0;
+      const itm = cart.find(x=>x.itemNum==id);
+      itm.qty--;
+      if (itm.qty<1) cart = cart.filter(x=>x.itemNum!=id);
+      saveCart(); renderCartPopover();
+    };
+  });
+}
+
+
+
+    
   // popover toggle
   const cartBtn = document.getElementById('bottom-cart'),
         popover = document.getElementById('cart-popover');
