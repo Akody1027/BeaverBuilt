@@ -861,101 +861,80 @@ hr{
   });
 
   // NEW PAYPAL BUTTONS:  
-  paypal.Buttons({
-    createOrder: function(data, actions) {
-      if(cart.length === 0) {
-        alert("Your cart is empty!");
-        return actions.reject();
-      }
-      if(!selectedShippingOption) {
-        alert("Please select a shipping option.");
-        return actions.reject();
-      }
+paypal.Buttons({
+  createOrder: function(data, actions) {
+    if(cart.length === 0) {
+      alert("Your cart is empty!");
+      return actions.reject();
+    }
+    if(!selectedShippingOption) {
+      alert("Please select a shipping option.");
+      return actions.reject();
+    }
+    if (!zipInput.value.trim()) {
+      alert("Please enter a valid ZIP/postal code.");
+      return actions.reject();
+    }
+    if (!countrySelect.value) {
+      alert("Please select a country.");
+      return actions.reject();
+    }
 
-      const itemsTotalRaw = calculateDiscountedTotal(false);
-      const itemsTotal = Math.round(itemsTotalRaw * 100) / 100;
-      const shippingCostRounded = Math.round(shippingCost * 100) / 100;
-      const orderTotal = Math.round((itemsTotal + shippingCostRounded) * 100) / 100;
+    const itemsTotalRaw = calculateDiscountedTotal(false);
+    const itemsTotal = parseFloat(itemsTotalRaw.toFixed(2));
+    const shippingCostRounded = parseFloat(shippingCost.toFixed(2));
+    const orderTotal = parseFloat((itemsTotal + shippingCostRounded).toFixed(2));
 
-      const purchaseUnits = [{
+    // Build items array carefully
+    let unitsProcessed = 0;
+    const items = cart.flatMap(item => {
+      let fullPriceUnits = 0;
+      let discountedUnits = 0;
+
+      if (unitsProcessed >= 1) {
+        discountedUnits = item.qty;
+      } else if (unitsProcessed + item.qty <= 1) {
+        fullPriceUnits = item.qty;
+      } else {
+        fullPriceUnits = 1 - unitsProcessed;
+        discountedUnits = item.qty - fullPriceUnits;
+      }
+      unitsProcessed += item.qty;
+
+      const arr = [];
+      if (fullPriceUnits > 0) {
+        arr.push({
+          name: item.itemNum + (discountedUnits > 0 ? " (Full Price)" : ""),
+          unit_amount: { currency_code: "USD", value: item.price.toFixed(2) },
+          quantity: fullPriceUnits.toString(),
+          item_category: "PHYSICAL_GOODS",
+          sku: item.itemNum
+        });
+      }
+      if (discountedUnits > 0) {
+        arr.push({
+          name: item.itemNum + " (10% Discount)",
+          unit_amount: { currency_code: "USD", value: (item.price * 0.9).toFixed(2) },
+          quantity: discountedUnits.toString(),
+          item_category: "PHYSICAL_GOODS",
+          sku: item.itemNum
+        });
+      }
+      return arr;
+    });
+
+    // Final payload object
+    const orderPayload = {
+      purchase_units: [{
         amount: {
           currency_code: "USD",
           value: orderTotal.toFixed(2),
           breakdown: {
-            item_total: {
-              currency_code: "USD",
-              value: itemsTotal.toFixed(2)
-            },
-            shipping: {
-              currency_code: "USD",
-              value: shippingCostRounded.toFixed(2)
-            }
+            item_total: { currency_code: "USD", value: itemsTotal.toFixed(2) },
+            shipping: { currency_code: "USD", value: shippingCostRounded.toFixed(2) }
           }
         },
-        items: (() => {
-          let unitsProcessed = 0;
-          return cart.map(item => {
-            let fullPriceUnits = 0;
-            let discountedUnits = 0;
-
-            if (unitsProcessed >= 1) {
-              discountedUnits = item.qty;
-            } else if (unitsProcessed + item.qty <= 1) {
-              fullPriceUnits = item.qty;
-            } else {
-              fullPriceUnits = 1 - unitsProcessed;
-              discountedUnits = item.qty - fullPriceUnits;
-            }
-            unitsProcessed += item.qty;
-
-            if (fullPriceUnits > 0 && discountedUnits > 0) {
-              return [
-                {
-                  name: item.itemNum + ' (Full Price)',
-                  unit_amount: {
-                    currency_code: "USD",
-                    value: item.price.toFixed(2)
-                  },
-                  quantity: fullPriceUnits.toString(),
-                  item_category: "PHYSICAL_GOODS",
-                  sku: item.itemNum
-                },
-                {
-                  name: item.itemNum + ' (10% Discount)',
-                  unit_amount: {
-                    currency_code: "USD",
-                    value: (item.price * 0.9).toFixed(2)
-                  },
-                  quantity: discountedUnits.toString(),
-                  item_category: "PHYSICAL_GOODS",
-                  sku: item.itemNum
-                }
-              ];
-            } else if (fullPriceUnits > 0) {
-              return [{
-                name: item.itemNum,
-                unit_amount: {
-                  currency_code: "USD",
-                  value: item.price.toFixed(2)
-                },
-                quantity: fullPriceUnits.toString(),
-                item_category: "PHYSICAL_GOODS",
-                sku: item.itemNum
-              }];
-            } else {
-              return [{
-                name: item.itemNum,
-                unit_amount: {
-                  currency_code: "USD",
-                  value: (item.price * 0.9).toFixed(2)
-                },
-                quantity: discountedUnits.toString(),
-                item_category: "PHYSICAL_GOODS",
-                sku: item.itemNum
-              }];
-            }
-          }).flat();
-        })(),
+        items: items,
         shipping: {
           method: selectedShippingOption.label,
           address: {
@@ -963,7 +942,36 @@ hr{
             country_code: countrySelect.value
           }
         }
-      }];
+      }]
+    };
+
+    console.log("Creating PayPal order with payload:", JSON.stringify(orderPayload, null, 2));
+
+    return actions.order.create(orderPayload);
+  },
+
+  onApprove: function(data, actions) {
+    return actions.order.capture().then(function(details) {
+      paymentMessage.textContent = "Payment completed successfully! Thank you.";
+      paymentError.textContent = "";
+
+      localStorage.removeItem('bbf_cart');
+      cart = [];
+      renderCart();
+
+      if(downloadReceiptCheckbox.checked) {
+        generatePDFReceipt(details);
+      }
+    });
+  },
+
+  onError: function(err) {
+    paymentError.textContent = "An error occurred during payment. Please try again.";
+    paymentMessage.textContent = "";
+    console.error(err);
+  }
+}).render('#paypal-button-container');
+
 
       console.log("PayPal order data:", JSON.stringify(purchaseUnits, null, 2)); // Debug log
 
