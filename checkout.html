@@ -263,7 +263,9 @@ cartContainer.addEventListener('click', function(event) {
 
 
 
-
+function saveCart() {
+  localStorage.setItem('bbf_cart', JSON.stringify(cart));
+}
     
 
     
