@@ -233,37 +233,38 @@ function renderCart() {
     cartContainer.appendChild(div);
   });
 
-  // Attach event listeners to plus/minus buttons after rendering
-  cartContainer.querySelectorAll('.quantity-button.plus').forEach(button => {
-    button.onclick = () => {
-      const id = button.dataset.id;
-      const item = cart.find(x => x.itemNum == id);
-      if (item) {
-        item.qty++;
-        saveCart();
-        renderCart();
-        calculateOrderTotal();
-      }
-    };
-  });
-
-  cartContainer.querySelectorAll('.quantity-button.minus').forEach(button => {
-    button.onclick = () => {
-      const id = button.dataset.id;
-      const item = cart.find(x => x.itemNum == id);
-      if (item) {
-        item.qty--;
-        if (item.qty < 1) {
-          cart = cart.filter(x => x.itemNum != id);
-        }
-        saveCart();
-        renderCart();
-        calculateOrderTotal();
-      }
-    };
-  });
+  
 }
 
+// Add one click listener to the whole cart container
+cartContainer.addEventListener('click', function(event) {
+  // Check if the thing clicked has class 'quantity-button'
+  if (!event.target.classList.contains('quantity-button')) return;
+
+  const id = event.target.dataset.id; // Get which product's button was clicked
+  const item = cart.find(x => x.itemNum == id);
+  if (!item) return;
+
+  if (event.target.classList.contains('plus')) {
+    item.qty++;  // Increase quantity by 1
+  } else if (event.target.classList.contains('minus')) {
+    item.qty--;  // Decrease quantity by 1
+    if (item.qty < 1) {
+      // Remove item from cart if quantity goes below 1
+      cart = cart.filter(x => x.itemNum != id);
+    }
+  }
+
+  saveCart();      // Save cart to storage
+  renderCart();    // Redraw cart list with new quantities
+  calculateOrderTotal(); // Update totals and PayPal button
+});
+
+
+
+
+
+    
 
     
 
