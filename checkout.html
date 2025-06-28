@@ -3,1253 +3,387 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Your Cart | Beaver Built Furniture</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Material Icons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-
+  <title>Checkout - Beaver Built Furniture</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
   <style>
-    /* Reset & Base */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; padding: 20px; }
-    a { color: inherit; text-decoration: none; }
-
-    header {
-      display: flex; align-items: center; margin-bottom: 20px;
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 10px;
     }
-    .icon-btn {
-      font-size: 1.5rem; margin-right: 10px; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; color: #1f2937;
+    h1 {
+      text-align: center;
     }
-    header h1 {
-      font-size: 1.5rem; font-weight: normal;
-      flex: 1;
-    }
-
-    .cart-list {
-      width: 100%; border-collapse: collapse; margin-bottom: 20px;
-    }
-    .cart-list th, .cart-list td {
-      padding: 10px; text-align: left; border-bottom: 1px solid #e0e0e0;
-      vertical-align: top;
-    }
-    .cart-list th { font-weight: 600; text-transform: uppercase; font-size: 0.85rem; color: #555; }
-    .cart-list img {
-      width: 50px; height: 50px; object-fit: cover; border-radius: 4px;
-    }
-
-    .quantity-controls {
-      display: flex; align-items: center;
-    }
-    .quantity-controls button {
-      width: 24px; height: 24px; background: #e0e0e0; border: none;
-      border-radius: 4px; font-size: 1rem; line-height: 0; cursor: pointer;
-      margin: 0 5px;
-    }
-    .quantity-controls span {
-      min-width: 20px; text-align: center; display: inline-block;
-    }
-
-    .discount-info {
-      font-size: 0.85rem;
-      color: #15803d; /* green */
-      margin-top: 4px;
-      font-weight: 600;
-    }
-
-    .totals {
+    .cart-item {
       display: flex;
-      justify-content: flex-end;
-      padding-top: 10px;
-      margin-right: 5px;
-      margin-bottom: 25px;
-      font-size: 1.1rem; font-weight: 600;
+      justify-content: space-between;
+      margin: 10px 0;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
     }
-    .totals span:last-child { margin-left: 10px; }
-
-    /* Receipt checkbox styling */
-    .receipt-checkbox {
-      margin-top: 30px;
-      margin-bottom: 20px;
-      margin-left: 35px;
-      font-size: 0.9rem;
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      margin-right: 10px;
+    }
+    .cart-item-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .cart-item-name {
+      font-weight: bold;
+    }
+    .cart-item-qty,
+    .cart-item-price {
+      font-size: 0.9em;
+      color: #555;
+    }
+    #delivery-cost,
+    #order-total {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 1.1em;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    #paypal-button-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #distance-msg {
+      margin-top: 8px;
+      font-size: 0.9em;
+      color: #333;
+    }
+    #error-msg {
+      color: red;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    /* Map container */
+    #map {
+      margin-top: 10px;
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      display: none; /* hidden initially */
+    }
+    /* Marker styles */
+    .marker {
+      background-color: red;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      border: 2px solid white;
+      box-shadow: 0 0 2px rgba(0,0,0,0.5);
     }
-
-    /* Shipping form - centered and modern button */
-    #shipping-calculator {
-      max-width: 85%;
-      margin: 0 auto 20px auto;
-      padding: 0;
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      position: relative;
-      left: 0px; /* shift right slightly */
-      text-align: center;
-    }
-    #shipping-calculator label {
-      margin-bottom: 6px;
-      font-weight: 600;
-      display: block;
-      text-align: left;
-    }
-    #shipping-calculator input[type="text"],
-    #shipping-calculator select {
-      width: 100%;
-      padding: 6px 8px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-
-    #shipping-options {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-    #shipping-options label {
-      display: block;
-      margin-bottom: 6px;
-      cursor: pointer;
-    }
-
-    #get-rates-btn {
-      display: block;
-      margin: 20px auto 25px auto;
-      padding: 10px 25px;
-      background-color: #1f2937;
-      color: #fff;
-      font-weight: 600;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(31, 41, 55, 0.2);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-    }
-
-    #get-rates-btn:hover {
-      background-color: #374151;
-      box-shadow: 0 6px 12px rgba(31, 41, 55, 0.3);
-    }
-
-    /* PayPal button container */
-    #paypal-button-container {
-      max-width: 90%;
-      margin:auto;
-      padding-left:5px;
-    }
-
-    /* Messages */
-    #payment-message {
-      text-align: center;
-      margin-top: 15px;
-      font-weight: 600;
-      color: green;
-    }
-    #payment-error {
-      text-align: center;
-      margin-top: 15px;
-      font-weight: 600;
-      color: red;
-    }
-
-    /* Discount bubble */
-    #discount-bubble {
-      position: fixed;
-      bottom: 30px;
-      right: 20px;
-      background: #fcd34d;
-      color: #111;
-      font-weight: 600;
-      padding: 12px 16px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 9999;
-      font-size: 0.95rem;
-      max-width: 280px;
-      display: none;
-    }
-
-@keyframes pulseScale {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-#discount-bubble {
-  /* your existing styles */
-  animation: pulseScale 2s infinite ease-in-out;
-  /* Add transform origin so it scales from center */
-  transform-origin: center center;
-}
-
-  button {
-    cursor: pointer;
-    padding: 8px 12px;
-    background-color: #1f2937;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    margin-right: 8px;
-  }
-  button:hover {
-    background-color: #374151;
-  }
-  #delivery-message {
-    margin-top: 10px;
-    font-weight: bold;
-    line-height: 1.4;
-  }
-  #map {
-    width: 100%;
-    height: 250px;
-    margin-top: 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    display: none; /* Hidden initially */
-  }
-  /* Fullscreen modal styles */
-  #modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  #modal-map-container {
-    position: relative;
-    width: 90vw;
-    height: 90vh;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-  }
-  #modal-close-btn {
-    position: absolute;
-    top: 8px; right: 8px;
-    background: #e53e3e;
-    color: white;
-    border: none;
-    font-size: 20px;
-    border-radius: 50%;
-    width: 32px; height: 32px;
-    cursor: pointer;
-    z-index: 10;
-  }
-  #modal-map {
-    width: 100%;
-    height: 100%;
-    border-radius: 10px;
-  }
-  #fullscreen-btn {
-    margin-top: 10px;
-    padding: 6px 10px;
-    font-size: 0.9rem;
-    background-color: #059669;
-    display: none; /* Hidden initially */
-  }
-  #fullscreen-btn:hover {
-    background-color: #047857;
-  }
-  .marker-label {
-    background-color: red;
-    color: white;
-    font-weight: bold;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    border: 2px solid white;
-    box-sizing: border-box;
-  }
-
-#largeproduct {
-  background-color: transparent;
-  padding: 20px 25px;
-  border-radius: 10px;
-  max-width: 500px;
-  margin: 0 auto 30px auto;
-  font-family: Arial, sans-serif;
-  color: #1f2937;
-}
-
-#largeproduct h3 {
-  margin-bottom: 15px;
-  font-weight: 700;
-  font-size: 1.4rem;
-  border-bottom: 2px solid #22c55e;
-  padding-bottom: 8px;
-}
-
-#largeproduct label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-#largeproduct input[type="text"] {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  margin-bottom: 15px;
-  box-sizing: border-box;
-  transition: border-color 0.3s ease;
-}
-
-#largeproduct input[type="text"]:focus {
-  outline: none;
-  border-color: #22c55e;
-  box-shadow: 0 0 6px #22c55e66;
-}
-
-#largeproduct button#find-spots-btn {
-  background-color: #22c55e;
-  color: white;
-  padding: 12px 24px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.4);
-  transition: background-color 0.3s ease;
-}
-
-#largeproduct button#find-spots-btn:hover {
-  background-color: #16a34a;
-  box-shadow: 0 6px 12px rgba(22, 163, 74, 0.6);
-}
-
-#largeproduct #delivery-message {
-  margin-top: 15px;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #065f46; /* dark green */
-  min-height: 40px;
-}
-
-#largeproduct #map {
-  margin-top: 15px;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-  height: 300px; /* slightly taller map */
-  width: 100%;
-  display: none; /* keep hidden initially */
-}
-
-#largeproduct #fullscreen-btn {
-  margin-top: 12px;
-  padding: 8px 14px;
-  font-size: 0.95rem;
-  background-color: #22c55e;
-  color: white;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.5);
-  transition: background-color 0.3s ease;
-  display: none; /* initially hidden */
-}
-
-#largeproduct #fullscreen-btn:hover {
-  background-color: #16a34a;
-  box-shadow: 0 5px 12px rgba(22, 163, 74, 0.7);
-}
-
-#confirm-delivery-btn {
-  margin-top: 20px;
-  background-color: #22c55e;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(34,197,94,0.4);
-  transition: background-color 0.3s ease;
-  width: 100%;
-}
-
-#confirm-delivery-btn.selected {
-  background-color: #16a34a;
-  box-shadow: 0 0 12px #16a34aaa;
-}
-
-#free-pickup-section {
-  margin-top: 40px;
-  margin-bottom: 40px;
-  padding: 15px 20px;
-  border-radius: 10px;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  font-family: Arial, sans-serif;
-}
-
-#free-pickup-section h3 {
-  margin-bottom: 10px;
-  font-weight: 700;
-  color: #1f2937;
-}
-#free-pickup-section label {
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-#free-pickup-section input[type="radio"] {
-  margin-right: 8px;
-}
-
-hr{
-  width:100%;
-  opacity: 50%;
-}
-
   </style>
-  
-  <!-- Mapbox CSS & JS -->
-<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
-<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+
+  <!-- Load Mapbox GL JS -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+  <!-- Load PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AZ1st2QfbDjcDTmMwT27gZM2CtVRujmmQoLGSQuoC5HeBUgp1cWOk9NnFtelXrPW5viW2EXpEK3gqHDf&currency=USD"></script>
 </head>
 <body>
 
-  <header>
-    <!-- Home button -->
-    <a href="index.html" class="icon-btn" title="Home">
-      <span class="material-icons">home</span>
-    </a>
-    <!-- Back button -->
-    <span class="material-icons icon-btn" onclick="history.back()" title="Back">arrow_back</span>
-    <h1>Your Cart</h1>
-  </header>
+  <h1>Checkout</h1>
 
-  <table class="cart-list">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Price</th>
-        <th>Qty</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody id="cart-body">
-      <!-- JS injects rows here -->
-    </tbody>
-  </table>
+  <div id="cart-container"></div>
 
-  <div class="totals" style="margin-bottom: 50px;">
-    <span>Items Total:</span><span id="cart-total">$0.00</span>
-  </div>
+  <div id="delivery-cost">Delivery: $0.00</div>
+  <div id="order-total">Order Total: $0.00</div>
 
-  <div id="shipping-calculator">
-    <label for="zip">Enter Shipping ZIP/Postal Code:</label>
-    <input type="text" id="zip" placeholder="e.g. 90210" maxlength="10" />
+  <form id="checkout-form">
+    <label for="address">Delivery Address:</label>
+    <input type="text" id="address" name="address" placeholder="Enter your delivery address" required />
+    <div id="distance-msg"></div>
+    <div id="error-msg"></div>
+  </form>
 
-    <label for="country">Country:</label>
-    <select id="country">
-      <option value="US" selected>United States</option>
-      <option value="CA">Canada</option>
-      <!-- Add more countries as needed -->
-    </select>
+  <!-- Map container -->
+  <div id="map"></div>
 
-    <button class="get-rates-btn" type="button">Get Shipping Rates</button>
+  <div id="paypal-button-container"></div>
 
-    <div id="shipping-options"></div>
+  <script>
+    const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1Ijoia29keWEiLCJhIjoiY21jZGd1amVuMGJ0bTJqb2ptc3V4MDNtZyJ9.2cZ20_whY2bXAPZW545n9A';
+    const ORIGIN_ADDRESS = "427 Indian Ave, Hastings, IA 51540";
+    const DELIVERY_RATE_PER_MILE = 1.50;
 
-    <div class="totals">
-      <span>Shipping:</span><span id="shipping-cost">$0.00</span>
-    </div>
-</div>
+    mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
 
-<div id="largeproduct">
+    let cart = [];
+    let deliveryCost = 0;
+    let orderTotal = 0;
+    let originCoords = null;
+    let destinationCoords = null;
 
- <hr>
+    const cartContainer = document.getElementById('cart-container');
+    const deliveryCostEl = document.getElementById('delivery-cost');
+    const orderTotalEl = document.getElementById('order-total');
+    const addressInput = document.getElementById('address');
+    const distanceMsg = document.getElementById('distance-msg');
+    const errorMsg = document.getElementById('error-msg');
+    const paypalContainer = document.getElementById('paypal-button-container');
+    const mapDiv = document.getElementById('map');
 
-<h3>Large Item Delivery</h3>
+    // Initialize Mapbox map, centered initially at USA center
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [-95.7129, 37.0902], // USA center
+      zoom: 3
+    });
 
-<label for="address-input">Enter Customer Full Address:</label>
-<input type="text" id="address-input" placeholder="123 Main St, City, State ZIP" />
+    let originMarker, destinationMarker, routeLayerId = 'route';
 
-<div>
-  <button id="find-spots-btn" class="get-rates-btn">Calculate</button>
-</div>
-
-<div id="delivery-message"></div>
-<div id="map"></div>
-<button id="fullscreen-btn">Expand Map</button>
-
-<!-- Fullscreen Modal -->
-<div id="modal-overlay">
-  <div id="modal-map-container">
-    <button id="modal-close-btn" title="Close Map">&times;</button>
-    <div id="modal-map"></div>
-  </div>
-</div>
-
-    <div class="totals">
-      <span><strong>Order Total:</strong></span><span id="order-total">$0.00</span>
-    </div>
-
-<button id="confirm-delivery-btn" type="button">Confirm Delivery</button>
-
-</div>
-
-<hr>
-
-<div id="free-pickup-section">
-  <h3>Pickup Options</h3>
-  <label>
-    <input type="radio" name="shipping_option" id="free-pickup" value="0" />
-    Pickup (No charge)
-  </label>
-</div>
-
-<hr>
-
-<label class="receipt-checkbox">
-  <input type="checkbox" id="download-receipt" />
-  Download receipt after purchase
-</label>
-
-<div id="paypal-button-container"></div>
-
-<div id="payment-message"></div>
-<div id="payment-error"></div>
-
-<!-- Discount bubble -->
-<div id="discount-bubble">Get 10% off additional products!</div>
-
-<!-- Load jsPDF library for PDF generation -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- Load PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id=AUolc9Il1ow4yOeARcTxKwMvRMV43EHSS9UFpc2SO3n0bOt5eSiZSTp6OgepodrHjKgOBzX5BdhUaHDi&currency=USD"></script>
-
-<script>
-  const shippingClasses = {
-    A: { weight: 2,  dimensions: [8, 6, 4], name: "Small Accessories" },
-    B: { weight: 6,  dimensions: [12, 10, 6], name: "Wall Decor" },
-    C: { weight: 18, dimensions: [24, 18, 10], name: "Bench" },
-    D: { weight: 50, dimensions: [60, 24, 18], name: "Outdoor Bench" },
-    E: { weight: 150, dimensions: [72, 36, 30], name: "Dining Table" }
-  };
-
-  function assignShippingClass(price) {
-    if (price <= 100) return 'A';
-    if (price <= 300) return 'B';
-    if (price <= 700) return 'C';
-    if (price <= 1500) return 'D';
-    return 'E';
-  }
-
-  let deliveryCost = 0;
-
-  let cart = JSON.parse(localStorage.getItem('bbf_cart')||'[]');
-  let shippingCost = 0;
-  let selectedShippingOption = null;
-
-  const cartBody = document.getElementById('cart-body');
-  const cartTotalEl = document.getElementById('cart-total');
-  const paymentMessage = document.getElementById('payment-message');
-  const paymentError = document.getElementById('payment-error');
-  const downloadReceiptCheckbox = document.getElementById('download-receipt');
-  const zipInput = document.getElementById('zip');
-  const countrySelect = document.getElementById('country');
-
-  const getRatesBtns = document.querySelectorAll('.get-rates-btn');
-
-  const shippingOptionsDiv = document.getElementById('shipping-options');
-  const shippingCostEl = document.getElementById('shipping-cost');
-  const orderTotalEl = document.getElementById('order-total');
-  const discountBubble = document.getElementById('discount-bubble');
-
-  // Total quantity helper
-  function totalCartQuantity() {
-    return cart.reduce((acc, item) => acc + item.qty, 0);
-  }
-
-  function toggleLargeProductSection() {
-    const hasLargeProduct = cart.some(item => item.id === "large");
-    const largeProductDiv = document.getElementById('largeproduct');
-    const shippingCalcDiv = document.getElementById('shipping-calculator');
-
-    if (hasLargeProduct) {
-      largeProductDiv.style.display = 'block';
-      shippingCalcDiv.style.display = 'none';
-    } else {
-      largeProductDiv.style.display = 'none';
-      shippingCalcDiv.style.display = 'block';
+    function loadCart() {
+      cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
+      renderCart();
+      calculateOrderTotal();
     }
-  }
 
-  // Calculate discounted prices applying 10% off to all units after the first unit in total quantity
-  function renderCart() {
-    cartBody.innerHTML = '';
-    let totalFullPrice = 0;
-    let totalDiscountedPrice = 0;
-    let unitsProcessed = 0;
-
-    cart.forEach((item) => {
-      let sub = 0;
-      let discountAddedHtml = '';
-      let discountedUnits = 0;
-      let fullPriceUnits = 0;
-
-      // Calculate how many units get discount and how many at full price
-      if (unitsProcessed >= 1) {
-        // All this item's units discounted
-        discountedUnits = item.qty;
-        fullPriceUnits = 0;
-      } else if (unitsProcessed + item.qty <= 1) {
-        // All units full price
-        fullPriceUnits = item.qty;
-        discountedUnits = 0;
-      } else {
-        // Some units full price (to complete first unit), rest discounted
-        fullPriceUnits = 1 - unitsProcessed; // fraction to make total 1
-        discountedUnits = item.qty - fullPriceUnits;
-      }
-
-      unitsProcessed += item.qty;
-
-      // Calculate subtotal for this item with discount
-      sub += item.price * fullPriceUnits;
-      sub += item.price * 0.9 * discountedUnits;
-
-      // Show discount message if any units discounted
-      if (discountedUnits > 0) {
-        discountAddedHtml = `<div class="discount-info">10% Discount added</div>`;
-      }
-
-      totalFullPrice += item.price * fullPriceUnits;
-      totalDiscountedPrice += item.price * 0.9 * discountedUnits;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <img src="${item.img}" alt="" />
-          ${item.itemNum}
-        </td>
-        <td>
-          $${item.price.toFixed(2)}
-          ${discountAddedHtml}
-        </td>
-        <td>
-          <div class="quantity-controls">
-            <button class="dec" data-id="${item.itemNum}">−</button>
-            <span>${item.qty}</span>
-            <button class="inc" data-id="${item.itemNum}">+</button>
-          </div>
-        </td>
-        <td>$${sub.toFixed(2)}</td>
-      `;
-      cartBody.appendChild(tr);
-    });
-
-    // Call this function initially and after cart updates
-    toggleLargeProductSection();
-
-    const total = totalFullPrice + totalDiscountedPrice;
-    cartTotalEl.textContent = '$' + total.toFixed(2);
-    updateOrderTotal(total);
-    attachQtyHandlers();
-    checkForDiscountPrompt();
-  }
-
-  function attachQtyHandlers() {
-    document.querySelectorAll('.inc').forEach(btn => {
-      btn.onclick = () => adjustQty(btn.dataset.id, +1);
-    });
-    document.querySelectorAll('.dec').forEach(btn => {
-      btn.onclick = () => adjustQty(btn.dataset.id, -1);
-    });
-  }
-
-  function adjustQty(id, delta) {
-    const idx = cart.findIndex(i=>i.itemNum==id);
-    if (idx===-1) return;
-    cart[idx].qty += delta;
-    if (cart[idx].qty < 1) cart.splice(idx,1);
-    localStorage.setItem('bbf_cart', JSON.stringify(cart));
-    renderCart();
-  }
-
-  function calculatePackageFromCart() {
-    if (cart.length === 0) return null;
-
-    let totalWeight = 0;
-    let maxLength = 0, maxWidth = 0, totalHeight = 0;
-
-    cart.forEach(item => {
-      const cls = item.shippingClass || assignShippingClass(item.price);
-      const tier = shippingClasses[cls];
-      if (!tier) return;
-
-      const [length, width, height] = tier.dimensions;
-      const qty = item.qty;
-
-      totalWeight += tier.weight * qty;
-      maxLength = Math.max(maxLength, length);
-      maxWidth  = Math.max(maxWidth, width);
-      totalHeight += height * qty;
-    });
-
-    return {
-      weight: totalWeight,
-      dimensions: [maxLength, maxWidth, totalHeight],
-      name: 'Combined Package'
-    };
-  }
-
-  function updateOrderTotal(totalFromCart) {
-    const orderTotal = totalFromCart + shippingCost + deliveryCost;  // <-- Add deliveryCost here
-    orderTotalEl.textContent = '$' + orderTotal.toFixed(2);
-  }
-
-  function generatePDFReceipt(orderData) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Beaver Built Furniture", 10, 20);
-    doc.setFontSize(14);
-    doc.text("Purchase Receipt", 10, 30);
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleString()}`, 10, 40);
-
-    let y = 55;
-    doc.text("Items Purchased:", 10, y);
-    y += 10;
-
-    orderData.items.forEach(item => {
-      const line = `${item.name} (ID: ${item.itemNum}) x${item.quantity} - $${item.unit_amount.value}`;
-      doc.text(line, 10, y);
-      y += 10;
-    });
-
-    y += 10;
-    doc.text(`Shipping Method: ${selectedShippingOption ? selectedShippingOption.label : 'N/A'}`, 10, y);
-    y += 10;
-    doc.text(`Shipping Cost: $${shippingCost.toFixed(2)}`, 10, y);
-
-    y += 10;
-    doc.text(`Total Paid: $${orderData.purchase_units[0].amount.value}`, 10, y);
-
-    doc.save(`Receipt_${Date.now()}.pdf`);
-  }
-
-  async function fetchShippingRates(zip, country, packageInfo) {
-    await new Promise(r=>setTimeout(r, 500)); // simulate network delay
-
-    const base = packageInfo.weight;
-    return [
-      { id: 'standard', label: 'Standard Shipping (5-7 days)', amount: (5 + base * 0.5).toFixed(2) },
-      { id: 'express', label: 'Express Shipping (2-3 days)', amount: (15 + base * 1.0).toFixed(2) },
-      { id: 'overnight', label: 'Overnight Shipping', amount: (30 + base * 2.0).toFixed(2) },
-    ];
-  }
-
-  function renderShippingOptions(options) {
-    shippingOptionsDiv.innerHTML = '';
-    if(options.length === 0) {
-      shippingOptionsDiv.textContent = 'No shipping options found for this address/package.';
-      return;
-    }
-    options.forEach(opt => {
-      const id = 'ship_opt_' + opt.id;
-      const label = document.createElement('label');
-      label.htmlFor = id;
-      label.textContent = `${opt.label} - $${opt.amount}`;
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = 'shipping_option';
-      radio.id = id;
-      radio.value = opt.amount;
-      if(opt === options[0]) {
-        radio.checked = true;
-        selectedShippingOption = opt;
-        shippingCost = parseFloat(opt.amount);
-        shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-        updateOrderTotal(calculateDiscountedTotal());  // Fix here
-      }
-      radio.onchange = () => {
-        shippingCost = parseFloat(radio.value);
-        selectedShippingOption = opt;
-        shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-        updateOrderTotal(calculateDiscountedTotal());  // Correct
-      };
-      label.prepend(radio);
-      shippingOptionsDiv.appendChild(label);
-    });
-    shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-  }
-
-  function calculateDiscountedTotal(includeShipping = true) {
-    let unitsProcessed = 0;
-    let total = 0;
-    for (const item of cart) {
-      let fullPriceUnits = 0;
-      let discountedUnits = 0;
-
-      if (unitsProcessed >= 1) {
-        discountedUnits = item.qty;
-      } else if (unitsProcessed + item.qty <= 1) {
-        fullPriceUnits = item.qty;
-      } else {
-        fullPriceUnits = 1 - unitsProcessed;
-        discountedUnits = item.qty - fullPriceUnits;
-      }
-
-      unitsProcessed += item.qty;
-      total += item.price * fullPriceUnits + item.price * 0.9 * discountedUnits;
-    }
-    return includeShipping ? total + shippingCost : total;
-  }
-
-  document.querySelectorAll('.get-rates-btn').forEach(btn => {
-    btn.onclick = async () => {
-      paymentMessage.textContent = '';
-      paymentError.textContent = '';
-
-      const zip = zipInput.value.trim();
-      const country = countrySelect.value;
-      if (!zip) {
-        alert('Please enter your ZIP/postal code');
-        return;
-      }
+    function renderCart() {
+      cartContainer.innerHTML = '';
       if (cart.length === 0) {
-        alert('Your cart is empty!');
+        cartContainer.innerHTML = '<p>Your cart is empty.</p>';
+        paypalContainer.innerHTML = '';
         return;
       }
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <img src="${item.img}" alt="${item.itemNum}" />
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.itemNum} ${item.name || ''}</div>
+            <div class="cart-item-qty">Quantity: ${item.qty}</div>
+            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+          </div>
+        `;
+        cartContainer.appendChild(div);
+      });
+    }
 
-      const packageInfo = calculatePackageFromCart();
-      if (!packageInfo) {
-        alert('Could not determine package information');
+    function calculateOrderTotal() {
+      const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+      orderTotal = itemsTotal + deliveryCost;
+      deliveryCostEl.textContent = `Delivery: $${deliveryCost.toFixed(2)}`;
+      orderTotalEl.textContent = `Order Total: $${orderTotal.toFixed(2)}`;
+      renderPayPalButton();
+    }
+
+    function hasLargeItems() {
+      return cart.some(item => item.id === "large");
+    }
+
+    function totalLargeQuantity() {
+      return cart.filter(item => item.id === "large").reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    async function geocodeAddress(address) {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${MAPBOX_ACCESS_TOKEN}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to geocode address');
+      const data = await response.json();
+      if (!data.features || data.features.length === 0) throw new Error('No results found');
+      return data.features[0].center; // [lng, lat]
+    }
+
+    async function getDistanceAndRoute(originCoordsParam, destinationCoordsParam) {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${originCoordsParam[0]},${originCoordsParam[1]};${destinationCoordsParam[0]},${destinationCoordsParam[1]}?access_token=${MAPBOX_ACCESS_TOKEN}&geometries=geojson`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to get directions');
+      const data = await response.json();
+      if (!data.routes || data.routes.length === 0) throw new Error('No route found');
+      return data.routes[0];
+    }
+
+    function addMarker(coords, label) {
+      const el = document.createElement('div');
+      el.className = 'marker';
+      el.textContent = label;
+      return new mapboxgl.Marker(el).setLngLat(coords).addTo(map);
+    }
+
+    function drawRoute(routeGeoJSON) {
+      // Remove existing route layer if present
+      if (map.getLayer(routeLayerId)) {
+        map.removeLayer(routeLayerId);
+      }
+      if (map.getSource(routeLayerId)) {
+        map.removeSource(routeLayerId);
+      }
+
+      map.addSource(routeLayerId, {
+        type: 'geojson',
+        data: routeGeoJSON
+      });
+
+      map.addLayer({
+        id: routeLayerId,
+        type: 'line',
+        source: routeLayerId,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#28a745', // green
+          'line-width': 5
+        }
+      });
+    }
+
+    async function updateDeliveryCost() {
+      errorMsg.textContent = "";
+      distanceMsg.textContent = "";
+      deliveryCost = 0;
+      mapDiv.style.display = 'none';
+
+      const address = addressInput.value.trim();
+      if (!address) {
+        deliveryCostEl.textContent = "Delivery: $0.00";
+        orderTotalEl.textContent = `Order Total: $${cart.reduce((s,i)=>s+i.price*i.qty,0).toFixed(2)}`;
+        paypalContainer.innerHTML = '';
+        if (originMarker) { originMarker.remove(); originMarker=null; }
+        if (destinationMarker) { destinationMarker.remove(); destinationMarker=null; }
+        if (map.getLayer(routeLayerId)) { map.removeLayer(routeLayerId); }
+        if (map.getSource(routeLayerId)) { map.removeSource(routeLayerId); }
         return;
       }
 
       try {
-        const rates = await fetchShippingRates(zip, country, packageInfo);
-        renderShippingOptions(rates);
-      } catch (err) {
-        paymentError.textContent = 'Failed to fetch shipping rates. Please try again later.';
-        console.error(err);
+        distanceMsg.textContent = "Geocoding origin address...";
+        if (!originCoords) {
+          originCoords = await geocodeAddress(ORIGIN_ADDRESS);
+        }
+        distanceMsg.textContent = "Geocoding delivery address...";
+        destinationCoords = await geocodeAddress(address);
+
+        if (hasLargeItems()) {
+          distanceMsg.textContent = "Calculating driving distance and route...";
+          const route = await getDistanceAndRoute(originCoords, destinationCoords);
+          const miles = route.distance / 1609.34;
+          distanceMsg.textContent = `Distance from origin: ${miles.toFixed(2)} miles`;
+
+          const qty = totalLargeQuantity();
+          deliveryCost = miles * DELIVERY_RATE_PER_MILE * qty;
+          deliveryCostEl.textContent = `Delivery: $${deliveryCost.toFixed(2)}`;
+
+          calculateOrderTotal();
+
+          // Show map with markers and route
+          mapDiv.style.display = 'block';
+
+          // Remove previous markers if any
+          if (originMarker) originMarker.remove();
+          if (destinationMarker) destinationMarker.remove();
+
+          originMarker = addMarker(originCoords, 'A');
+          destinationMarker = addMarker(destinationCoords, 'B');
+
+          // Fit map to route bounds
+          const bounds = new mapboxgl.LngLatBounds();
+          route.geometry.coordinates.forEach(coord => bounds.extend(coord));
+          map.fitBounds(bounds, {
+          padding: { top: 50, bottom: 50, left: 50, right: 100          }
+                 });
+ 
+          // Draw route line
+          drawRoute(route.geometry);
+
+        } else {
+          distanceMsg.textContent = "Calculating shipping cost via Shippo...";
+          const shippoCost = await getShippoShippingCost();
+          deliveryCost = shippoCost;
+          deliveryCostEl.textContent = `Delivery: $${deliveryCost.toFixed(2)}`;
+          calculateOrderTotal();
+          mapDiv.style.display = 'none';
+          if (originMarker) { originMarker.remove(); originMarker=null; }
+          if (destinationMarker) { destinationMarker.remove(); destinationMarker=null; }
+          if (map.getLayer(routeLayerId)) { map.removeLayer(routeLayerId); }
+          if (map.getSource(routeLayerId)) { map.removeSource(routeLayerId); }
+        }
+      } catch (error) {
+        deliveryCostEl.textContent = "Delivery: N/A";
+        errorMsg.textContent = "Error: " + error.message;
+        paypalContainer.innerHTML = '';
+        mapDiv.style.display = 'none';
+        if (originMarker) { originMarker.remove(); originMarker=null; }
+        if (destinationMarker) { destinationMarker.remove(); destinationMarker=null; }
+        if (map.getLayer(routeLayerId)) { map.removeLayer(routeLayerId); }
+        if (map.getSource(routeLayerId)) { map.removeSource(routeLayerId); }
       }
-    };
-  });
-
-  // NEW PAYPAL BUTTONS:  
-paypal.Buttons({
-  createOrder: function(data, actions) {
-    if(cart.length === 0) {
-      alert("Your cart is empty!");
-      return actions.reject();
-    }
-    if(!selectedShippingOption) {
-      alert("Please select a shipping option.");
-      return actions.reject();
-    }
-    if (!zipInput.value.trim()) {
-      alert("Please enter a valid ZIP/postal code.");
-      return actions.reject();
-    }
-    if (!countrySelect.value) {
-      alert("Please select a country.");
-      return actions.reject();
     }
 
-    const itemsTotalRaw = calculateDiscountedTotal(false);
-    const itemsTotal = parseFloat(itemsTotalRaw.toFixed(2));
-    const shippingCostRounded = parseFloat(shippingCost.toFixed(2));
-    const orderTotal = parseFloat((itemsTotal + shippingCostRounded).toFixed(2));
+    async function getShippoShippingCost() {
+      // Placeholder for Shippo shipping cost
+      return new Promise(resolve => {
+        setTimeout(() => resolve(9.99), 500);
+      });
+    }
 
-    // Build items array carefully
-    let unitsProcessed = 0;
-    const items = cart.flatMap(item => {
-      let fullPriceUnits = 0;
-      let discountedUnits = 0;
-
-      if (unitsProcessed >= 1) {
-        discountedUnits = item.qty;
-      } else if (unitsProcessed + item.qty <= 1) {
-        fullPriceUnits = item.qty;
-      } else {
-        fullPriceUnits = 1 - unitsProcessed;
-        discountedUnits = item.qty - fullPriceUnits;
-      }
-      unitsProcessed += item.qty;
-
-      const arr = [];
-      if (fullPriceUnits > 0) {
-        arr.push({
-          name: item.itemNum + (discountedUnits > 0 ? " (Full Price)" : ""),
-          unit_amount: { currency_code: "USD", value: item.price.toFixed(2) },
-          quantity: fullPriceUnits.toString(),
-          item_category: "PHYSICAL_GOODS",
-          sku: item.itemNum
-        });
-      }
-      if (discountedUnits > 0) {
-        arr.push({
-          name: item.itemNum + " (10% Discount)",
-          unit_amount: { currency_code: "USD", value: (item.price * 0.9).toFixed(2) },
-          quantity: discountedUnits.toString(),
-          item_category: "PHYSICAL_GOODS",
-          sku: item.itemNum
-        });
-      }
-      return arr;
+    addressInput.addEventListener('change', updateDeliveryCost);
+    addressInput.addEventListener('input', () => {
+      clearTimeout(addressInput._timeout);
+      addressInput._timeout = setTimeout(updateDeliveryCost, 700);
     });
 
-    // Final payload object
-    const orderPayload = {
-      purchase_units: [{
-        amount: {
-          currency_code: "USD",
-          value: orderTotal.toFixed(2),
-          breakdown: {
-            item_total: { currency_code: "USD", value: itemsTotal.toFixed(2) },
-            shipping: { currency_code: "USD", value: shippingCostRounded.toFixed(2) }
-          }
+    function renderPayPalButton() {
+      if (cart.length === 0) {
+        paypalContainer.innerHTML = '';
+        return;
+      }
+      paypalContainer.innerHTML = '';
+      paypal.Buttons({
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: orderTotal.toFixed(2)
+              }
+            }]
+          });
         },
-        items: items,
-        shipping: {
-          method: selectedShippingOption.label,
-          address: {
-            postal_code: zipInput.value.trim(),
-            country_code: countrySelect.value
-          }
+        onApprove: function(data, actions) {
+          return actions.order.capture().then(function(details) {
+            alert('Transaction completed by ' + details.payer.name.given_name + '!');
+            localStorage.removeItem('bbf_cart');
+            window.location.href = 'thankyou.html';
+          });
+        },
+        onError: function(err) {
+          alert('Payment error: ' + err);
         }
-      }]
-    };
-
-    console.log("Creating PayPal order with payload:", JSON.stringify(orderPayload, null, 2));
-
-    return actions.order.create(orderPayload);
-  },
-
-  onApprove: function(data, actions) {
-    return actions.order.capture().then(function(details) {
-      paymentMessage.textContent = "Payment completed successfully! Thank you.";
-      paymentError.textContent = "";
-
-      localStorage.removeItem('bbf_cart');
-      cart = [];
-      renderCart();
-
-      if(downloadReceiptCheckbox.checked) {
-        generatePDFReceipt(details);
-      }
-    });
-  },
-
-  onError: function(err) {
-    paymentError.textContent = "An error occurred during payment. Please try again.";
-    paymentMessage.textContent = "";
-    console.error(err);
-  }
-}).render('#paypal-button-container');
-
-
-      console.log("PayPal order data:", JSON.stringify(purchaseUnits, null, 2)); // Debug log
-
-      return actions.order.create({
-        purchase_units: purchaseUnits
-      });
-    },
-
-    onApprove: function(data, actions) {
-      return actions.order.capture().then(function(details) {
-        paymentMessage.textContent = "Payment completed successfully! Thank you.";
-        paymentError.textContent = "";
-
-        localStorage.removeItem('bbf_cart');
-        cart = [];
-        renderCart();
-
-        if(downloadReceiptCheckbox.checked) {
-          generatePDFReceipt(details);
-        }
-      });
-    },
-
-    onError: function(err) {
-      paymentError.textContent = "An error occurred during payment. Please try again.";
-      paymentMessage.textContent = "";
-      console.error(err);
-    }
-  }).render('#paypal-button-container');
-
-  function checkForDiscountPrompt() {
-    const totalQty = totalCartQuantity();
-    if (totalQty >= 1) {  // Show bubble as soon as 1 or more units in cart
-      discountBubble.style.display = 'block';
-    } else {
-      discountBubble.style.display = 'none';
-    }
-  }
-
-  renderCart();
-</script>
-
-<script>
-  mapboxgl.accessToken = 'pk.eyJ1Ijoia29keWEiLCJhIjoiY21jZGd1amVuMGJ0bTJqb2ptc3V4MDNtZyJ9.2cZ20_whY2bXAPZW545n9A';
-
-  const warehouseCoords = [-95.4800, 41.0772]; // [lng, lat]
-  const perMileRate = 1.25;
-
-  const addressInput = document.getElementById('address-input');
-  const findSpotsBtn = document.getElementById('find-spots-btn');
-  const fullscreenBtn = document.getElementById('fullscreen-btn');
-  const deliveryMessage = document.getElementById('delivery-message');
-  const mapDiv = document.getElementById('map');
-  const modalOverlay = document.getElementById('modal-overlay');
-  const modalMapDiv = document.getElementById('modal-map');
-  const modalCloseBtn = document.getElementById('modal-close-btn');
-
-  let map, modalMap;
-  let startMarker = null, destMarker = null;
-  let startMarkerModal = null, destMarkerModal = null;
-  let customerCoords = null;
-  let drivingDistance = null;
-
-  // Initialize maps but do NOT display map container yet
-  map = new mapboxgl.Map({
-    container: mapDiv,
-    style: 'mapbox://styles/mapbox/streets-v12',
-    center: warehouseCoords,
-    zoom: 9
-  });
-  modalMap = new mapboxgl.Map({
-    container: modalMapDiv,
-    style: 'mapbox://styles/mapbox/streets-v12',
-    center: warehouseCoords,
-    zoom: 9
-  });
-
-  fullscreenBtn.onclick = () => {
-    modalOverlay.style.display = 'flex';
-    modalMap.resize();
-  };
-  modalCloseBtn.onclick = () => {
-    modalOverlay.style.display = 'none';
-  };
-
-  findSpotsBtn.onclick = async () => {
-    deliveryMessage.textContent = '';
-    fullscreenBtn.style.display = 'none';
-    clearMapLayers();
-    mapDiv.style.display = 'none'; // hide map until route loaded
-
-    const address = addressInput.value.trim();
-
-    if (!address) {
-      deliveryMessage.textContent = 'Please enter your full address.';
-      return;
+      }).render('#paypal-button-container');
     }
 
-    try {
-      customerCoords = await geocodeMapbox(address);
-      const routeData = await getDrivingRoute(warehouseCoords, customerCoords);
-      if (!routeData) throw new Error('No route found');
-
-      drivingDistance = routeData.distanceMiles;
-
-      showDeliveryInfo(drivingDistance);
-
-      drawRoute(routeData.geometry);
-
-      addMarkers();
-
-      mapDiv.style.display = 'block'; // show map after loading route
-      fullscreenBtn.style.display = 'inline-block';
-    } catch (err) {
-      deliveryMessage.textContent = `Error: ${err.message}`;
-      fullscreenBtn.style.display = 'none';
-      mapDiv.style.display = 'none';
-    }
-  };
-
-  function clearMapLayers() {
-    if (startMarker) {
-      startMarker.remove();
-      startMarker = null;
-    }
-    if (destMarker) {
-      destMarker.remove();
-      destMarker = null;
-    }
-    if (startMarkerModal) {
-      startMarkerModal.remove();
-      startMarkerModal = null;
-    }
-    if (destMarkerModal) {
-      destMarkerModal.remove();
-      destMarkerModal = null;
-    }
-    if(map.getLayer('route')) map.removeLayer('route');
-    if(map.getSource('route')) map.removeSource('route');
-    if(modalMap.getLayer('route')) modalMap.removeLayer('route');
-    if(modalMap.getSource('route')) modalMap.removeSource('route');
-  }
-
-  async function geocodeMapbox(address) {
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?limit=1&access_token=${mapboxgl.accessToken}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Geocode fetch failed: ${res.status} ${res.statusText}`);
-    const data = await res.json();
-    if(!data.features || data.features.length === 0) throw new Error('Address not found');
-    return data.features[0].center;
-  }
-
-  async function getDrivingRoute(startLngLat, endLngLat) {
-    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${startLngLat[0]},${startLngLat[1]};${endLngLat[0]},${endLngLat[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Directions fetch failed: ${res.status} ${res.statusText}`);
-    const data = await res.json();
-    if(!data.routes || data.routes.length === 0) throw new Error('No driving route found');
-    const route = data.routes[0];
-    return {
-      geometry: route.geometry,
-      distanceMiles: route.distance / 1609.34
-    };
-  }
-
-  function showDeliveryInfo(distance) {
-    const roundedMiles = Math.round(distance);
-    const totalCost = Math.round(distance * perMileRate);
-    deliveryCost = totalCost;  // <-- Add this line to update the global deliveryCost
-
-    deliveryMessage.innerHTML = `
-      <strong>Total miles:</strong> ${roundedMiles}<br>
-      <strong>Price per mile:</strong> $${perMileRate.toFixed(2)}<br>
-      <strong>Delivery total:</strong> $${totalCost}
-    `;
-
-    // Update the order total whenever delivery cost changes
-    updateOrderTotal(calculateDiscountedTotal());
-  }
-
-  function drawRoute(geojson) {
-    if (map.getSource('route')) {
-      if (map.getLayer('route')) map.removeLayer('route');
-      map.removeSource('route');
-    }
-    map.addSource('route', { type: 'geojson', data: geojson });
-    map.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': '#22c55e', 'line-width': 6 }
-    });
-    map.fitBounds(boundsFromGeojson(geojson), { padding: 40 });
-
-    if (modalMap.getSource('route')) {
-      if (modalMap.getLayer('route')) modalMap.removeLayer('route');
-      modalMap.removeSource('route');
-    }
-    modalMap.addSource('route', { type: 'geojson', data: geojson });
-    modalMap.addLayer({
-      id: 'route',
-      type: 'line',
-      source: 'route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': '#22c55e', 'line-width': 6 }
-    });
-    modalMap.fitBounds(boundsFromGeojson(geojson), { padding: 40 });
-  }
-
-  function boundsFromGeojson(geojson) {
-    const coords = geojson.coordinates;
-    const lats = coords.map(c => c[1]);
-    const lngs = coords.map(c => c[0]);
-    return [
-      [Math.min(...lngs), Math.min(...lats)],
-      [Math.max(...lngs), Math.max(...lats)]
-    ];
-  }
-
-  function createLabelMarker(label) {
-    const el = document.createElement('div');
-    el.className = 'marker-label';
-    el.textContent = label;
-    return el;
-  }
-
-  function addMarkers() {
-    // Start marker - warehouse (red with label "A")
-    startMarker = new mapboxgl.Marker(createLabelMarker('A')).setLngLat(warehouseCoords).addTo(map);
-    // Destination marker - customer (red with label "B")
-    destMarker = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(map);
-
-    // Same for modal map
-    startMarkerModal = new mapboxgl.Marker(createLabelMarker('A')).setLngLat(warehouseCoords).addTo(modalMap);
-    destMarkerModal = new mapboxgl.Marker(createLabelMarker('B')).setLngLat(customerCoords).addTo(modalMap);
-  }
-
-  const confirmDeliveryBtn = document.getElementById('confirm-delivery-btn');
-  const freePickupRadio = document.getElementById('free-pickup');
-
-  confirmDeliveryBtn.onclick = () => {
-    if (deliveryCost <= 0) {
-      alert('Please calculate delivery cost first.');
-      return;
-    }
-    selectedShippingOption = {
-      id: 'large_delivery',
-      label: 'Large Item Delivery',
-      amount: deliveryCost.toFixed(2)
-    };
-    shippingCost = deliveryCost;
-    shippingCostEl.textContent = '$' + shippingCost.toFixed(2);
-
-    // Visually update selections
-    confirmDeliveryBtn.classList.add('selected');
-    freePickupRadio.checked = false;
-    freePickupRadio.parentElement.classList.remove('selected');
-
-    updateOrderTotal(calculateDiscountedTotal());
-  };
-
-  freePickupRadio.onchange = () => {
-    if (freePickupRadio.checked) {
-      selectedShippingOption = {
-        id: 'free_pickup',
-        label: 'Free Pickup',
-        amount: '0.00'
-      };
-      shippingCost = 0;
-      shippingCostEl.textContent = '$0.00';
-
-      confirmDeliveryBtn.classList.remove('selected');
-
-      updateOrderTotal(calculateDiscountedTotal());
-    }
-  };
-</script>
+    loadCart();
+  </script>
 
 </body>
 </html>
