@@ -50,6 +50,30 @@
       margin-top: 15px;
       font-size: 1.1em;
     }
+
+.quantity-button {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 5px;
+}
+.cart-item-qty {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+
+    
     label {
       display: block;
       margin-top: 15px;
@@ -183,27 +207,65 @@
       calculateOrderTotal();
     }
 
-    function renderCart() {
-      cartContainer.innerHTML = '';
-      if (cart.length === 0) {
-        cartContainer.innerHTML = '<p>Your cart is empty.</p>';
-        paypalContainer.innerHTML = '';
-        return;
+ 
+function renderCart() {
+  cartContainer.innerHTML = '';
+  if (cart.length === 0) {
+    cartContainer.innerHTML = '<p>Your cart is empty.</p>';
+    paypalContainer.innerHTML = '';
+    return;
+  }
+  cart.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.innerHTML = `
+      <img src="${item.img}" alt="${item.itemNum}" />
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.itemNum} ${item.name || ''}</div>
+        <div class="cart-item-qty">
+          <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
+          <span>${item.qty}</span>
+          <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
+        </div>
+        <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+      </div>
+    `;
+    cartContainer.appendChild(div);
+  });
+
+  // Attach event listeners to plus/minus buttons after rendering
+  cartContainer.querySelectorAll('.quantity-button.plus').forEach(button => {
+    button.onclick = () => {
+      const id = button.dataset.id;
+      const item = cart.find(x => x.itemNum == id);
+      if (item) {
+        item.qty++;
+        saveCart();
+        renderCart();
+        calculateOrderTotal();
       }
-      cart.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
-          <img src="${item.img}" alt="${item.itemNum}" />
-          <div class="cart-item-info">
-            <div class="cart-item-name">${item.itemNum} ${item.name || ''}</div>
-            <div class="cart-item-qty">Quantity: ${item.qty}</div>
-            <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
-          </div>
-        `;
-        cartContainer.appendChild(div);
-      });
-    }
+    };
+  });
+
+  cartContainer.querySelectorAll('.quantity-button.minus').forEach(button => {
+    button.onclick = () => {
+      const id = button.dataset.id;
+      const item = cart.find(x => x.itemNum == id);
+      if (item) {
+        item.qty--;
+        if (item.qty < 1) {
+          cart = cart.filter(x => x.itemNum != id);
+        }
+        saveCart();
+        renderCart();
+        calculateOrderTotal();
+      }
+    };
+  });
+}
+
+
+    
 
     function calculateOrderTotal() {
       const itemsTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
