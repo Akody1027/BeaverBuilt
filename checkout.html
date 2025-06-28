@@ -1,5 +1,4 @@
-
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -25,8 +24,8 @@
       padding-bottom: 5px;
     }
     .cart-item img {
-      width: 60px;
-      height: 60px;
+      width: auto;
+      height: 120px;
       object-fit: cover;
       margin-right: 10px;
     }
@@ -52,6 +51,7 @@
     }
 
 .quantity-button {
+  
   width: 26px;
   height: 26px;
   border-radius: 4px;
@@ -59,7 +59,7 @@
   background: #e5e7eb;
   cursor: pointer;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 25px;
   line-height: 20px;
   display: inline-flex;
   justify-content: center;
@@ -67,6 +67,7 @@
   margin: 0 5px;
 }
 .cart-item-qty {
+  margin-left:80%;
   display: flex;
   align-items: center;
   margin-top: 4px;
@@ -221,13 +222,13 @@ function renderCart() {
     div.innerHTML = `
       <img src="${item.img}" alt="${item.itemNum}" />
       <div class="cart-item-info">
-        <div class="cart-item-name">${item.itemNum} ${item.name || ''}</div>
+        <div class="cart-item-name">Item: ${item.itemNum} ${item.name || ''}</div>
         <div class="cart-item-qty">
           <button class="quantity-button minus" data-id="${item.itemNum}">−</button>
           <span>${item.qty}</span>
           <button class="quantity-button plus" data-id="${item.itemNum}">+</button>
         </div>
-        <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+        <div class="cart-item-price">Price: $${(item.price * item.qty).toFixed(2)}</div>
       </div>
     `;
     cartContainer.appendChild(div);
