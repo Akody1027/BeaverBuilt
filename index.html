@@ -133,13 +133,14 @@
   // ... your existing popover toggle & cart code ...
 
   // When user clicks "Checkout" in the popover, go to cart.html
-  document.getElementById('checkout-btn').addEventListener('click', function(e) {
-    e.preventDefault();
-    // hide the popover (optional)
-    document.getElementById('cart-popover').style.display = 'none';
-    // navigate to your standalone cart page
-    window.location.href = 'checkout.html' target="_self";
-  });
+document.getElementById('checkout-btn').addEventListener('click', function(e) {
+  e.preventDefault();
+  // hide the popover (optional)
+  document.getElementById('cart-popover').style.display = 'none';
+  // <-- CHANGE HERE: Load checkout page inside iframe by setting iframe src -->
+  document.getElementById('view-frame').src = 'checkout.html';
+});
+
 </script>
   
 
