@@ -12,6 +12,7 @@
       max-width: 600px;
       margin: 20px auto;
       padding: 10px;
+      overflow-x: hidden;
     }
     h1 {
       text-align: center;
@@ -83,6 +84,8 @@
       height: 300px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin: 0 auto;
       display: none; /* hidden initially */
     }
     /* Marker styles */
@@ -99,6 +102,11 @@
       justify-content: center;
       border: 2px solid white;
       box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    }
+    #map .mapboxgl-canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
     }
   </style>
 
@@ -141,6 +149,10 @@
     let originCoords = null;
     let destinationCoords = null;
 
+    let originMarker = null;
+    let destinationMarker = null;
+    let routeLayerId = 'route';
+
     const cartContainer = document.getElementById('cart-container');
     const deliveryCostEl = document.getElementById('delivery-cost');
     const orderTotalEl = document.getElementById('order-total');
@@ -154,11 +166,16 @@
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [-95.7129, 37.0902], // USA center
-      zoom: 3
+      center: [-95.7129, 37.0902],
+      zoom: 3,
+      // Disable zoom and rotation interactions
+      scrollZoom: false,
+      boxZoom: false,
+      doubleClickZoom: false,
+      dragRotate: false,
+      touchZoomRotate: false,
+      dragPan: true
     });
-
-    let originMarker, destinationMarker, routeLayerId = 'route';
 
     function loadCart() {
       cart = JSON.parse(localStorage.getItem('bbf_cart') || '[]');
@@ -226,7 +243,7 @@
       const el = document.createElement('div');
       el.className = 'marker';
       el.textContent = label;
-      return new mapboxgl.Marker(el).setLngLat(coords).addTo(map);
+      return new mapboxgl.Marker(el, { anchor: 'bottom' }).setLngLat(coords).addTo(map);
     }
 
     function drawRoute(routeGeoJSON) {
@@ -300,19 +317,29 @@
           mapDiv.style.display = 'block';
 
           // Remove previous markers if any
-          if (originMarker) originMarker.remove();
-          if (destinationMarker) destinationMarker.remove();
+          if (originMarker) {
+            originMarker.remove();
+            originMarker = null;
+          }
+          if (destinationMarker) {
+            destinationMarker.remove();
+            destinationMarker = null;
+          }
 
+          // Add new markers at updated positions
           originMarker = addMarker(originCoords, 'A');
           destinationMarker = addMarker(destinationCoords, 'B');
 
-          // Fit map to route bounds
+          // Fit map to just the origin and destination bounds to avoid trailing route tails
           const bounds = new mapboxgl.LngLatBounds();
-          route.geometry.coordinates.forEach(coord => bounds.extend(coord));
+          bounds.extend(originCoords);
+          bounds.extend(destinationCoords);
+
           map.fitBounds(bounds, {
-          padding: { top: 50, bottom: 50, left: 50, right: 100          }
-                 });
- 
+            padding: { top: 50, bottom: 50, left: 50, right: 100 }
+          });
+          map.resize();
+
           // Draw route line
           drawRoute(route.geometry);
 
@@ -323,20 +350,40 @@
           deliveryCostEl.textContent = `Delivery: $${deliveryCost.toFixed(2)}`;
           calculateOrderTotal();
           mapDiv.style.display = 'none';
-          if (originMarker) { originMarker.remove(); originMarker=null; }
-          if (destinationMarker) { destinationMarker.remove(); destinationMarker=null; }
-          if (map.getLayer(routeLayerId)) { map.removeLayer(routeLayerId); }
-          if (map.getSource(routeLayerId)) { map.removeSource(routeLayerId); }
+          if (originMarker) {
+            originMarker.remove();
+            originMarker = null;
+          }
+          if (destinationMarker) {
+            destinationMarker.remove();
+            destinationMarker = null;
+          }
+          if (map.getLayer(routeLayerId)) {
+            map.removeLayer(routeLayerId);
+          }
+          if (map.getSource(routeLayerId)) {
+            map.removeSource(routeLayerId);
+          }
         }
       } catch (error) {
         deliveryCostEl.textContent = "Delivery: N/A";
         errorMsg.textContent = "Error: " + error.message;
         paypalContainer.innerHTML = '';
         mapDiv.style.display = 'none';
-        if (originMarker) { originMarker.remove(); originMarker=null; }
-        if (destinationMarker) { destinationMarker.remove(); destinationMarker=null; }
-        if (map.getLayer(routeLayerId)) { map.removeLayer(routeLayerId); }
-        if (map.getSource(routeLayerId)) { map.removeSource(routeLayerId); }
+        if (originMarker) {
+          originMarker.remove();
+          originMarker = null;
+        }
+        if (destinationMarker) {
+          destinationMarker.remove();
+          destinationMarker = null;
+        }
+        if (map.getLayer(routeLayerId)) {
+          map.removeLayer(routeLayerId);
+        }
+        if (map.getSource(routeLayerId)) {
+          map.removeSource(routeLayerId);
+        }
       }
     }
 
