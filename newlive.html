@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Custom Code Editor with Live Preview and Console</title>
+<title>Custom Code Editor with Live Preview and Console - Fixed</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   * {
@@ -75,39 +75,43 @@
     line-height: 1.4;
     background: #1e1e1e;
     color: #eee;
-    overflow: hidden;
     z-index: 10;
+    overflow: hidden;
   }
+
+  #scroll-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+  }
+
   #highlighting {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    overflow: hidden; /* Important: disable independent scroll */
-    white-space: pre-wrap;
+    top: 0; left: 0;
+    width: 100%;
     padding: 12px;
-    pointer-events: none;
-    user-select: none;
+    white-space: pre-wrap;
     font-family: monospace;
     font-size: 14px;
     line-height: 1.4;
+    color: transparent;
+    user-select: none;
+    pointer-events: none;
     box-sizing: border-box;
-    color: transparent; /* base text transparent */
     z-index: 1;
     background: transparent;
   }
+
   #highlighting code {
-    color: #eee; /* colored syntax */
-    white-space: pre-wrap;
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.4;
-    box-sizing: border-box;
     display: block;
+    color: #eee;
   }
+
   #editor-textarea {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: relative;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     background: transparent;
     color: #eee;
     border: none;
@@ -117,13 +121,12 @@
     line-height: 1.4;
     resize: none;
     outline: none;
-    overflow: auto;
-    caret-color: white;
     box-sizing: border-box;
+    white-space: pre-wrap;
     z-index: 2;
   }
 
-  /* Syntax Highlighting Styles */
+  /* Syntax Highlighting Colors */
   .tag { color: #569CD6; }
   .attr-name { color: #9CDCFE; }
   .attr-value { color: #CE9178; }
@@ -146,6 +149,7 @@
     border: none;
     z-index: 10;
   }
+
   #inspect-btn {
     position: fixed;
     bottom: 80px;
@@ -170,6 +174,7 @@
     background: #16a34a;
     box-shadow: 0 0 15px #16a34aff;
   }
+
   #console-overlay {
     position: fixed;
     bottom: 0;
@@ -203,8 +208,10 @@
 </header>
 
 <div id="editor-container">
-  <pre id="highlighting" aria-hidden="true"><code></code></pre>
-  <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+  <div id="scroll-container">
+    <pre id="highlighting" aria-hidden="true"><code></code></pre>
+    <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+  </div>
 </div>
 
 <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -215,6 +222,7 @@
 <script>
   const textarea = document.getElementById('editor-textarea');
   const highlighting = document.getElementById('highlighting').firstElementChild;
+  const scrollContainer = document.getElementById('scroll-container');
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
@@ -233,12 +241,10 @@
 
   let isConsoleVisible = false;
 
-  // Basic HTML syntax highlighting (tags, attributes, strings, comments)
+  // Syntax highlight with basic HTML parsing
   function syntaxHighlight(text) {
     text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
     text = text.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="comment">$1</span>');
-
     text = text.replace(/(&lt;\/?)([^\s&]+)([^&]*?)(&gt;)/g, (m, p1, tagName, attrs, p4) => {
       const attrReplaced = attrs.replace(/([^\s=]+)(="[^"]*")?/g, (m2, attrName, attrValue) => {
         let val = attrValue ? `<span class="attr-value">${attrValue}</span>` : '';
@@ -246,15 +252,19 @@
       });
       return `${p1}<span class="tag">${tagName}</span>${attrReplaced}${p4}`;
     });
-
     text = text.replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
-
     return text;
   }
 
-  textarea.addEventListener('scroll', () => {
-    highlighting.parentElement.scrollTop = textarea.scrollTop;
-    highlighting.parentElement.scrollLeft = textarea.scrollLeft;
+  // Update highlighting content
+  function updateHighlighting() {
+    highlighting.innerHTML = syntaxHighlight(textarea.value) + '\n '; // add trailing space to avoid clipping
+  }
+
+  // Sync scroll positions
+  scrollContainer.addEventListener('scroll', () => {
+    highlighting.style.top = -scrollContainer.scrollTop + 'px';
+    highlighting.style.left = -scrollContainer.scrollLeft + 'px';
   });
 
   textarea.addEventListener('input', () => {
@@ -265,13 +275,11 @@
     }
   });
 
-  function updateHighlighting() {
-    highlighting.innerHTML = syntaxHighlight(textarea.value) + '\n '; // trailing newline + space prevents clipping
-  }
+  // Initial highlight update
+  updateHighlighting();
 
   function updatePreview() {
     const userCode = textarea.value;
-
     const injectedScript = `
       <script>
         (function() {
@@ -306,7 +314,6 @@
       </body>
       </html>
     `;
-
     preview.srcdoc = fullHTML;
   }
 
@@ -386,8 +393,7 @@
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
   });
 
-  // Initialize highlighting and focus on load
-  updateHighlighting();
+  // Focus textarea on load
   textarea.focus();
 </script>
 
