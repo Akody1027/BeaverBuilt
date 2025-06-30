@@ -68,13 +68,13 @@
       white-space: nowrap;
     }
 
-    /* Monaco Editor container - FIXED: added width and height */
+    /* Monaco Editor container */
     #editor {
       position: fixed;
-      top: 40px; /* below header */
+      top: 40px;
       left: 0;
-      width: 100vw;             /* Added */
-      height: calc(100vh - 70px); /* Added */
+      width: 100vw;
+      height: calc(100vh - 70px);
       margin: 0; padding: 0;
       z-index: 10;
       display: block;
@@ -93,7 +93,6 @@
       z-index: 10;
     }
 
-    /* Floating Inspect Button */
     #inspect-btn {
       position: fixed;
       bottom: 80px;
@@ -119,7 +118,6 @@
       box-shadow: 0 0 15px #16a34aff;
     }
 
-    /* Console Overlay */
     #console-overlay {
       position: fixed;
       bottom: 0;
@@ -139,7 +137,6 @@
       user-select: text;
     }
   </style>
-  <!-- Monaco Editor loader -->
   <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs/loader.js"></script>
 </head>
 <body>
@@ -162,7 +159,7 @@
   <div id="console-overlay"></div>
 
 <script>
-  let editor; // Monaco editor instance
+  let editor;
 
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
@@ -171,18 +168,16 @@
   const inspectBtn = document.getElementById('inspect-btn');
   const consoleOverlay = document.getElementById('console-overlay');
 
-  let fontSize = 14; // Monaco default font size
+  let fontSize = 14;
   const minFontSize = 8;
   const maxFontSize = 40;
 
-  // Zoom scale inside iframe content
   let insideZoom = 1;
   const minInsideZoom = 0.2;
   const maxInsideZoom = 3;
 
   let isConsoleVisible = false;
 
-  // Inject code + setup console capturing inside iframe
   function updatePreview() {
     if (!editor) return;
     const userCode = editor.getValue();
@@ -226,22 +221,18 @@
     preview.srcdoc = fullHTML;
   }
 
-  // Append message to console overlay
   function appendConsole(type, message) {
     const time = new Date().toLocaleTimeString();
     consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
     consoleOverlay.scrollTop = consoleOverlay.scrollHeight;
   }
 
-  // Clear console overlay
   function clearConsole() {
     consoleOverlay.textContent = '';
   }
 
-  // Listen to messages from iframe to show logs/errors
   window.addEventListener('message', (event) => {
     if (!event.data || !event.data.type) return;
-
     if (event.data.type === 'log') {
       appendConsole('LOG', event.data.args.join(' '));
     } else if (event.data.type === 'error') {
@@ -249,7 +240,6 @@
     }
   });
 
-  // Debounce editor changes
   let changeTimeout;
   function debounceEditorChange() {
     clearTimeout(changeTimeout);
@@ -261,26 +251,27 @@
     }, 300);
   }
 
-  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
-  require(['vs/editor/editor.main'], function() {
-    editor = monaco.editor.create(document.getElementById('editor'), {
-      value: '',
-      language: 'html',
-      theme: 'vs-dark',
-      automaticLayout: true, // use automatic layout now that container has fixed size
-      fontSize: fontSize,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      wordWrap: 'on',
-      tabSize: 2,
-      lineNumbers: 'on'
+  window.onload = function() {
+    require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
+    require(['vs/editor/editor.main'], function() {
+      editor = monaco.editor.create(document.getElementById('editor'), {
+        value: '<!-- Start typing your HTML code here -->\n',
+        language: 'html',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: fontSize,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        wordWrap: 'on',
+        tabSize: 2,
+        lineNumbers: 'on'
+      });
+
+      editor.onDidChangeModelContent(debounceEditorChange);
+      editor.focus();
     });
+  };
 
-    editor.onDidChangeModelContent(debounceEditorChange);
-    editor.focus();
-  });
-
-  // Toggle editor/live preview
   toggleBtn.addEventListener('click', () => {
     if (preview.style.display === 'none' || preview.style.display === '') {
       preview.style.display = 'block';
@@ -301,7 +292,6 @@
     }
   });
 
-  // Zoom in/out handler: zoom inside iframe content or font size in editor
   incBtn.addEventListener('click', () => {
     if (preview.style.display === 'block') {
       if (insideZoom < maxInsideZoom) {
@@ -330,7 +320,6 @@
     }
   });
 
-  // Inspect button toggles console overlay
   inspectBtn.addEventListener('click', () => {
     isConsoleVisible = !isConsoleVisible;
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
