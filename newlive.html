@@ -81,7 +81,7 @@
   #highlighting {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    overflow: hidden;
+    overflow: hidden; /* Important: disable independent scroll */
     white-space: pre-wrap;
     padding: 12px;
     pointer-events: none;
@@ -90,17 +90,18 @@
     font-size: 14px;
     line-height: 1.4;
     box-sizing: border-box;
-    color: transparent;
+    color: transparent; /* base text transparent */
     z-index: 1;
     background: transparent;
   }
   #highlighting code {
-    color: #eee;
+    color: #eee; /* colored syntax */
     white-space: pre-wrap;
     font-family: monospace;
     font-size: 14px;
     line-height: 1.4;
     box-sizing: border-box;
+    display: block;
   }
   #editor-textarea {
     position: absolute;
@@ -234,15 +235,11 @@
 
   // Basic HTML syntax highlighting (tags, attributes, strings, comments)
   function syntaxHighlight(text) {
-    // Escape HTML special chars
     text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // Comments
     text = text.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="comment">$1</span>');
 
-    // Tags with attributes
     text = text.replace(/(&lt;\/?)([^\s&]+)([^&]*?)(&gt;)/g, (m, p1, tagName, attrs, p4) => {
-      // Attributes
       const attrReplaced = attrs.replace(/([^\s=]+)(="[^"]*")?/g, (m2, attrName, attrValue) => {
         let val = attrValue ? `<span class="attr-value">${attrValue}</span>` : '';
         return `<span class="attr-name">${attrName}</span>${val}`;
@@ -250,19 +247,16 @@
       return `${p1}<span class="tag">${tagName}</span>${attrReplaced}${p4}`;
     });
 
-    // Strings outside tags (very naive)
     text = text.replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
 
     return text;
   }
 
-  // Sync scroll of textarea and highlighting
   textarea.addEventListener('scroll', () => {
     highlighting.parentElement.scrollTop = textarea.scrollTop;
     highlighting.parentElement.scrollLeft = textarea.scrollLeft;
   });
 
-  // Update highlighting on input
   textarea.addEventListener('input', () => {
     updateHighlighting();
     if (preview.style.display === 'block') {
@@ -272,7 +266,7 @@
   });
 
   function updateHighlighting() {
-    highlighting.innerHTML = syntaxHighlight(textarea.value) + '<br>';
+    highlighting.innerHTML = syntaxHighlight(textarea.value) + '\n '; // trailing newline + space prevents clipping
   }
 
   function updatePreview() {
