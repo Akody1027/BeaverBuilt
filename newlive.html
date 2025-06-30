@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Custom Editor with Full HTML and CSS Selector Highlighting</title>
+<title>Monaco Editor with Live Preview and Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  /* Reset and base styles */
   * {
     box-sizing: border-box;
   }
@@ -70,67 +71,17 @@
     left: 0;
     width: 100vw;
     height: calc(100vh - 70px);
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.4;
     background: #1e1e1e;
-    color: #eee;
     z-index: 10;
-    overflow: hidden;
   }
 
-  #scroll-container {
-    position: relative;
+  /* Monaco editor fills container */
+  #editor {
     width: 100%;
     height: 100%;
-    overflow: auto;
   }
 
-  #highlighting {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    padding: 12px;
-    white-space: pre-wrap;
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.4;
-    color: transparent;
-    user-select: none;
-    pointer-events: none;
-    box-sizing: border-box;
-    z-index: 1;
-    background: transparent;
-  }
-
-  #highlighting code {
-    display: block;
-    white-space: pre-wrap;
-  }
-
-  /* Coloring classes */
-  .html-tag { color: red; }
-  .css-selector { color: green; }
-  .js-code { color: blue; }
-
-  #editor-textarea {
-    position: relative;
-    width: 100%;
-    min-height: 100%;
-    background: transparent;
-    color: #eee;
-    border: none;
-    padding: 12px;
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.4;
-    resize: none;
-    outline: none;
-    box-sizing: border-box;
-    white-space: pre-wrap;
-    z-index: 2;
-  }
-
+  /* Preview iframe */
   #preview {
     position: fixed;
     top: 40px;
@@ -139,11 +90,12 @@
     height: calc(100vh - 70px);
     background: white;
     color: black;
-    display: none;
     border: none;
+    display: none;
     z-index: 10;
   }
 
+  /* Floating Inspect Button */
   #inspect-btn {
     position: fixed;
     bottom: 80px;
@@ -169,6 +121,7 @@
     box-shadow: 0 0 15px #16a34aff;
   }
 
+  /* Console overlay */
   #console-overlay {
     position: fixed;
     bottom: 0;
@@ -188,6 +141,10 @@
     user-select: text;
   }
 </style>
+
+<!-- Monaco Editor loader -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs/loader.js"></script>
+
 </head>
 <body>
 
@@ -202,10 +159,7 @@
 </header>
 
 <div id="editor-container">
-  <div id="scroll-container">
-    <pre id="highlighting" aria-hidden="true"><code></code></pre>
-    <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
-  </div>
+  <div id="editor"></div>
 </div>
 
 <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -214,16 +168,15 @@
 <div id="console-overlay"></div>
 
 <script>
-  const textarea = document.getElementById('editor-textarea');
-  const highlighting = document.getElementById('highlighting').firstElementChild;
-  const scrollContainer = document.getElementById('scroll-container');
+  let editor; // Monaco instance
+
+  const editorContainer = document.getElementById('editor-container');
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
   const decBtn = document.getElementById('decrease-font-btn');
   const inspectBtn = document.getElementById('inspect-btn');
   const consoleOverlay = document.getElementById('console-overlay');
-  const editorContainer = document.getElementById('editor-container');
 
   let fontSize = 14;
   const minFontSize = 8;
@@ -235,67 +188,34 @@
 
   let isConsoleVisible = false;
 
-  // Regexes
-  // Match entire HTML tag including attributes (escaped)
-  const htmlTagRe = /&lt;\/?[\w-]+(?:\s+[^&]*?)?&gt;/g;
-  // Match full CSS selector before brace (escaped)
-  const cssSelectorRe = /([.#][\w-]+)(?=\s*\{)/g;
-  // JS strings, keywords, numbers
-  const jsStringRe = /(".*?"|'.*?'|`.*?`)/g;
-  const jsKeywordRe = /\b(const|let|var|function|if|else|return|for|while|new|this|class|async|await|try|catch)\b/g;
-  const jsNumberRe = /\b\d+(\.\d+)?\b/g;
+  require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
+  require(['vs/editor/editor.main'], function () {
+    editor = monaco.editor.create(document.getElementById('editor'), {
+      value: `<!-- Type your HTML, CSS, JS here -->\n`,
+      language: 'html',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      wordWrap: 'on',
+      tabSize: 2,
+      lineNumbers: 'on',
+    });
 
-  function escapeHtml(text) {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  function syntaxHighlight(text) {
-    let escaped = escapeHtml(text);
-
-    // Highlight entire HTML tags red
-    escaped = escaped.replace(htmlTagRe, (match) => `<span class="html-tag">${match}</span>`);
-
-    // Highlight entire CSS selectors green
-    escaped = escaped.replace(cssSelectorRe, (match) => `<span class="css-selector">${match}</span>`);
-
-    // Highlight JS strings blue
-    escaped = escaped.replace(jsStringRe, (match) => `<span class="js-code">${match}</span>`);
-
-    // Highlight JS keywords blue
-    escaped = escaped.replace(jsKeywordRe, (match) => `<span class="js-code">${match}</span>`);
-
-    // Highlight JS numbers blue
-    escaped = escaped.replace(jsNumberRe, (match) => `<span class="js-code">${match}</span>`);
-
-    return escaped;
-  }
-
-  function updateHighlighting() {
-    highlighting.innerHTML = syntaxHighlight(textarea.value) + '\n ';
-  }
-
-  scrollContainer.addEventListener('scroll', () => {
-    highlighting.style.top = -scrollContainer.scrollTop + 'px';
-    highlighting.style.left = -scrollContainer.scrollLeft + 'px';
+    editor.focus();
   });
 
-  textarea.addEventListener('input', () => {
-    updateHighlighting();
-    if (preview.style.display === 'block') {
-      updatePreview();
-      clearConsole();
-    }
-  });
-
-  updateHighlighting();
-
+  // Update preview iframe content with console capture
   function updatePreview() {
-    const userCode = textarea.value;
+    if (!editor) return;
+    const userCode = editor.getValue();
+
     const injectedScript = `
       <script>
-        (function() {
+        (function(){
           const sendMessage = (type, args) => {
-            parent.postMessage({ type, args: Array.from(args).map(a => (typeof a === 'object' ? JSON.stringify(a) : a.toString())) }, '*');
+            parent.postMessage({type, args: Array.from(args).map(a => (typeof a === 'object' ? JSON.stringify(a) : a.toString()))}, '*');
           };
           const oldLog = console.log;
           const oldError = console.error;
@@ -312,11 +232,12 @@
           };
         })();
       <\/script>`;
+
     const fullHTML = `
       <!DOCTYPE html>
       <html lang="en">
       <head><meta charset="UTF-8" />
-        <style>html { zoom: ${insideZoom}; -webkit-text-size-adjust: none; }</style>
+      <style>html { zoom: ${insideZoom}; -webkit-text-size-adjust: none; }</style>
       </head>
       <body>
       ${userCode}
@@ -324,9 +245,11 @@
       </body>
       </html>
     `;
+
     preview.srcdoc = fullHTML;
   }
 
+  // Console functions
   function appendConsole(type, message) {
     const time = new Date().toLocaleTimeString();
     consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
@@ -346,6 +269,7 @@
     }
   });
 
+  // Toggle editor/live preview
   toggleBtn.addEventListener('click', () => {
     if (preview.style.display === 'none' || preview.style.display === '') {
       preview.style.display = 'block';
@@ -359,13 +283,14 @@
       preview.style.display = 'none';
       editorContainer.style.display = 'block';
       toggleBtn.textContent = 'Show Live';
-      textarea.focus();
+      editor.focus();
       inspectBtn.style.display = 'none';
       consoleOverlay.style.display = 'none';
       insideZoom = 1;
     }
   });
 
+  // Zoom controls
   incBtn.addEventListener('click', () => {
     if (preview.style.display === 'block') {
       if (insideZoom < maxInsideZoom) {
@@ -375,9 +300,7 @@
     } else {
       if (fontSize < maxFontSize) {
         fontSize++;
-        editorContainer.style.fontSize = fontSize + 'px';
-        textarea.style.fontSize = fontSize + 'px';
-        updateHighlighting();
+        if (editor) editor.updateOptions({ fontSize });
       }
     }
   });
@@ -391,19 +314,17 @@
     } else {
       if (fontSize > minFontSize) {
         fontSize--;
-        editorContainer.style.fontSize = fontSize + 'px';
-        textarea.style.fontSize = fontSize + 'px';
-        updateHighlighting();
+        if (editor) editor.updateOptions({ fontSize });
       }
     }
   });
 
+  // Inspect button toggles console overlay
   inspectBtn.addEventListener('click', () => {
     isConsoleVisible = !isConsoleVisible;
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
   });
 
-  textarea.focus();
 </script>
 
 </body>
