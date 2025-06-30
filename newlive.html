@@ -2,27 +2,40 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Code Editor with Live Preview and Inspect Console</title>
+<title>Code Editor with Live Preview and Inspect Console (CodeMirror 6)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  * { box-sizing: border-box; }
+  /* Reset and base styles */
+  * {
+    box-sizing: border-box;
+  }
   body, html {
-    margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    overflow: hidden;
     font-family: Arial, sans-serif;
     background: #121212;
     color: #eee;
   }
   header {
-    position: fixed; top: 0; left: 0; width: 100%; height: 40px;
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    height: 40px;
     background: #1f1f1f;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 10px; z-index: 20; user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    z-index: 20;
+    user-select: none;
   }
   #left-controls {
-    display: flex; gap: 10px; align-items: center;
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
   #right-controls {
-    display: flex; align-items: center;
+    display: flex;
+    align-items: center;
   }
   header button {
     background-color: #22c55e;
@@ -50,18 +63,29 @@
     cursor: pointer;
     white-space: nowrap;
   }
+
+  /* Editor container */
   #editor {
     position: fixed;
     top: 40px;
     left: 0;
     width: 100vw;
     height: calc(100vh - 70px);
-    margin: 0; padding: 0;
+    background: #1e1e1e;
+    color: #eee;
+    font-family: monospace;
+    font-size: 14px;
+    overflow: auto;
     z-index: 10;
-    display: block;
-    background: transparent;
-    pointer-events: auto;
   }
+
+  /* CodeMirror editor specific styles */
+  .cm-editor {
+    height: 100%;
+    outline: none;
+  }
+
+  /* Preview iframe */
   #preview {
     position: fixed;
     top: 40px;
@@ -74,6 +98,8 @@
     border: none;
     z-index: 10;
   }
+
+  /* Floating Inspect Button */
   #inspect-btn {
     position: fixed;
     bottom: 80px;
@@ -98,6 +124,8 @@
     background: #16a34a;
     box-shadow: 0 0 15px #16a34aff;
   }
+
+  /* Console Overlay */
   #console-overlay {
     position: fixed;
     bottom: 0;
@@ -117,7 +145,16 @@
     user-select: text;
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs/loader.js"></script>
+
+<!-- CodeMirror 6 CDN and dependencies -->
+<script type="module">
+  import {EditorView, basicSetup} from "https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.19.3/dist/index.js";
+  import {html} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-html@0.19.6/dist/index.js";
+  import {keymap} from "https://cdn.jsdelivr.net/npm/@codemirror/view@0.19.47/dist/index.js";
+
+  window.cmModules = { EditorView, basicSetup, html, keymap };
+</script>
+
 </head>
 <body>
 
@@ -138,9 +175,10 @@
 <button id="inspect-btn" title="Toggle Console">💬</button>
 <div id="console-overlay"></div>
 
-<script>
-  let editor;
+<script type="module">
+  const {EditorView, basicSetup, html} = window.cmModules;
 
+  const editorContainer = document.getElementById('editor');
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
@@ -158,9 +196,47 @@
 
   let isConsoleVisible = false;
 
+  let editor = new EditorView({
+    doc: "<!-- Start typing your HTML code here -->\n",
+    extensions: [
+      basicSetup,
+      html(),
+      EditorView.lineWrapping,
+      EditorView.theme({
+        "&": {
+          height: "100%",
+          fontSize: fontSize + "px",
+          backgroundColor: "#1e1e1e",
+          color: "#eee"
+        },
+        ".cm-scroller": {
+          fontFamily: "monospace"
+        }
+      }),
+      EditorView.updateListener.of(update => {
+        if (update.docChanged && preview.style.display === "block") {
+          clearConsole();
+          updatePreview();
+        }
+      }),
+    ],
+    parent: editorContainer
+  });
+
+  function getEditorContent() {
+    return editor.state.doc.toString();
+  }
+
+  function setEditorFontSize(size) {
+    editor.dispatch({
+      effects: EditorView.theme({
+        "&": { fontSize: size + "px" }
+      }, { dark: true, override: true })
+    });
+  }
+
   function updatePreview() {
-    if (!editor) return;
-    const userCode = editor.getValue();
+    const userCode = getEditorContent();
 
     const injectedScript = `
       <script>
@@ -220,40 +296,10 @@
     }
   });
 
-  let changeTimeout;
-  function debounceEditorChange() {
-    clearTimeout(changeTimeout);
-    changeTimeout = setTimeout(() => {
-      if (preview.style.display === 'block') {
-        updatePreview();
-        clearConsole();
-      }
-    }, 300);
-  }
-
-  require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
-  require(['vs/editor/editor.main'], function() {
-    editor = monaco.editor.create(document.getElementById('editor'), {
-      value: '<!-- Start typing here -->\n',
-      language: 'html',
-      theme: 'vs-dark',
-      automaticLayout: true,
-      fontSize: fontSize,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      wordWrap: 'on',
-      tabSize: 2,
-      lineNumbers: 'on'
-    });
-
-    editor.focus();
-    editor.onDidChangeModelContent(debounceEditorChange);
-  });
-
   toggleBtn.addEventListener('click', () => {
     if (preview.style.display === 'none' || preview.style.display === '') {
       preview.style.display = 'block';
-      document.getElementById('editor').style.display = 'none';
+      editorContainer.style.display = 'none';
       toggleBtn.textContent = 'Show Editor';
       updatePreview();
       clearConsole();
@@ -261,9 +307,9 @@
       inspectBtn.style.display = 'flex';
     } else {
       preview.style.display = 'none';
-      document.getElementById('editor').style.display = 'block';
+      editorContainer.style.display = 'block';
       toggleBtn.textContent = 'Show Live';
-      if (editor) editor.focus();
+      editor.focus();
       inspectBtn.style.display = 'none';
       consoleOverlay.style.display = 'none';
       insideZoom = 1;
@@ -279,7 +325,7 @@
     } else {
       if (fontSize < maxFontSize) {
         fontSize++;
-        if (editor) editor.updateOptions({ fontSize });
+        setEditorFontSize(fontSize);
       }
     }
   });
@@ -293,7 +339,7 @@
     } else {
       if (fontSize > minFontSize) {
         fontSize--;
-        if (editor) editor.updateOptions({ fontSize });
+        setEditorFontSize(fontSize);
       }
     }
   });
