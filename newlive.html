@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Code Editor with Live Preview and Inspect Console (CodeMirror 6)</title>
+<title>Custom Code Editor with Live Preview and Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  /* Reset and base styles */
   * {
     box-sizing: border-box;
   }
@@ -64,28 +63,63 @@
     white-space: nowrap;
   }
 
-  /* Editor container */
-  #editor {
+  #editor-container {
     position: fixed;
     top: 40px;
     left: 0;
     width: 100vw;
     height: calc(100vh - 70px);
-    background: #1e1e1e;
-    color: #eee;
     font-family: monospace;
     font-size: 14px;
-    overflow: auto;
+    line-height: 1.4;
+    background: #1e1e1e;
+    color: #eee;
+    overflow: hidden;
     z-index: 10;
   }
-
-  /* CodeMirror editor specific styles */
-  .cm-editor {
+  #highlighting {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: auto;
+    white-space: pre-wrap;
+    padding: 12px;
+    pointer-events: none;
+    color: transparent;
+    user-select: none;
+    font-family: monospace;
+  }
+  #highlighting code {
+    color: #eee;
+  }
+  #editor-textarea {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
     height: 100%;
+    background: transparent;
+    color: #eee;
+    border: none;
+    padding: 12px;
+    font-family: monospace;
+    font-size: inherit;
+    line-height: inherit;
+    resize: none;
     outline: none;
+    overflow: auto;
+    caret-color: white;
   }
 
-  /* Preview iframe */
+  /* Syntax Highlighting Styles */
+  .tag { color: #569CD6; }
+  .attr-name { color: #9CDCFE; }
+  .attr-value { color: #CE9178; }
+  .comment { color: #6A9955; font-style: italic; }
+  .string { color: #CE9178; }
+  .keyword { color: #C586C0; }
+  .number { color: #B5CEA8; }
+  .operator { color: #D4D4D4; }
+  .text { color: #D4D4D4; }
+
   #preview {
     position: fixed;
     top: 40px;
@@ -98,8 +132,6 @@
     border: none;
     z-index: 10;
   }
-
-  /* Floating Inspect Button */
   #inspect-btn {
     position: fixed;
     bottom: 80px;
@@ -124,8 +156,6 @@
     background: #16a34a;
     box-shadow: 0 0 15px #16a34aff;
   }
-
-  /* Console Overlay */
   #console-overlay {
     position: fixed;
     bottom: 0;
@@ -145,16 +175,6 @@
     user-select: text;
   }
 </style>
-
-<!-- CodeMirror 6 CDN and dependencies -->
-<script type="module">
-  import {EditorView, basicSetup} from "https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.19.3/dist/index.js";
-  import {html} from "https://cdn.jsdelivr.net/npm/@codemirror/lang-html@0.19.6/dist/index.js";
-  import {keymap} from "https://cdn.jsdelivr.net/npm/@codemirror/view@0.19.47/dist/index.js";
-
-  window.cmModules = { EditorView, basicSetup, html, keymap };
-</script>
-
 </head>
 <body>
 
@@ -168,23 +188,26 @@
   </div>
 </header>
 
-<div id="editor"></div>
+<div id="editor-container">
+  <pre id="highlighting" aria-hidden="true"><code></code></pre>
+  <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+</div>
 
 <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
 
 <button id="inspect-btn" title="Toggle Console">💬</button>
 <div id="console-overlay"></div>
 
-<script type="module">
-  const {EditorView, basicSetup, html} = window.cmModules;
-
-  const editorContainer = document.getElementById('editor');
+<script>
+  const textarea = document.getElementById('editor-textarea');
+  const highlighting = document.getElementById('highlighting').firstElementChild;
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
   const decBtn = document.getElementById('decrease-font-btn');
   const inspectBtn = document.getElementById('inspect-btn');
   const consoleOverlay = document.getElementById('console-overlay');
+  const editorContainer = document.getElementById('editor-container');
 
   let fontSize = 14;
   const minFontSize = 8;
@@ -196,47 +219,51 @@
 
   let isConsoleVisible = false;
 
-  let editor = new EditorView({
-    doc: "<!-- Start typing your HTML code here -->\n",
-    extensions: [
-      basicSetup,
-      html(),
-      EditorView.lineWrapping,
-      EditorView.theme({
-        "&": {
-          height: "100%",
-          fontSize: fontSize + "px",
-          backgroundColor: "#1e1e1e",
-          color: "#eee"
-        },
-        ".cm-scroller": {
-          fontFamily: "monospace"
-        }
-      }),
-      EditorView.updateListener.of(update => {
-        if (update.docChanged && preview.style.display === "block") {
-          clearConsole();
-          updatePreview();
-        }
-      }),
-    ],
-    parent: editorContainer
-  });
+  // Basic HTML syntax highlighting (tags, attributes, strings, comments)
+  function syntaxHighlight(text) {
+    // Escape HTML special chars
+    text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  function getEditorContent() {
-    return editor.state.doc.toString();
+    // Comments
+    text = text.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="comment">$1</span>');
+
+    // Tags with attributes
+    text = text.replace(/(&lt;\/?)([^\s&]+)([^&]*?)(&gt;)/g, (m, p1, tagName, attrs, p4) => {
+      // Attributes
+      const attrReplaced = attrs.replace(/([^\s=]+)(="[^"]*")?/g, (m2, attrName, attrValue) => {
+        let val = attrValue ? `<span class="attr-value">${attrValue}</span>` : '';
+        return `<span class="attr-name">${attrName}</span>${val}`;
+      });
+      return `${p1}<span class="tag">${tagName}</span>${attrReplaced}${p4}`;
+    });
+
+    // Strings outside tags (very naive)
+    text = text.replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
+
+    return text;
   }
 
-  function setEditorFontSize(size) {
-    editor.dispatch({
-      effects: EditorView.theme({
-        "&": { fontSize: size + "px" }
-      }, { dark: true, override: true })
-    });
+  // Sync scroll of textarea and highlighting
+  textarea.addEventListener('scroll', () => {
+    highlighting.parentElement.scrollTop = textarea.scrollTop;
+    highlighting.parentElement.scrollLeft = textarea.scrollLeft;
+  });
+
+  // Update highlighting on input
+  textarea.addEventListener('input', () => {
+    updateHighlighting();
+    if (preview.style.display === 'block') {
+      updatePreview();
+      clearConsole();
+    }
+  });
+
+  function updateHighlighting() {
+    highlighting.innerHTML = syntaxHighlight(textarea.value) + '<br>'; // add <br> to keep height consistent
   }
 
   function updatePreview() {
-    const userCode = getEditorContent();
+    const userCode = textarea.value;
 
     const injectedScript = `
       <script>
@@ -263,8 +290,7 @@
     const fullHTML = `
       <!DOCTYPE html>
       <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
+      <head><meta charset="UTF-8" />
         <style>html { zoom: ${insideZoom}; -webkit-text-size-adjust: none; }</style>
       </head>
       <body>
@@ -309,7 +335,7 @@
       preview.style.display = 'none';
       editorContainer.style.display = 'block';
       toggleBtn.textContent = 'Show Live';
-      editor.focus();
+      textarea.focus();
       inspectBtn.style.display = 'none';
       consoleOverlay.style.display = 'none';
       insideZoom = 1;
@@ -325,7 +351,9 @@
     } else {
       if (fontSize < maxFontSize) {
         fontSize++;
-        setEditorFontSize(fontSize);
+        editorContainer.style.fontSize = fontSize + 'px';
+        textarea.style.fontSize = fontSize + 'px';
+        updateHighlighting();
       }
     }
   });
@@ -339,7 +367,9 @@
     } else {
       if (fontSize > minFontSize) {
         fontSize--;
-        setEditorFontSize(fontSize);
+        editorContainer.style.fontSize = fontSize + 'px';
+        textarea.style.fontSize = fontSize + 'px';
+        updateHighlighting();
       }
     }
   });
@@ -348,6 +378,10 @@
     isConsoleVisible = !isConsoleVisible;
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
   });
+
+  // Initialize highlighting on page load
+  updateHighlighting();
+  textarea.focus();
 </script>
 
 </body>
