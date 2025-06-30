@@ -154,7 +154,6 @@
     </div>
   </header>
 
-  <!-- Monaco editor container -->
   <div id="editor"></div>
 
   <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -164,22 +163,6 @@
 
 <script>
   let editor; // Monaco editor instance
-
-  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
-  require(['vs/editor/editor.main'], function() {
-    editor = monaco.editor.create(document.getElementById('editor'), {
-      value: '',
-      language: 'html',
-      theme: 'vs-dark',
-      automaticLayout: true,
-      fontSize: 14,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      wordWrap: 'on',
-      tabSize: 2,
-      lineNumbers: 'on'
-    });
-  });
 
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
@@ -243,6 +226,18 @@
     preview.srcdoc = fullHTML;
   }
 
+  // Append message to console overlay
+  function appendConsole(type, message) {
+    const time = new Date().toLocaleTimeString();
+    consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
+    consoleOverlay.scrollTop = consoleOverlay.scrollHeight;
+  }
+
+  // Clear console overlay
+  function clearConsole() {
+    consoleOverlay.textContent = '';
+  }
+
   // Listen to messages from iframe to show logs/errors
   window.addEventListener('message', (event) => {
     if (!event.data || !event.data.type) return;
@@ -254,37 +249,36 @@
     }
   });
 
-  // Append message to console overlay
-  function appendConsole(type, message) {
-    const color = type === 'ERROR' ? '#ff6666' : '#99ff99';
-    const time = new Date().toLocaleTimeString();
-    consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
-    consoleOverlay.scrollTop = consoleOverlay.scrollHeight;
-  }
-
-  // Clear console overlay
-  function clearConsole() {
-    consoleOverlay.textContent = '';
-  }
-
-  // Editor content change listener
-  function onEditorChange() {
-    if (preview.style.display === 'block') {
-      updatePreview();
-      clearConsole();
-    }
-  }
-
-  // Debounce editor changes (to avoid too many updates)
+  // Debounce editor changes
   let changeTimeout;
   function debounceEditorChange() {
     clearTimeout(changeTimeout);
-    changeTimeout = setTimeout(onEditorChange, 300);
+    changeTimeout = setTimeout(() => {
+      if (preview.style.display === 'block') {
+        updatePreview();
+        clearConsole();
+      }
+    }, 300);
   }
 
-  // Wait for Monaco to be ready and then set up change event listener
+  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
   require(['vs/editor/editor.main'], function() {
+    editor = monaco.editor.create(document.getElementById('editor'), {
+      value: '',
+      language: 'html',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: fontSize,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      wordWrap: 'on',
+      tabSize: 2,
+      lineNumbers: 'on'
+    });
+
     editor.onDidChangeModelContent(debounceEditorChange);
+
+    editor.focus();
   });
 
   // Toggle editor/live preview
@@ -301,7 +295,7 @@
       preview.style.display = 'none';
       document.getElementById('editor').style.display = 'block';
       toggleBtn.textContent = 'Show Live';
-      editor.focus();
+      if (editor) editor.focus();
       inspectBtn.style.display = 'none';
       consoleOverlay.style.display = 'none';
       insideZoom = 1;
@@ -318,7 +312,7 @@
     } else {
       if (fontSize < maxFontSize) {
         fontSize++;
-        editor.updateOptions({ fontSize });
+        if (editor) editor.updateOptions({ fontSize });
       }
     }
   });
@@ -332,7 +326,7 @@
     } else {
       if (fontSize > minFontSize) {
         fontSize--;
-        editor.updateOptions({ fontSize });
+        if (editor) editor.updateOptions({ fontSize });
       }
     }
   });
@@ -341,12 +335,6 @@
   inspectBtn.addEventListener('click', () => {
     isConsoleVisible = !isConsoleVisible;
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
-  });
-
-  // Initial font size setup and focus - once Monaco is ready
-  require(['vs/editor/editor.main'], function() {
-    editor.updateOptions({ fontSize });
-    editor.focus();
   });
 </script>
 
