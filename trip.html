@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1100, initial-scale=1" />
+<title>Editable Trip Ticket Form</title>
+<style>
+  body {
+    margin: 0;
+    background: #fff;
+    font-family: Arial, sans-serif;
+  }
+  #container {
+    position: relative;
+    width: 1100px;
+    height: 840px;
+    margin: 20px auto;
+    background-image: url('1000034940.jpg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    border: 1px solid #ccc;
+  }
+  input, textarea {
+    position: absolute;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    color: black;
+    font-weight: 600;
+    outline: none;
+  }
+  input::placeholder, textarea::placeholder {
+    color: rgba(0,0,0,0.4);
+  }
+  textarea {
+    resize: none;
+  }
+  /* Position input fields exactly on the form */
+  /* DRIVER */
+  #driver {
+    top: 60px; left: 120px; width: 350px; height: 22px;
+    padding-left: 3px;
+  }
+  /* TRACTOR */
+  #tractor {
+    top: 90px; left: 120px; width: 150px; height: 22px;
+    padding-left: 3px;
+  }
+  /* TRAILER */
+  #trailer {
+    top: 90px; left: 355px; width: 150px; height: 22px;
+    padding-left: 3px;
+  }
+  /* TRIP NUMBER */
+  #tripNumber {
+    top: 60px; left: 880px; width: 150px; height: 22px;
+    padding-left: 3px;
+  }
+  /* DATE */
+  #tripDate {
+    top: 90px; left: 880px; width: 150px; height: 22px;
+    padding-left: 3px;
+  }
+  /* Table inputs - 10 rows x 6 columns */
+  /* CODE (single char) */
+  .code {
+    width: 25px; height: 22px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  /* Miles */
+  .miles {
+    width: 70px; height: 22px;
+    text-align: center;
+  }
+  /* Mileage */
+  .mileage {
+    width: 70px; height: 22px;
+    text-align: center;
+  }
+  /* Origin City */
+  .origin {
+    width: 180px; height: 22px;
+    padding-left: 3px;
+    text-align: left;
+  }
+  /* Destination City */
+  .destination {
+    width: 180px; height: 22px;
+    padding-left: 3px;
+    text-align: left;
+  }
+  /* BOL, Description, Notes */
+  .bol {
+    width: 240px; height: 22px;
+    padding-left: 3px;
+    text-align: left;
+  }
+  /* Position all table fields row by row */
+  /* Starting positions */
+  #rowStartTop { top: 130px; }
+  #rowHeight { height: 30px; }
+
+  /* We'll position each row's inputs absolutely */
+  /* Row 1 */
+  #code_0 { top: 130px; left: 50px; }
+  #miles_0 { top: 130px; left: 85px; }
+  #mileage_0 { top: 130px; left: 160px; }
+  #origin_0 { top: 130px; left: 235px; }
+  #destination_0 { top: 130px; left: 420px; }
+  #bol_0 { top: 130px; left: 610px; }
+  /* Row 2 */
+  #code_1 { top: 160px; left: 50px; }
+  #miles_1 { top: 160px; left: 85px; }
+  #mileage_1 { top: 160px; left: 160px; }
+  #origin_1 { top: 160px; left: 235px; }
+  #destination_1 { top: 160px; left: 420px; }
+  #bol_1 { top: 160px; left: 610px; }
+  /* Row 3 */
+  #code_2 { top: 190px; left: 50px; }
+  #miles_2 { top: 190px; left: 85px; }
+  #mileage_2 { top: 190px; left: 160px; }
+  #origin_2 { top: 190px; left: 235px; }
+  #destination_2 { top: 190px; left: 420px; }
+  #bol_2 { top: 190px; left: 610px; }
+  /* Row 4 */
+  #code_3 { top: 220px; left: 50px; }
+  #miles_3 { top: 220px; left: 85px; }
+  #mileage_3 { top: 220px; left: 160px; }
+  #origin_3 { top: 220px; left: 235px; }
+  #destination_3 { top: 220px; left: 420px; }
+  #bol_3 { top: 220px; left: 610px; }
+  /* Row 5 */
+  #code_4 { top: 250px; left: 50px; }
+  #miles_4 { top: 250px; left: 85px; }
+  #mileage_4 { top: 250px; left: 160px; }
+  #origin_4 { top: 250px; left: 235px; }
+  #destination_4 { top: 250px; left: 420px; }
+  #bol_4 { top: 250px; left: 610px; }
+  /* Row 6 */
+  #code_5 { top: 280px; left: 50px; }
+  #miles_5 { top: 280px; left: 85px; }
+  #mileage_5 { top: 280px; left: 160px; }
+  #origin_5 { top: 280px; left: 235px; }
+  #destination_5 { top: 280px; left: 420px; }
+  #bol_5 { top: 280px; left: 610px; }
+  /* Row 7 */
+  #code_6 { top: 310px; left: 50px; }
+  #miles_6 { top: 310px; left: 85px; }
+  #mileage_6 { top: 310px; left: 160px; }
+  #origin_6 { top: 310px; left: 235px; }
+  #destination_6 { top: 310px; left: 420px; }
+  #bol_6 { top: 310px; left: 610px; }
+  /* Row 8 */
+  #code_7 { top: 340px; left: 50px; }
+  #miles_7 { top: 340px; left: 85px; }
+  #mileage_7 { top: 340px; left: 160px; }
+  #origin_7 { top: 340px; left: 235px; }
+  #destination_7 { top: 340px; left: 420px; }
+  #bol_7 { top: 340px; left: 610px; }
+  /* Row 9 */
+  #code_8 { top: 370px; left: 50px; }
+  #miles_8 { top: 370px; left: 85px; }
+  #mileage_8 { top: 370px; left: 160px; }
+  #origin_8 { top: 370px; left: 235px; }
+  #destination_8 { top: 370px; left: 420px; }
+  #bol_8 { top: 370px; left: 610px; }
+  /* Row 10 */
+  #code_9 { top: 400px; left: 50px; }
+  #miles_9 { top: 400px; left: 85px; }
+  #mileage_9 { top: 400px; left: 160px; }
+  #origin_9 { top: 400px; left: 235px; }
+  #destination_9 { top: 400px; left: 420px; }
+  #bol_9 { top: 400px; left: 610px; }
+
+  /* Total miles */
+  #totalMiles {
+    position: absolute;
+    top: 440px;
+    left: 50px;
+    width: 120px;
+    height: 22px;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    border: none;
+    background: transparent;
+  }
+
+  /* Bottom left inputs */
+  #tripCost {
+    position: absolute;
+    top: 490px;
+    left: 50px;
+    width: 130px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  #supervisor {
+    position: absolute;
+    top: 490px;
+    left: 300px;
+    width: 130px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  #inboundCost {
+    position: absolute;
+    top: 530px;
+    left: 50px;
+    width: 130px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* Driver's notes textarea */
+  #driverNotes {
+    position: absolute;
+    top: 485px;
+    left: 600px;
+    width: 460px;
+    height: 150px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 14px;
+    resize: none;
+    padding: 4px;
+  }
+
+  /* Remove input borders on focus */
+  input:focus, textarea:focus {
+    outline: 2px solid #4a90e2;
+    background: rgba(255 255 255 / 0.8);
+  }
+
+  /* Button styling */
+  #downloadPdfBtn {
+    display: block;
+    margin: 650px auto 40px auto;
+    padding: 14px 28px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid black;
+    background: white;
+  }
+  #downloadPdfBtn:hover {
+    background: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+
+<div id="container">
+  <!-- Top inputs -->
+  <input type="text" id="driver" placeholder="Driver" />
+  <input type="text" id="tractor" placeholder="Tractor" />
+  <input type="text" id="trailer" placeholder="Trailer" />
+  <input type="text" id="tripNumber" placeholder="Trip Number" />
+  <input type="date" id="tripDate" />
+
+  <!-- Table inputs -->
+  <input type="text" maxlength="1" id="code_0" class="code" />
+  <input type="text" id="miles_0" class="miles" />
+  <input type="text" id="mileage_0" class="mileage" />
+  <input type="text" id="origin_0" class="origin" />
+  <input type="text" id="destination_0" class="destination" />
+  <input type="text" id="bol_0" class="bol" />
+
+  <input type="text" maxlength="1" id="code_1" class="code" />
+  <input type="text" id="miles_1" class="miles" />
+  <input type="text" id="mileage_1" class="mileage" />
+  <input type="text" id="origin_1" class="origin" />
+  <input type="text" id="destination_1" class="destination" />
+  <input type="text" id="bol_1" class="bol" />
+
+  <input type="text" maxlength="1" id="code_2" class="code" />
+  <input type="text" id="miles_2" class="miles" />
+  <input type="text" id="mileage_2" class="mileage" />
+  <input type="text" id="origin_2" class="origin" />
+  <input type="text" id="destination_2" class="destination" />
+  <input type="text" id="bol_2" class="bol" />
+
+  <input type="text" maxlength="1" id="code_3" class="code" />
+  <input type="text" id="miles_3" class="miles" />
+  <input type="text" id="mileage_3" class="mileage" />
+  <input type="text" id="origin_3" class="origin" />
+  <input type="text" id="destination_3" class="destination" />
+  <input type="text" id="bol_3" class="bol" />
+
+  <input type="text" maxlength="1" id="code_4" class="code" />
+  <input type="text" id="miles_4" class="miles" />
+  <input type="text" id="mileage_4" class="mileage" />
+  <input type="text" id="origin_4" class="origin" />
+  <input type="text" id="destination_4" class="destination" />
+  <input type="text" id="bol_4" class="bol" />
+
+  <input type="text" maxlength="1" id="code_5" class="code" />
+  <input type="text" id="miles_5" class="miles" />
+  <input type="text" id="mileage_5" class="mileage" />
+  <input type="text" id="origin_5" class="origin" />
+  <input type="text" id="destination_5" class="destination" />
+  <input type="text" id="bol_5" class="bol" />
+
+  <input type="text" maxlength="1" id="code_6" class="code" />
+  <input type="text" id="miles_6" class="miles" />
+  <input type="text" id="mileage_6" class="mileage" />
+  <input type="text" id="origin_6" class="origin" />
+  <input type="text" id="destination_6" class="destination" />
+  <input type="text" id="bol_6" class="bol" />
+
+  <input type="text" maxlength="1" id="code_7" class="code" />
+  <input type="text" id="miles_7" class="miles" />
+  <input type="text" id="mileage_7" class="mileage" />
+  <input type="text" id="origin_7" class="origin" />
+  <input type="text" id="destination_7" class="destination" />
+  <input type="text" id="bol_7" class="bol" />
+
+  <input type="text" maxlength="1" id="code_8" class="code" />
+  <input type="text" id="miles_8" class="miles" />
+  <input type="text" id="mileage_8" class="mileage" />
+  <input type="text" id="origin_8" class="origin" />
+  <input type="text" id="destination_8" class="destination" />
+  <input type="text" id="bol_8" class="bol" />
+
+  <input type="text" maxlength="1" id="code_9" class="code" />
+  <input type="text" id="miles_9" class="miles" />
+  <input type="text" id="mileage_9" class="mileage" />
+  <input type="text" id="origin_9" class="origin" />
+  <input type="text" id="destination_9" class="destination" />
+  <input type="text" id="bol_9" class="bol" />
+
+  <!-- Total miles -->
+  <input type="text" id="totalMiles" readonly placeholder="Total Miles" />
+
+  <!-- Bottom fields -->
+  <input type="text" id="tripCost" placeholder="Trip Cost" />
+  <input type="text" id="supervisor" placeholder="Supervisor" />
+  <input type="text" id="inboundCost" placeholder="Inbound Cost" />
+
+  <!-- Driver's notes -->
+  <textarea id="driverNotes" placeholder="Driver's Notes"></textarea>
+</div>
+
+<button id="downloadPdfBtn">Download as PDF</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  // Sum miles live
+  function sumMiles() {
+    let total = 0;
+    for(let i=0; i<10; i++) {
+      let val = parseFloat(document.getElementById('miles_' + i).value);
+      if(!isNaN(val)) total += val;
+    }
+    document.getElementById('totalMiles').value = total.toFixed(2);
+  }
+
+  for(let i=0; i<10; i++) {
+    document.getElementById('miles_' + i).addEventListener('input', sumMiles);
+  }
+
+  // Download PDF function using html2canvas + jsPDF
+  document.getElementById('downloadPdfBtn').addEventListener('click', async () => {
+    const { jsPDF } = window.jspdf;
+    const element = document.getElementById('container');
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#fff',
+    });
+    const imgData = canvas.toDataURL('image/png');
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: [canvas.width, canvas.height]
+    });
+    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+    pdf.save('trip_ticket_filled.pdf');
+  });
+</script>
+
+</body>
+</html>
