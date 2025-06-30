@@ -63,6 +63,7 @@
     white-space: nowrap;
   }
 
+  /* Editor container */
   #editor-container {
     position: fixed;
     top: 40px;
@@ -80,16 +81,26 @@
   #highlighting {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    overflow: auto;
+    overflow: hidden;
     white-space: pre-wrap;
     padding: 12px;
     pointer-events: none;
-    color: transparent;
     user-select: none;
     font-family: monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    box-sizing: border-box;
+    color: transparent;
+    z-index: 1;
+    background: transparent;
   }
   #highlighting code {
     color: #eee;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    box-sizing: border-box;
   }
   #editor-textarea {
     position: absolute;
@@ -101,12 +112,14 @@
     border: none;
     padding: 12px;
     font-family: monospace;
-    font-size: inherit;
-    line-height: inherit;
+    font-size: 14px;
+    line-height: 1.4;
     resize: none;
     outline: none;
     overflow: auto;
     caret-color: white;
+    box-sizing: border-box;
+    z-index: 2;
   }
 
   /* Syntax Highlighting Styles */
@@ -259,7 +272,7 @@
   });
 
   function updateHighlighting() {
-    highlighting.innerHTML = syntaxHighlight(textarea.value) + '<br>'; // add <br> to keep height consistent
+    highlighting.innerHTML = syntaxHighlight(textarea.value) + '<br>';
   }
 
   function updatePreview() {
@@ -379,7 +392,7 @@
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
   });
 
-  // Initialize highlighting on page load
+  // Initialize highlighting and focus on load
   updateHighlighting();
   textarea.focus();
 </script>
