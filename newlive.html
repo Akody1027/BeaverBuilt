@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Plain Code Editor with Live Preview and Console</title>
+<title>Custom Editor with Full HTML and CSS Selector Highlighting</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   * {
@@ -79,10 +79,44 @@
     overflow: hidden;
   }
 
-  #editor-textarea {
+  #scroll-container {
     position: relative;
     width: 100%;
     height: 100%;
+    overflow: auto;
+  }
+
+  #highlighting {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    padding: 12px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    color: transparent;
+    user-select: none;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 1;
+    background: transparent;
+  }
+
+  #highlighting code {
+    display: block;
+    white-space: pre-wrap;
+  }
+
+  /* Coloring classes */
+  .html-tag { color: red; }
+  .css-selector { color: green; }
+  .js-code { color: blue; }
+
+  #editor-textarea {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
     background: transparent;
     color: #eee;
     border: none;
@@ -94,8 +128,6 @@
     outline: none;
     box-sizing: border-box;
     white-space: pre-wrap;
-    overflow: auto;
-    caret-color: white;
     z-index: 2;
   }
 
@@ -170,7 +202,10 @@
 </header>
 
 <div id="editor-container">
-  <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+  <div id="scroll-container">
+    <pre id="highlighting" aria-hidden="true"><code></code></pre>
+    <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+  </div>
 </div>
 
 <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
@@ -180,6 +215,8 @@
 
 <script>
   const textarea = document.getElementById('editor-textarea');
+  const highlighting = document.getElementById('highlighting').firstElementChild;
+  const scrollContainer = document.getElementById('scroll-container');
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
@@ -198,9 +235,62 @@
 
   let isConsoleVisible = false;
 
+  // Regexes
+  // Match entire HTML tag including attributes (escaped)
+  const htmlTagRe = /&lt;\/?[\w-]+(?:\s+[^&]*?)?&gt;/g;
+  // Match full CSS selector before brace (escaped)
+  const cssSelectorRe = /([.#][\w-]+)(?=\s*\{)/g;
+  // JS strings, keywords, numbers
+  const jsStringRe = /(".*?"|'.*?'|`.*?`)/g;
+  const jsKeywordRe = /\b(const|let|var|function|if|else|return|for|while|new|this|class|async|await|try|catch)\b/g;
+  const jsNumberRe = /\b\d+(\.\d+)?\b/g;
+
+  function escapeHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function syntaxHighlight(text) {
+    let escaped = escapeHtml(text);
+
+    // Highlight entire HTML tags red
+    escaped = escaped.replace(htmlTagRe, (match) => `<span class="html-tag">${match}</span>`);
+
+    // Highlight entire CSS selectors green
+    escaped = escaped.replace(cssSelectorRe, (match) => `<span class="css-selector">${match}</span>`);
+
+    // Highlight JS strings blue
+    escaped = escaped.replace(jsStringRe, (match) => `<span class="js-code">${match}</span>`);
+
+    // Highlight JS keywords blue
+    escaped = escaped.replace(jsKeywordRe, (match) => `<span class="js-code">${match}</span>`);
+
+    // Highlight JS numbers blue
+    escaped = escaped.replace(jsNumberRe, (match) => `<span class="js-code">${match}</span>`);
+
+    return escaped;
+  }
+
+  function updateHighlighting() {
+    highlighting.innerHTML = syntaxHighlight(textarea.value) + '\n ';
+  }
+
+  scrollContainer.addEventListener('scroll', () => {
+    highlighting.style.top = -scrollContainer.scrollTop + 'px';
+    highlighting.style.left = -scrollContainer.scrollLeft + 'px';
+  });
+
+  textarea.addEventListener('input', () => {
+    updateHighlighting();
+    if (preview.style.display === 'block') {
+      updatePreview();
+      clearConsole();
+    }
+  });
+
+  updateHighlighting();
+
   function updatePreview() {
     const userCode = textarea.value;
-
     const injectedScript = `
       <script>
         (function() {
@@ -222,7 +312,6 @@
           };
         })();
       <\/script>`;
-
     const fullHTML = `
       <!DOCTYPE html>
       <html lang="en">
@@ -235,16 +324,8 @@
       </body>
       </html>
     `;
-
     preview.srcdoc = fullHTML;
   }
-
-  textarea.addEventListener('input', () => {
-    if (preview.style.display === 'block') {
-      updatePreview();
-      clearConsole();
-    }
-  });
 
   function appendConsole(type, message) {
     const time = new Date().toLocaleTimeString();
@@ -296,6 +377,7 @@
         fontSize++;
         editorContainer.style.fontSize = fontSize + 'px';
         textarea.style.fontSize = fontSize + 'px';
+        updateHighlighting();
       }
     }
   });
@@ -311,6 +393,7 @@
         fontSize--;
         editorContainer.style.fontSize = fontSize + 'px';
         textarea.style.fontSize = fontSize + 'px';
+        updateHighlighting();
       }
     }
   });
