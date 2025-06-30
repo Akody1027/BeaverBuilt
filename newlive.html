@@ -68,12 +68,13 @@
       white-space: nowrap;
     }
 
-    /* Monaco Editor container */
+    /* Monaco Editor container - FIXED: added width and height */
     #editor {
       position: fixed;
       top: 40px; /* below header */
       left: 0;
-      /* width and height will be set by JS */
+      width: 100vw;             /* Added */
+      height: calc(100vh - 70px); /* Added */
       margin: 0; padding: 0;
       z-index: 10;
       display: block;
@@ -262,22 +263,11 @@
 
   require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
   require(['vs/editor/editor.main'], function() {
-    const editorContainer = document.getElementById('editor');
-
-    // Explicitly set width/height in pixels to avoid layout issues
-    function resizeEditor() {
-      editorContainer.style.width = window.innerWidth + 'px';
-      editorContainer.style.height = (window.innerHeight - 70) + 'px'; // header + bottom margin
-      if (editor) {
-        editor.layout();
-      }
-    }
-
-    editor = monaco.editor.create(editorContainer, {
+    editor = monaco.editor.create(document.getElementById('editor'), {
       value: '',
       language: 'html',
       theme: 'vs-dark',
-      automaticLayout: false, // manual layout on resize
+      automaticLayout: true, // use automatic layout now that container has fixed size
       fontSize: fontSize,
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
@@ -288,12 +278,6 @@
 
     editor.onDidChangeModelContent(debounceEditorChange);
     editor.focus();
-
-    // Initial resize
-    resizeEditor();
-
-    // Resize editor on window resize
-    window.addEventListener('resize', resizeEditor);
   });
 
   // Toggle editor/live preview
