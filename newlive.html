@@ -47,7 +47,6 @@
       color: white;
       font-weight: 700;
       font-size: 18px;
-      
       height: 28px;
       cursor: pointer;
       border-radius: 5px;
@@ -69,30 +68,29 @@
       white-space: nowrap;
     }
 
-    #editor, #preview {
+    /* Monaco Editor container */
+    #editor {
       position: fixed;
-      top: 30px; left: 0;
-      margin-bottm:20px;
+      top: 40px; /* below header */
+      left: 0;
       width: 100vw;
       height: calc(100vh - 70px);
-      margin: 0; padding: 12px;
-      font-size: 14px;
-      background: #1e1e1e;
-      color: #eee;
-      font-family: monospace, monospace;
-      resize: none;
-      outline: none;
-      border: none;
+      margin: 0; padding: 0;
       z-index: 10;
-      overflow: auto;
       display: block;
     }
 
     #preview {
+      position: fixed;
+      top: 40px;
+      left: 0;
+      width: 100vw;
+      height: calc(100vh - 70px);
       background: white;
       color: black;
       display: none;
       border: none;
+      z-index: 10;
     }
 
     /* Floating Inspect Button */
@@ -141,6 +139,8 @@
       user-select: text;
     }
   </style>
+  <!-- Monaco Editor loader -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs/loader.js"></script>
 </head>
 <body>
 
@@ -154,9 +154,8 @@
     </div>
   </header>
 
-  <textarea id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="enter code">
-
-  </textarea>
+  <!-- Monaco editor container -->
+  <div id="editor"></div>
 
   <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
 
@@ -164,7 +163,24 @@
   <div id="console-overlay"></div>
 
 <script>
-  const editor = document.getElementById('editor');
+  let editor; // Monaco editor instance
+
+  require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.42.0/min/vs' }});
+  require(['vs/editor/editor.main'], function() {
+    editor = monaco.editor.create(document.getElementById('editor'), {
+      value: '',
+      language: 'html',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      fontSize: 14,
+      minimap: { enabled: false },
+      scrollBeyondLastLine: false,
+      wordWrap: 'on',
+      tabSize: 2,
+      lineNumbers: 'on'
+    });
+  });
+
   const preview = document.getElementById('preview');
   const toggleBtn = document.getElementById('toggle-live-view-btn');
   const incBtn = document.getElementById('increase-font-btn');
@@ -172,8 +188,8 @@
   const inspectBtn = document.getElementById('inspect-btn');
   const consoleOverlay = document.getElementById('console-overlay');
 
-  let fontSize = 8;
-  const minFontSize = 2;
+  let fontSize = 14; // Monaco default font size
+  const minFontSize = 8;
   const maxFontSize = 40;
 
   // Zoom scale inside iframe content
@@ -185,10 +201,9 @@
 
   // Inject code + setup console capturing inside iframe
   function updatePreview() {
-    // Compose full HTML with console capture scripts injected
-    const userCode = editor.value;
+    if (!editor) return;
+    const userCode = editor.getValue();
 
-    // Wrap user code to override console & capture errors, then postMessage to parent
     const injectedScript = `
       <script>
         (function() {
@@ -211,7 +226,6 @@
         })();
       <\/script>`;
 
-    // Wrap full HTML
     const fullHTML = `
       <!DOCTYPE html>
       <html lang="en">
@@ -253,18 +267,31 @@
     consoleOverlay.textContent = '';
   }
 
-  editor.addEventListener('input', () => {
+  // Editor content change listener
+  function onEditorChange() {
     if (preview.style.display === 'block') {
       updatePreview();
       clearConsole();
     }
+  }
+
+  // Debounce editor changes (to avoid too many updates)
+  let changeTimeout;
+  function debounceEditorChange() {
+    clearTimeout(changeTimeout);
+    changeTimeout = setTimeout(onEditorChange, 300);
+  }
+
+  // Wait for Monaco to be ready and then set up change event listener
+  require(['vs/editor/editor.main'], function() {
+    editor.onDidChangeModelContent(debounceEditorChange);
   });
 
   // Toggle editor/live preview
   toggleBtn.addEventListener('click', () => {
     if (preview.style.display === 'none' || preview.style.display === '') {
       preview.style.display = 'block';
-      editor.style.display = 'none';
+      document.getElementById('editor').style.display = 'none';
       toggleBtn.textContent = 'Show Editor';
       updatePreview();
       clearConsole();
@@ -272,7 +299,7 @@
       inspectBtn.style.display = 'flex';
     } else {
       preview.style.display = 'none';
-      editor.style.display = 'block';
+      document.getElementById('editor').style.display = 'block';
       toggleBtn.textContent = 'Show Live';
       editor.focus();
       inspectBtn.style.display = 'none';
@@ -291,7 +318,7 @@
     } else {
       if (fontSize < maxFontSize) {
         fontSize++;
-        editor.style.fontSize = fontSize + 'px';
+        editor.updateOptions({ fontSize });
       }
     }
   });
@@ -305,7 +332,7 @@
     } else {
       if (fontSize > minFontSize) {
         fontSize--;
-        editor.style.fontSize = fontSize + 'px';
+        editor.updateOptions({ fontSize });
       }
     }
   });
@@ -316,9 +343,11 @@
     consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
   });
 
-  // Init
-  editor.style.fontSize = fontSize + 'px';
-  editor.focus();
+  // Initial font size setup and focus - once Monaco is ready
+  require(['vs/editor/editor.main'], function() {
+    editor.updateOptions({ fontSize });
+    editor.focus();
+  });
 </script>
 
 </body>
