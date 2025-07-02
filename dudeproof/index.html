@@ -81,6 +81,7 @@
     align-items: center;
     justify-content: center;
     flex: 1 1 0;
+    position: relative; /* added for cart badge */
   }
   nav button:hover {
     background-color: #212121;
@@ -166,6 +167,21 @@
     color: #666;
     font-style: italic;
   }
+  /* Cart count badge */
+  #cart-count-badge {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    background: red;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    user-select: none;
+    pointer-events: none;
+    font-weight: 700;
+    display: none;
+  }
 </style>
 </head>
 <body>
@@ -190,8 +206,9 @@
     <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">
       <img src="boyicon.png" alt="Boys’" class="nav-icon boys-icon" />
     </button>
-    <button id="nav-cart" aria-pressed="false" aria-label="Shopping cart">
+    <button id="nav-cart" aria-pressed="false" aria-label="Shopping cart" style="position:relative;">
       <img src="Cart.png" alt="Cart" class="nav-icon cart-icon" />
+      <span id="cart-count-badge" aria-live="polite" aria-atomic="true">0</span>
     </button>
   </nav>
 
@@ -219,14 +236,12 @@
     cart: document.getElementById('nav-cart')
   };
 
-  // Map buttons to page URLs
   const pages = {
     home: 'home.html',
     men: 'mens.html',
     boys: 'boys.html'
   };
 
-  // Clear active states & aria-pressed on all buttons except cart
   function clearActive() {
     Object.entries(buttons).forEach(([key, btn]) => {
       if (key !== 'cart') {
@@ -236,32 +251,28 @@
     });
   }
 
-  // Set active button (only for home, men, boys)
   function setActive(key) {
     clearActive();
     buttons[key].classList.add('active');
     buttons[key].setAttribute('aria-pressed', 'true');
   }
 
-  // Load page in iframe & set active button
   function loadPage(key) {
     iframe.src = pages[key];
     setActive(key);
-    closeCart(); // close cart if open
+    closeCart();
   }
 
-  // Event listeners for nav buttons
   buttons.home.addEventListener('click', () => loadPage('home'));
   buttons.men.addEventListener('click', () => loadPage('men'));
   buttons.boys.addEventListener('click', () => loadPage('boys'));
 
-  // Cart modal elements
   const cartModal = document.getElementById('cart-modal');
   const cartCloseBtn = document.getElementById('cart-close-btn');
   const cartItemsContainer = document.getElementById('cart-items');
   const cartEmptyText = document.getElementById('cart-empty');
+  const cartCountBadge = document.getElementById('cart-count-badge');
 
-  // Show/hide cart modal
   function openCart() {
     cartModal.classList.add('active');
     buttons.cart.setAttribute('aria-pressed', 'true');
@@ -271,7 +282,6 @@
     buttons.cart.setAttribute('aria-pressed', 'false');
   }
 
-  // Toggle cart modal on Cart button click
   buttons.cart.addEventListener('click', () => {
     if (cartModal.classList.contains('active')) {
       closeCart();
@@ -282,38 +292,59 @@
 
   cartCloseBtn.addEventListener('click', closeCart);
 
-  // Close cart modal on outside click
   cartModal.addEventListener('click', (e) => {
     if (e.target === cartModal) {
       closeCart();
     }
   });
 
-  // Initialize default page active
   setActive('home');
 
-  // Placeholder cart data & rendering (initially empty)
   let cart = [];
 
   function renderCart() {
     if (cart.length === 0) {
       cartEmptyText.style.display = 'block';
+      cartItemsContainer.innerHTML = '';
     } else {
       cartEmptyText.style.display = 'none';
-      cartItemsContainer.innerHTML = ''; // clear previous
-      cart.forEach((item, index) => {
+      cartItemsContainer.innerHTML = '';
+      cart.forEach(item => {
         const div = document.createElement('div');
         div.textContent = `${item.name} - Qty: ${item.qty}`;
         cartItemsContainer.appendChild(div);
       });
     }
+    updateCartCount();
   }
 
-  // Initial render
-  renderCart();
+  function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.qty, 0);
+    if (count > 0) {
+      cartCountBadge.textContent = count;
+      cartCountBadge.style.display = 'inline-block';
+    } else {
+      cartCountBadge.style.display = 'none';
+    }
+  }
 
-  // Future: you can add functions to add/remove items to/from cart array
-  // and call renderCart() to update the modal display accordingly.
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'ADD_TO_CART') {
+      const product = event.data.product;
+      if (!product || !product.id) return;
+
+      const existingItem = cart.find(item => item.id === product.id);
+      if (existingItem) {
+        existingItem.qty += 1;
+      } else {
+        cart.push({...product, qty: 1});
+      }
+
+      renderCart();
+    }
+  });
+
+  renderCart();
 </script>
 
 </body>
