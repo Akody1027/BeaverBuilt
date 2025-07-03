@@ -2,326 +2,539 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Plain Code Editor with Live Preview and Console</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dude Proof Apparel - Index</title>
+<!-- Lily Script font -->
+<link href="https://fonts.googleapis.com/css2?family=Lily+Script+One&display=swap" rel="stylesheet" />
 <style>
+  /* Reset */
   * {
     box-sizing: border-box;
   }
   body, html {
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background: #121212;
-    color: #eee;
+    margin: 0; padding: 0; height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('dudelogo.png') no-repeat center center fixed;
+    background-size: contain;
+    color: #222;
+    display: flex;
+    flex-direction: column;
   }
+
+  #page-overlay {
+    background: rgba(225,225,225,0.96);
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
   header {
-    position: fixed;
-    top: 0; left: 0; width: 100%;
-    height: 40px;
-    background: #1f1f1f;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 10px;
-    z-index: 20;
-    user-select: none;
-  }
-  #left-controls {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  #right-controls {
-    display: flex;
-    align-items: center;
-  }
-  header button {
-    background-color: #22c55e;
-    border: none;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
-    height: 28px;
-    cursor: pointer;
-    border-radius: 5px;
-    line-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s ease;
-  }
-  header button:hover {
-    background-color: #16a34a;
-  }
-  #toggle-live-view-btn {
-    padding: auto;
-    font-size: 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
+    background: #e1e1e1;
+    padding: 0.6rem 0;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    font-family: 'Lily Script One', cursive;
+    font-size: 1.5rem;
+    color: #222;
+    user-select: text;
+    letter-spacing: 0.05em;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
 
-  /* Editor container */
-  #editor-container {
-    position: fixed;
-    top: 40px;
-    left: 0;
-    width: 100vw;
-    height: calc(100vh - 70px);
-    font-family: monospace;
-    font-size: 14px;
-    line-height: 1.4;
-    background: #1e1e1e;
-    color: #eee;
-    z-index: 10;
-    overflow: hidden;
-  }
-
-  #editor-textarea {
-    position: relative;
+  #viewport {
+    flex: 1 1 auto;
     width: 100%;
-    height: 100%;
-    background: transparent;
-    color: #eee;
     border: none;
-    padding: 12px;
-    font-family: monospace;
-    font-size: 8px;
-    line-height: 1.4;
-    resize: none;
-    outline: none;
-    box-sizing: border-box;
-    white-space: pre-wrap;
-    overflow: auto;
-    caret-color: white;
-    z-index: 2;
+    min-height: 0;
   }
 
-  #preview {
-    position: fixed;
-    top: 40px;
-    left: 0;
-    width: 100vw;
-    height: calc(100vh - 70px);
-    background: white;
-    color: black;
-    display: none;
-    border: none;
-    z-index: 10;
-  }
-
-  #inspect-btn {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    z-index: 30;
-    background: #22c55e;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    font-size: 28px;
-    font-weight: 700;
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 10px #16a34aaa;
-    user-select: none;
-  }
-  #inspect-btn:hover {
-    background: #16a34a;
-    box-shadow: 0 0 15px #16a34aff;
-  }
-
-  #console-overlay {
+  nav {
     position: fixed;
     bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 200px;
-    background: #222;
+    left: 0; right: 0;
+    background: #121212;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.12);
+    display: flex;
+    padding: 0.6rem 0;
+    user-select: none;
+    z-index: 1001;
+  }
+
+  nav button {
+    background: transparent;
+    border: none;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
     color: #eee;
-    font-family: monospace;
-    font-size: 13px;
-    overflow-y: auto;
-    padding: 8px 12px;
+    cursor: pointer;
+    padding: 0.25rem 1rem;
+    transition: background-color 0.3s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    position: relative;
+  }
+  nav button:hover {
+    background-color: #212121;
+  }
+  nav button.active {
+    background-color: #212121;
+    color: grey;
+    font-weight: 700;
+  }
+
+  nav button img.nav-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+  nav button img.boys-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  main {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 48px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #cart-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
     display: none;
-    z-index: 25;
-    border-top: 3px solid #22c55e;
-    white-space: pre-wrap;
-    user-select: text;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+  #cart-modal.active {
+    display: flex;
+  }
+  #cart-content {
+    background: #fff;
+    width: 95vw;
+    height: 95vh;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  #cart-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  #cart-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    color: #444;
+  }
+  #cart-items {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5rem;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  #cart-empty {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+  }
+  .cart-item {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  .cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-right: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .cart-item-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .cart-item-details .name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.15rem;
+    color: #222;
+  }
+  .cart-item-details .qty-price {
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  #cart-count-badge {
+    position: absolute;
+    top: 4px;
+    right: 50px;
+    background: red;
+    color: white;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 12px;
+    user-select: none;
+    pointer-events: none;
+    font-weight: 700;
+    display: none;
+  }
+
+  #free-shipping-msg {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: green;
+  }
+
+  #total-price {
+    margin-top: 0.75rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+
+  #proceed-checkout-btn {
+    margin-top: 1rem;
+    align-self: center;
+    padding: 0.6rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: #0070ba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  #proceed-checkout-btn:hover {
+    background-color: #005ea6;
+  }
+
+  #paypal-button-container {
+    margin-top: 1rem;
+    align-self: center;
   }
 </style>
 </head>
 <body>
 
-<header>
-  <div id="left-controls">
-    <button id="decrease-font-btn" title="Decrease font size or zoom out">−</button>
-    <button id="increase-font-btn" title="Increase font size or zoom in">+</button>
-  </div>
-  <div id="right-controls">
-    <button id="toggle-live-view-btn">Show Live</button>
-  </div>
-</header>
+<div id="page-overlay">
 
-<div id="editor-container">
-  <textarea id="editor-textarea" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Start typing your code here..."></textarea>
+  <header role="banner" aria-label="Store name">
+    Dude Proof Apparel
+  </header>
+
+  <main>
+    <iframe id="viewport" src="home.html" title="Content viewport" aria-live="polite"></iframe>
+  </main>
+
+  <nav role="navigation" aria-label="Main navigation">
+    <button id="nav-home" aria-pressed="true" aria-label="Home page">
+      <img src="homeicon.png" alt="Home" class="nav-icon home-icon" />
+    </button>
+    <button id="nav-men" aria-pressed="false" aria-label="Men's T-shirts page">
+      <img src="menicon.png" alt="Men’s" class="nav-icon men-icon" />
+    </button>
+    <button id="nav-boys" aria-pressed="false" aria-label="Boys' T-shirts page">
+      <img src="boyicon.png" alt="Boys’" class="nav-icon boys-icon" />
+    </button>
+    <button id="nav-cart" aria-pressed="false" aria-label="Shopping cart" style="position:relative;">
+      <img src="Cart.png" alt="Cart" class="nav-icon cart-icon" />
+      <span id="cart-count-badge" aria-live="polite" aria-atomic="true">0</span>
+    </button>
+  </nav>
+
 </div>
 
-<iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+<!-- Cart Modal -->
+<div id="cart-modal" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-describedby="cart-desc">
+  <div id="cart-content">
+    <div id="cart-header">
+      <h2 id="cart-title">Shopping Cart</h2>
+      <button id="cart-close-btn" aria-label="Close cart">&times;</button>
+    </div>
+    <div id="cart-items" aria-live="polite" aria-atomic="true">
+      <p id="cart-empty">Your cart is empty.</p>
+    </div>
 
-<button id="inspect-btn" title="Toggle Console"></button>
-<div id="console-overlay"></div>
+    <div id="free-shipping-msg" aria-live="polite" aria-atomic="true">Free Shipping</div>
+    <div id="total-price" aria-live="polite" aria-atomic="true"></div>
+    <button id="proceed-checkout-btn" type="button" aria-label="Proceed to checkout" style="display:none;">Proceed to Checkout</button>
+    <div id="paypal-button-container" style="display:none;"></div>
+  </div>
+</div>
+
+<script src="https://www.paypal.com/sdk/js?client-id=ASCKDo60gyBJKIwgMg-N3nmXVM43Qy4tku2oColtQsmbVQRwXisnoPyiCUh6rOtSKlc2FknkGSuh92kE&currency=USD"></script>
 
 <script>
-  const textarea = document.getElementById('editor-textarea');
-  const preview = document.getElementById('preview');
-  const toggleBtn = document.getElementById('toggle-live-view-btn');
-  const incBtn = document.getElementById('increase-font-btn');
-  const decBtn = document.getElementById('decrease-font-btn');
-  const inspectBtn = document.getElementById('inspect-btn');
-  const consoleOverlay = document.getElementById('console-overlay');
-  const editorContainer = document.getElementById('editor-container');
+  const iframe = document.getElementById('viewport');
+  const buttons = {
+    home: document.getElementById('nav-home'),
+    men: document.getElementById('nav-men'),
+    boys: document.getElementById('nav-boys'),
+    cart: document.getElementById('nav-cart')
+  };
 
-  let fontSize = 14;
-  const minFontSize = 8;
-  const maxFontSize = 40;
+  const pages = {
+    home: 'home.html',
+    men: 'mens.html',
+    boys: 'boys.html'
+  };
 
-  let insideZoom = 1;
-  const minInsideZoom = 0.2;
-  const maxInsideZoom = 3;
-
-  let isConsoleVisible = false;
-
-  function updatePreview() {
-    const userCode = textarea.value;
-
-    const injectedScript = `
-      <script>
-        (function() {
-          const sendMessage = (type, args) => {
-            parent.postMessage({ type, args: Array.from(args).map(a => (typeof a === 'object' ? JSON.stringify(a) : a.toString())) }, '*');
-          };
-          const oldLog = console.log;
-          const oldError = console.error;
-          console.log = function() {
-            oldLog.apply(console, arguments);
-            sendMessage('log', arguments);
-          };
-          console.error = function() {
-            oldError.apply(console, arguments);
-            sendMessage('error', arguments);
-          };
-          window.onerror = function(message, source, lineno, colno, error) {
-            sendMessage('error', [message + ' at ' + source + ':' + lineno + ':' + colno]);
-          };
-        })();
-      <\/script>`;
-
-    const fullHTML = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head><meta charset="UTF-8" />
-        <style>html { zoom: ${insideZoom}; -webkit-text-size-adjust: none; }</style>
-      </head>
-      <body>
-      ${userCode}
-      ${injectedScript}
-      </body>
-      </html>
-    `;
-
-    preview.srcdoc = fullHTML;
+  function clearActive() {
+    Object.entries(buttons).forEach(([key, btn]) => {
+      if (key !== 'cart') {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+      }
+    });
   }
 
-  textarea.addEventListener('input', () => {
-    if (preview.style.display === 'block') {
-      updatePreview();
-      clearConsole();
+  function setActive(key) {
+    clearActive();
+    buttons[key].classList.add('active');
+    buttons[key].setAttribute('aria-pressed', 'true');
+  }
+
+  function loadPage(key) {
+    iframe.src = pages[key];
+    setActive(key);
+    closeCart();
+  }
+
+  buttons.home.addEventListener('click', () => loadPage('home'));
+  buttons.men.addEventListener('click', () => loadPage('men'));
+  buttons.boys.addEventListener('click', () => loadPage('boys'));
+
+  const cartModal = document.getElementById('cart-modal');
+  const cartCloseBtn = document.getElementById('cart-close-btn');
+  const cartItemsContainer = document.getElementById('cart-items');
+  const cartEmptyText = document.getElementById('cart-empty');
+  const cartCountBadge = document.getElementById('cart-count-badge');
+  const freeShippingMsg = document.getElementById('free-shipping-msg');
+  const totalPriceElem = document.getElementById('total-price');
+  const proceedCheckoutBtn = document.getElementById('proceed-checkout-btn');
+  const paypalButtonContainer = document.getElementById('paypal-button-container');
+
+  function openCart() {
+    cartModal.classList.add('active');
+    buttons.cart.setAttribute('aria-pressed', 'true');
+  }
+  function closeCart() {
+    cartModal.classList.remove('active');
+    buttons.cart.setAttribute('aria-pressed', 'false');
+    paypalButtonContainer.style.display = 'none';
+    proceedCheckoutBtn.style.display = cart.length > 0 ? 'inline-block' : 'none';
+  }
+
+  buttons.cart.addEventListener('click', () => {
+    if (cartModal.classList.contains('active')) {
+      closeCart();
+    } else {
+      openCart();
     }
   });
 
-  function appendConsole(type, message) {
-    const time = new Date().toLocaleTimeString();
-    consoleOverlay.textContent += `[${time}] ${type}: ${message}\n`;
-    consoleOverlay.scrollTop = consoleOverlay.scrollHeight;
+  cartCloseBtn.addEventListener('click', closeCart);
+
+  cartModal.addEventListener('click', (e) => {
+    if (e.target === cartModal) {
+      closeCart();
+    }
+  });
+
+  setActive('home');
+
+  let cart = [];
+
+  function loadCart() {
+    try {
+      const saved = localStorage.getItem('dudeproof_cart');
+      if (saved) {
+        cart = JSON.parse(saved);
+      } else {
+        cart = [];
+      }
+    } catch {
+      cart = [];
+    }
+    renderCart();
   }
 
-  function clearConsole() {
-    consoleOverlay.textContent = '';
+  function saveCart() {
+    localStorage.setItem('dudeproof_cart', JSON.stringify(cart));
   }
+
+  function calculateTotal() {
+    return cart.reduce((sum, item) => sum + item.qty * parseFloat(item.price), 0);
+  }
+
+  function renderCart() {
+    if (cart.length === 0) {
+      cartEmptyText.style.display = 'block';
+      cartItemsContainer.innerHTML = '';
+      freeShippingMsg.style.display = 'none';
+      totalPriceElem.textContent = '';
+      proceedCheckoutBtn.style.display = 'none';
+      paypalButtonContainer.style.display = 'none';
+      updateCartCount();
+      return;
+    }
+    cartEmptyText.style.display = 'none';
+    cartItemsContainer.innerHTML = '';
+
+    cart.forEach(item => {
+      const div = document.createElement('div');
+      div.classList.add('cart-item');
+
+      const img = document.createElement('img');
+      img.src = item.img;
+      img.alt = item.name;
+
+      const details = document.createElement('div');
+      details.classList.add('cart-item-details');
+
+      const name = document.createElement('div');
+      name.classList.add('name');
+      name.textContent = item.name;
+
+      const qtyPrice = document.createElement('div');
+      qtyPrice.classList.add('qty-price');
+      qtyPrice.textContent = `Qty: ${item.qty}   Price: $${item.price}`;
+
+      details.appendChild(name);
+      details.appendChild(qtyPrice);
+
+      div.appendChild(img);
+      div.appendChild(details);
+
+      cartItemsContainer.appendChild(div);
+    });
+
+    freeShippingMsg.style.display = 'block';
+    freeShippingMsg.textContent = '🎉 Free Shipping';
+
+    const total = calculateTotal();
+    totalPriceElem.textContent = `Total Price: $${total.toFixed(2)}`;
+
+    proceedCheckoutBtn.style.display = 'inline-block';
+    paypalButtonContainer.style.display = 'none';
+
+    updateCartCount();
+  }
+
+  function updateCartCount() {
+    const count = cart.reduce((total, item) => total + item.qty, 0);
+    if (count > 0) {
+      cartCountBadge.textContent = count;
+      cartCountBadge.style.display = 'inline-block';
+    } else {
+      cartCountBadge.style.display = 'none';
+    }
+  }
+
+  function waitForPayPalAndRender() {
+    if (window.paypal) {
+      renderPayPalButton();
+    } else {
+      setTimeout(waitForPayPalAndRender, 50);
+    }
+  }
+
+  function renderPayPalButton() {
+    paypalButtonContainer.innerHTML = '';
+
+    if (cart.length === 0) return;
+
+    const total = calculateTotal();
+
+    paypal.Buttons({
+      style: {
+        layout: 'vertical',
+        color:  'blue',
+        shape:  'rect',
+        label:  'paypal'
+      },
+      createOrder: function(data, actions) {
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              value: total.toFixed(2)
+            }
+          }]
+        });
+      },
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          alert('Transaction completed by ' + details.payer.name.given_name + '!');
+          clearCart();
+          closeCart();
+        });
+      },
+      onError: function(err) {
+        alert('PayPal Checkout error: ' + err);
+      }
+    }).render('#paypal-button-container');
+
+    paypalButtonContainer.style.display = 'block';
+    proceedCheckoutBtn.style.display = 'none';
+  }
+
+  function clearCart() {
+    cart = [];
+    renderCart();
+    saveCart();
+    paypalButtonContainer.innerHTML = '';
+    paypalButtonContainer.style.display = 'none';
+  }
+
+  proceedCheckoutBtn.addEventListener('click', () => {
+    waitForPayPalAndRender();
+  });
 
   window.addEventListener('message', (event) => {
-    if (!event.data || !event.data.type) return;
-    if (event.data.type === 'log') {
-      appendConsole('LOG', event.data.args.join(' '));
-    } else if (event.data.type === 'error') {
-      appendConsole('ERROR', event.data.args.join(' '));
+    if (event.data && event.data.type === 'ADD_TO_CART') {
+      const product = event.data.product;
+      if (!product || !product.id) return;
+
+      const existingItem = cart.find(item => item.id === product.id);
+      if (existingItem) {
+        existingItem.qty += 1;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
+
+      renderCart();
+      saveCart();
     }
   });
 
-  toggleBtn.addEventListener('click', () => {
-    if (preview.style.display === 'none' || preview.style.display === '') {
-      preview.style.display = 'block';
-      editorContainer.style.display = 'none';
-      toggleBtn.textContent = 'Show Editor';
-      updatePreview();
-      clearConsole();
-      insideZoom = 1;
-      inspectBtn.style.display = 'flex';
-    } else {
-      preview.style.display = 'none';
-      editorContainer.style.display = 'block';
-      toggleBtn.textContent = 'Show Live';
-      textarea.focus();
-      inspectBtn.style.display = 'none';
-      consoleOverlay.style.display = 'none';
-      insideZoom = 1;
-    }
-  });
-
-  incBtn.addEventListener('click', () => {
-    if (preview.style.display === 'block') {
-      if (insideZoom < maxInsideZoom) {
-        insideZoom = Math.min(maxInsideZoom, insideZoom + 0.1);
-        updatePreview();
-      }
-    } else {
-      if (fontSize < maxFontSize) {
-        fontSize++;
-        editorContainer.style.fontSize = fontSize + 'px';
-        textarea.style.fontSize = fontSize + 'px';
-      }
-    }
-  });
-
-  decBtn.addEventListener('click', () => {
-    if (preview.style.display === 'block') {
-      if (insideZoom > minInsideZoom) {
-        insideZoom = Math.max(minInsideZoom, insideZoom - 0.1);
-        updatePreview();
-      }
-    } else {
-      if (fontSize > minFontSize) {
-        fontSize--;
-        editorContainer.style.fontSize = fontSize + 'px';
-        textarea.style.fontSize = fontSize + 'px';
-      }
-    }
-  });
-
-  inspectBtn.addEventListener('click', () => {
-    isConsoleVisible = !isConsoleVisible;
-    consoleOverlay.style.display = isConsoleVisible ? 'block' : 'none';
-  });
-
-  textarea.focus();
+  loadCart();
 </script>
 
 </body>
 </html>
+
