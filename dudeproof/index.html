@@ -113,7 +113,7 @@
     flex-direction: column;
   }
 
-  /* Cart Modal Styles - UPDATED */
+  /* Cart Modal Styles */
   #cart-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -267,6 +267,7 @@
     cart: document.getElementById('nav-cart')
   };
 
+  // Map buttons to page URLs
   const pages = {
     home: 'home.html',
     men: 'mens.html',
@@ -333,6 +334,27 @@
 
   let cart = [];
 
+  // Load cart from localStorage on page load
+  function loadCart() {
+    try {
+      const saved = localStorage.getItem('dudeproof_cart');
+      if (saved) {
+        cart = JSON.parse(saved);
+      } else {
+        cart = [];
+      }
+    } catch {
+      cart = [];
+    }
+    renderCart();
+  }
+
+  // Save cart to localStorage
+  function saveCart() {
+    localStorage.setItem('dudeproof_cart', JSON.stringify(cart));
+  }
+
+  // Render cart UI
   function renderCart() {
     if (cart.length === 0) {
       cartEmptyText.style.display = 'block';
@@ -372,6 +394,7 @@
     updateCartCount();
   }
 
+  // Update cart count badge
   function updateCartCount() {
     const count = cart.reduce((total, item) => total + item.qty, 0);
     if (count > 0) {
@@ -382,6 +405,7 @@
     }
   }
 
+  // Listen for Add To Cart messages from iframe
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'ADD_TO_CART') {
       const product = event.data.product;
@@ -391,14 +415,16 @@
       if (existingItem) {
         existingItem.qty += 1;
       } else {
-        cart.push({...product, qty: 1});
+        cart.push({ ...product, qty: 1 });
       }
 
       renderCart();
+      saveCart();
     }
   });
 
-  renderCart();
+  // Initialize cart on load
+  loadCart();
 </script>
 
 </body>
