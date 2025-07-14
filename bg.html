@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Color-Based Background Remover with Manual Brush & Undo</title>
+<title>Color-Based Background Remover with Multi-Color Selection</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-  #canvasContainer { position: relative; display: inline-block; border: 1px solid #ccc; }
+  #canvasContainer { position: relative; display: inline-block; border: 1px solid #ccc; margin-bottom: 10px; }
   canvas { max-width: 100%; height: auto; cursor: crosshair; }
   #controls { margin-top: 10px; }
   label { margin: 0 8px; }
@@ -18,9 +18,7 @@
   input[type="range"] { vertical-align: middle; width: 120px; }
   input[type="color"] { vertical-align: middle; }
 
-  /* Updated Download button styles */
   #downloadBtn {
-    display: inline-block; /* will be overridden dynamically */
     background-color: #28a745;
     border: none;
     color: white;
@@ -28,19 +26,48 @@
     font-weight: bold;
     padding: 12px 0;
     margin-top: 10px;
-    width: 100%; /* full width */
+    width: 100%;
     box-sizing: border-box;
     border-radius: 4px;
     transition: background-color 0.3s ease;
+    cursor: pointer;
   }
   #downloadBtn:active {
     background-color: #218838;
+  }
+
+  #colorSwatches {
+    margin: 10px auto;
+    max-width: 300px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+  .color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+  .color-swatch.selected {
+    border-color: #333;
+  }
+
+  #customColors {
+    margin-top: 10px;
+  }
+  #addColorBtn {
+    padding: 6px 10px;
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
 
-<h2>Color-Based Background Remover</h2>
+<h2>Color-Based Background Remover with Multi-Color Selection</h2>
 
 <input type="file" id="inputImage" accept="image/*" />
 <br /><br />
@@ -49,11 +76,17 @@
   <canvas id="mainCanvas"></canvas>
 </div>
 
+<div id="colorSwatches" title="Click to toggle colors to remove"></div>
+
+<div id="customColors">
+  <label>Custom color: <input type="color" id="customColorPicker" value="#ffffff" /></label>
+  <button id="addColorBtn">Add Color</button>
+</div>
+
 <div id="controls">
-  <label>Background Color: <input type="color" id="bgColorPicker" value="#ffffff"></label>
-  <label>Tolerance: <input type="range" id="toleranceRange" min="0" max="100" value="30"> <span id="toleranceVal">30</span></label>
+  <label>Tolerance: <input type="range" id="toleranceRange" min="0" max="100" value="30" /> <span id="toleranceVal">30</span></label>
   <br /><br />
-  <label>Brush Size: <input type="range" id="brushSizeRange" min="5" max="100" value="20"> <span id="brushSizeVal">20</span> px</label>
+  <label>Brush Size: <input type="range" id="brushSizeRange" min="5" max="100" value="20" /> <span id="brushSizeVal">20</span> px</label>
   <br /><br />
   <button id="modeErase" style="font-weight:bold;">Erase Mode</button>
   <button id="modeRestore">Restore Mode</button>
@@ -61,7 +94,6 @@
   <button id="clearBtn" disabled>Clear Edits</button>
 </div>
 
-<!-- Updated Download Button placed after controls -->
 <button id="downloadBtn" disabled>Download PNG</button>
 
 <script>
@@ -70,7 +102,10 @@
   const canvas = document.getElementById('mainCanvas');
   const ctx = canvas.getContext('2d');
 
-  const bgColorPicker = document.getElementById('bgColorPicker');
+  const colorSwatchesDiv = document.getElementById('colorSwatches');
+  const customColorPicker = document.getElementById('customColorPicker');
+  const addColorBtn = document.getElementById('addColorBtn');
+
   const toleranceRange = document.getElementById('toleranceRange');
   const toleranceVal = document.getElementById('toleranceVal');
 
@@ -85,18 +120,19 @@
 
   let image = null;
   let originalImageData = null;
-  let maskData = null; // Uint8ClampedArray same length as imageData.data, stores alpha mask (0=transparent,255=opaque)
+  let maskData = null; // Uint8ClampedArray alpha mask: 0=transparent,255=opaque
   let undoStack = [];
 
   let isDrawing = false;
-  let lastX = 0;
-  let lastY = 0;
 
   let brushSize = parseInt(brushSizeRange.value, 10);
-  let eraseMode = true; // true=erase (make transparent), false=restore (make opaque)
+  let eraseMode = true; // true=erase (transparent), false=restore (opaque)
   let tolerance = parseInt(toleranceRange.value, 10);
-  let bgColor = hexToRgb(bgColorPicker.value);
 
+  // Array of colors to remove [{r,g,b,selected}]
+  let colorsToRemove = [];
+
+  // --- Utility functions ---
   function hexToRgb(hex) {
     if(hex.length === 4) {
       hex = "#" + hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
@@ -108,7 +144,9 @@
       b: bigint & 255
     };
   }
-
+  function rgbToHex(r,g,b) {
+    return "#" + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+  }
   function colorDistance(c1, c2) {
     return Math.sqrt(
       (c1.r - c2.r) ** 2 +
@@ -117,14 +155,100 @@
     );
   }
 
+  function addColorToRemove(color) {
+    // Avoid duplicates
+    if(colorsToRemove.some(c => c.r === color.r && c.g === color.g && c.b === color.b)) return;
+    colorsToRemove.push({ ...color, selected: true });
+    renderColorSwatches();
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  }
+  function removeColorAt(index) {
+    colorsToRemove.splice(index,1);
+    renderColorSwatches();
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  }
+
+  function toggleColorSelection(index) {
+    colorsToRemove[index].selected = !colorsToRemove[index].selected;
+    renderColorSwatches();
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  }
+
+  function renderColorSwatches() {
+    colorSwatchesDiv.innerHTML = '';
+    colorsToRemove.forEach((colorObj, i) => {
+      const swatch = document.createElement('div');
+      swatch.className = 'color-swatch' + (colorObj.selected ? ' selected' : '');
+      swatch.style.backgroundColor = rgbToHex(colorObj.r, colorObj.g, colorObj.b);
+      swatch.title = rgbToHex(colorObj.r, colorObj.g, colorObj.b) + (colorObj.selected ? ' (click to deselect)' : ' (click to select)');
+      swatch.addEventListener('click', () => toggleColorSelection(i));
+      // Right-click or double-click to remove
+      swatch.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        removeColorAt(i);
+      });
+      swatch.addEventListener('dblclick', e => {
+        e.preventDefault();
+        removeColorAt(i);
+      });
+      colorSwatchesDiv.appendChild(swatch);
+    });
+  }
+
+  // --- Color quantization: simple median cut to get top N colors ---
+  // Adapted from https://github.com/ozra/quantize.js (MIT License)
+  // Returns array of {r,g,b,count} sorted by count desc
+  function quantizeColors(imgData, maxColors=6) {
+    const pixels = [];
+    for(let i=0; i < imgData.data.length; i+=4) {
+      const r = imgData.data[i];
+      const g = imgData.data[i+1];
+      const b = imgData.data[i+2];
+      pixels.push([r,g,b]);
+    }
+    // Median cut clustering adapted for brevity:
+    // We'll just do a rough frequency count for demo:
+    const freqMap = new Map();
+    for(const p of pixels) {
+      const key = p.join(',');
+      freqMap.set(key, (freqMap.get(key) || 0) + 1);
+    }
+    const arr = Array.from(freqMap.entries()).map(([k,v]) => {
+      const [r,g,b] = k.split(',').map(Number);
+      return {r,g,b,count:v};
+    });
+    arr.sort((a,b) => b.count - a.count);
+    return arr.slice(0, maxColors);
+  }
+
+  // --- Core functions ---
   function applyBackgroundRemoval() {
     if (!originalImageData) return;
     const data = originalImageData.data;
     maskData = new Uint8ClampedArray(data.length / 4);
     for(let i=0; i < data.length; i += 4) {
       const px = {r: data[i], g: data[i+1], b: data[i+2]};
-      const dist = colorDistance(px, bgColor);
-      maskData[i/4] = (dist <= tolerance) ? 0 : 255; // 0=transparent,255=opaque
+      // If matches any selected color within tolerance, mark transparent
+      let matched = false;
+      for(const c of colorsToRemove) {
+        if(c.selected && colorDistance(px,c) <= tolerance) {
+          matched = true;
+          break;
+        }
+      }
+      maskData[i/4] = matched ? 0 : 255;
     }
   }
 
@@ -138,9 +262,8 @@
       outData[i*4] = data[i*4];
       outData[i*4+1] = data[i*4+1];
       outData[i*4+2] = data[i*4+2];
-      outData[i*4+3] = maskData[i]; // alpha from mask
+      outData[i*4+3] = maskData[i];
     }
-
     ctx.putImageData(outImageData, 0, 0);
   }
 
@@ -168,12 +291,10 @@
   }
 
   function downloadImage() {
-    // Provide feedback and disable button temporarily
     downloadBtn.disabled = true;
     const originalText = downloadBtn.textContent;
     downloadBtn.textContent = 'Downloading...';
 
-    // Use toDataURL at max resolution (canvas already full resolution)
     canvas.toBlob(blob => {
       if (!blob) {
         alert('Failed to generate image.');
@@ -194,13 +315,7 @@
         downloadBtn.textContent = originalText;
         downloadBtn.disabled = false;
       }, 1000);
-    }, 'image/png', 1.0); // 1.0 quality for highest possible
-  }
-
-  function drawCircle(x, y, radius) {
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.closePath();
+    }, 'image/png', 1.0);
   }
 
   function drawOnMask(x, y, radius, erase) {
@@ -250,6 +365,8 @@
     renderCanvas();
   }
 
+  // --- Initialization and event handlers ---
+
   inputImage.addEventListener('change', () => {
     const file = inputImage.files[0];
     if (!file) return;
@@ -268,9 +385,17 @@
 
       originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const p = originalImageData.data;
-      bgColor = { r: p[0], g: p[1], b: p[2] };
-      bgColorPicker.value = rgbToHex(bgColor.r, bgColor.g, bgColor.b);
+      // Extract dominant colors
+      const dominantColors = quantizeColors(originalImageData, 6);
+      colorsToRemove = dominantColors.map(c => ({r:c.r, g:c.g, b:c.b, selected:true}));
+
+      renderColorSwatches();
+
+      tolerance = parseInt(toleranceRange.value, 10);
+      toleranceVal.textContent = tolerance;
+
+      brushSize = parseInt(brushSizeRange.value, 10);
+      brushSizeVal.textContent = brushSize;
 
       applyBackgroundRemoval();
       undoStack = [];
@@ -285,13 +410,13 @@
     img.src = URL.createObjectURL(file);
   });
 
-  bgColorPicker.addEventListener('input', () => {
-    bgColor = hexToRgb(bgColorPicker.value);
-    applyBackgroundRemoval();
-    undoStack = [];
-    undoBtn.disabled = true;
-    clearBtn.disabled = true;
-    renderCanvas();
+  customColorPicker.addEventListener('input', () => {
+    // Just update color picker UI, no automatic effect
+  });
+
+  addColorBtn.addEventListener('click', () => {
+    const color = hexToRgb(customColorPicker.value);
+    addColorToRemove(color);
   });
 
   toleranceRange.addEventListener('input', () => {
@@ -333,10 +458,6 @@
     downloadImage();
   });
 
-  function rgbToHex(r, g, b) {
-    return "#" + [r,g,b].map(x => x.toString(16).padStart(2, '0')).join('');
-  }
-
   canvas.addEventListener('mousedown', onPointerDown);
   canvas.addEventListener('mousemove', onPointerMove);
   canvas.addEventListener('mouseup', onPointerUp);
@@ -347,7 +468,6 @@
   canvas.addEventListener('touchend', onPointerUp);
 
   modeEraseBtn.style.fontWeight = 'bold';
-
 })();
 </script>
 
