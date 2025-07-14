@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color-Based Background Remover with Manual Brush & Undo</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+  #canvasContainer { position: relative; display: inline-block; border: 1px solid #ccc; }
+  canvas { max-width: 100%; height: auto; cursor: crosshair; }
+  #controls { margin-top: 10px; }
+  label { margin: 0 8px; }
+  button {
+    margin: 0 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  input[type="range"] { vertical-align: middle; width: 120px; }
+  input[type="color"] { vertical-align: middle; }
+
+  /* Updated Download button styles */
+  #downloadBtn {
+    display: inline-block; /* will be overridden dynamically */
+    background-color: #28a745;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 0;
+    margin-top: 10px;
+    width: 100%; /* full width */
+    box-sizing: border-box;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  #downloadBtn:active {
+    background-color: #218838;
+  }
+</style>
+</head>
+<body>
+
+<h2>Color-Based Background Remover</h2>
+
+<input type="file" id="inputImage" accept="image/*" />
+<br /><br />
+
+<div id="canvasContainer">
+  <canvas id="mainCanvas"></canvas>
+</div>
+
+<div id="controls">
+  <label>Background Color: <input type="color" id="bgColorPicker" value="#ffffff"></label>
+  <label>Tolerance: <input type="range" id="toleranceRange" min="0" max="100" value="30"> <span id="toleranceVal">30</span></label>
+  <br /><br />
+  <label>Brush Size: <input type="range" id="brushSizeRange" min="5" max="100" value="20"> <span id="brushSizeVal">20</span> px</label>
+  <br /><br />
+  <button id="modeErase" style="font-weight:bold;">Erase Mode</button>
+  <button id="modeRestore">Restore Mode</button>
+  <button id="undoBtn" disabled>Undo</button>
+  <button id="clearBtn" disabled>Clear Edits</button>
+</div>
+
+<!-- Updated Download Button placed after controls -->
+<button id="downloadBtn" disabled>Download PNG</button>
+
+<script>
+(() => {
+  const inputImage = document.getElementById('inputImage');
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const bgColorPicker = document.getElementById('bgColorPicker');
+  const toleranceRange = document.getElementById('toleranceRange');
+  const toleranceVal = document.getElementById('toleranceVal');
+
+  const brushSizeRange = document.getElementById('brushSizeRange');
+  const brushSizeVal = document.getElementById('brushSizeVal');
+
+  const modeEraseBtn = document.getElementById('modeErase');
+  const modeRestoreBtn = document.getElementById('modeRestore');
+  const undoBtn = document.getElementById('undoBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  let image = null;
+  let originalImageData = null;
+  let maskData = null; // Uint8ClampedArray same length as imageData.data, stores alpha mask (0=transparent,255=opaque)
+  let undoStack = [];
+
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  let brushSize = parseInt(brushSizeRange.value, 10);
+  let eraseMode = true; // true=erase (make transparent), false=restore (make opaque)
+  let tolerance = parseInt(toleranceRange.value, 10);
+  let bgColor = hexToRgb(bgColorPicker.value);
+
+  function hexToRgb(hex) {
+    if(hex.length === 4) {
+      hex = "#" + hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
+    }
+    const bigint = parseInt(hex.slice(1),16);
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255
+    };
+  }
+
+  function colorDistance(c1, c2) {
+    return Math.sqrt(
+      (c1.r - c2.r) ** 2 +
+      (c1.g - c2.g) ** 2 +
+      (c1.b - c2.b) ** 2
+    );
+  }
+
+  function applyBackgroundRemoval() {
+    if (!originalImageData) return;
+    const data = originalImageData.data;
+    maskData = new Uint8ClampedArray(data.length / 4);
+    for(let i=0; i < data.length; i += 4) {
+      const px = {r: data[i], g: data[i+1], b: data[i+2]};
+      const dist = colorDistance(px, bgColor);
+      maskData[i/4] = (dist <= tolerance) ? 0 : 255; // 0=transparent,255=opaque
+    }
+  }
+
+  function renderCanvas() {
+    if (!originalImageData || !maskData) return;
+    const outImageData = ctx.createImageData(originalImageData.width, originalImageData.height);
+    const data = originalImageData.data;
+    const outData = outImageData.data;
+
+    for(let i=0; i < maskData.length; i++) {
+      outData[i*4] = data[i*4];
+      outData[i*4+1] = data[i*4+1];
+      outData[i*4+2] = data[i*4+2];
+      outData[i*4+3] = maskData[i]; // alpha from mask
+    }
+
+    ctx.putImageData(outImageData, 0, 0);
+  }
+
+  function pushUndo() {
+    if (!maskData) return;
+    undoStack.push(new Uint8ClampedArray(maskData));
+    if (undoStack.length > 20) undoStack.shift();
+    undoBtn.disabled = false;
+    clearBtn.disabled = false;
+  }
+
+  function undo() {
+    if (undoStack.length === 0) return;
+    maskData = undoStack.pop();
+    renderCanvas();
+    if (undoStack.length === 0) undoBtn.disabled = true;
+  }
+
+  function clearEdits() {
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  }
+
+  function downloadImage() {
+    // Provide feedback and disable button temporarily
+    downloadBtn.disabled = true;
+    const originalText = downloadBtn.textContent;
+    downloadBtn.textContent = 'Downloading...';
+
+    // Use toDataURL at max resolution (canvas already full resolution)
+    canvas.toBlob(blob => {
+      if (!blob) {
+        alert('Failed to generate image.');
+        downloadBtn.textContent = originalText;
+        downloadBtn.disabled = false;
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'background_removed.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setTimeout(() => {
+        downloadBtn.textContent = originalText;
+        downloadBtn.disabled = false;
+      }, 1000);
+    }, 'image/png', 1.0); // 1.0 quality for highest possible
+  }
+
+  function drawCircle(x, y, radius) {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.closePath();
+  }
+
+  function drawOnMask(x, y, radius, erase) {
+    if (!maskData) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const radiusSq = radius * radius;
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      const py = y + dy;
+      if (py < 0 || py >= height) continue;
+      for (let dx = -radius; dx <= radius; dx++) {
+        const px = x + dx;
+        if (px < 0 || px >= width) continue;
+        if (dx*dx + dy*dy <= radiusSq) {
+          const idx = py * width + px;
+          maskData[idx] = erase ? 0 : 255;
+        }
+      }
+    }
+  }
+
+  function onPointerDown(e) {
+    if (!maskData) return;
+    isDrawing = true;
+    pushUndo();
+    drawAtEvent(e);
+  }
+  function onPointerMove(e) {
+    if (!isDrawing) return;
+    drawAtEvent(e);
+  }
+  function onPointerUp() {
+    isDrawing = false;
+  }
+
+  function drawAtEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = Math.floor((e.clientX || e.touches[0].clientX) * scaleX - rect.left * scaleX);
+    const y = Math.floor((e.clientY || e.touches[0].clientY) * scaleY - rect.top * scaleY);
+
+    drawOnMask(x, y, brushSize, eraseMode);
+    renderCanvas();
+  }
+
+  inputImage.addEventListener('change', () => {
+    const file = inputImage.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      image = img;
+
+      originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const p = originalImageData.data;
+      bgColor = { r: p[0], g: p[1], b: p[2] };
+      bgColorPicker.value = rgbToHex(bgColor.r, bgColor.g, bgColor.b);
+
+      applyBackgroundRemoval();
+      undoStack = [];
+      undoBtn.disabled = true;
+      clearBtn.disabled = true;
+      downloadBtn.disabled = false;
+
+      renderCanvas();
+    };
+
+    img.onerror = () => alert('Failed to load image.');
+    img.src = URL.createObjectURL(file);
+  });
+
+  bgColorPicker.addEventListener('input', () => {
+    bgColor = hexToRgb(bgColorPicker.value);
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  });
+
+  toleranceRange.addEventListener('input', () => {
+    tolerance = parseInt(toleranceRange.value, 10);
+    toleranceVal.textContent = tolerance;
+    applyBackgroundRemoval();
+    undoStack = [];
+    undoBtn.disabled = true;
+    clearBtn.disabled = true;
+    renderCanvas();
+  });
+
+  brushSizeRange.addEventListener('input', () => {
+    brushSize = parseInt(brushSizeRange.value, 10);
+    brushSizeVal.textContent = brushSize;
+  });
+
+  modeEraseBtn.addEventListener('click', () => {
+    eraseMode = true;
+    modeEraseBtn.style.fontWeight = 'bold';
+    modeRestoreBtn.style.fontWeight = 'normal';
+  });
+
+  modeRestoreBtn.addEventListener('click', () => {
+    eraseMode = false;
+    modeEraseBtn.style.fontWeight = 'normal';
+    modeRestoreBtn.style.fontWeight = 'bold';
+  });
+
+  undoBtn.addEventListener('click', () => {
+    undo();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    clearEdits();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    downloadImage();
+  });
+
+  function rgbToHex(r, g, b) {
+    return "#" + [r,g,b].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  canvas.addEventListener('mousedown', onPointerDown);
+  canvas.addEventListener('mousemove', onPointerMove);
+  canvas.addEventListener('mouseup', onPointerUp);
+  canvas.addEventListener('mouseleave', onPointerUp);
+
+  canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+  canvas.addEventListener('touchmove', onPointerMove, { passive: true });
+  canvas.addEventListener('touchend', onPointerUp);
+
+  modeEraseBtn.style.fontWeight = 'bold';
+
+})();
+</script>
+
+</body>
+</html>
